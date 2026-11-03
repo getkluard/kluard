@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/secretbox"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/secretbox"
 )
 
 const (
@@ -209,7 +209,7 @@ func (e *Engine) Allowed(n Notifier) bool {
 }
 
 func needsLicence(n Notifier) string {
-	return fmt.Sprintf("%s needs a Lumen %s licence. Add or renew it under Settings.", n.Label(), strings.Title(EditionOf(n))) //nolint:staticcheck
+	return fmt.Sprintf("%s needs a Kluard %s licence. Add or renew it under Settings.", n.Label(), strings.Title(EditionOf(n))) //nolint:staticcheck
 }
 
 func (e *Engine) deps() Deps {
@@ -262,6 +262,9 @@ func (e *Engine) Load() error {
 	rules, err := listAll[Rule](e.DB, collRules)
 	if err != nil {
 		return err
+	}
+	for i := range rules {
+		rules[i].Status = canonStatus(rules[i].Status) // rules saved before the rename of the product
 	}
 	chans, err := listAll[Channel](e.DB, collChannels)
 	if err != nil {
@@ -594,7 +597,7 @@ func (e *Engine) config(ch Channel) (Config, error) {
 	for k, sealed := range ch.SecretsEnc {
 		v, err := e.Box.Open(sealed)
 		if err != nil {
-			return cfg, fmt.Errorf("the stored secret %q cannot be decrypted (was LUMEN_SECRET_KEY changed?)", k)
+			return cfg, fmt.Errorf("the stored secret %q cannot be decrypted (was KLUARD_SECRET_KEY changed?)", k)
 		}
 		cfg.Secrets[k] = v
 	}
@@ -1116,7 +1119,7 @@ func (e *Engine) PutChannel(tenant, id string, in ChannelIn) (ChannelOut, error)
 	}
 	n, ok := e.reg().Get(in.Type)
 	if !ok {
-		return ChannelOut{}, invalid("unknown channel type %q (it may need Lumen Enterprise)", in.Type)
+		return ChannelOut{}, invalid("unknown channel type %q (it may need Kluard Enterprise)", in.Type)
 	}
 	for _, s := range in.Severities {
 		if !severities[s] {
@@ -1244,7 +1247,7 @@ func (e *Engine) TestChannel(ctx context.Context, tenant, id string) error {
 		return err
 	}
 	now := e.now()
-	v := []AlertView{{Fingerprint: "test", RuleName: "Lumen test alert", Severity: "info", State: "firing", Labels: map[string]string{"test": "true"}, Value: 1, Since: now, Annotation: "This is a test from Lumen. Nothing is wrong."}}
+	v := []AlertView{{Fingerprint: "test", RuleName: "Kluard test alert", Severity: "info", State: "firing", Labels: map[string]string{"test": "true"}, Value: 1, Since: now, Annotation: "This is a test from Kluard. Nothing is wrong."}}
 	title, body := Compose("firing", v, e.link())
 	title = strings.Replace(title, "[FIRING]", "[TEST]", 1)
 	c, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -1272,7 +1275,7 @@ func Templates() []Rule {
 		{Name: "Nextcloud instance down", Kind: KindStatus, Status: "instance_down", Severity: "critical", IntervalSec: 30, Annotation: "The agent cannot reach this Nextcloud (or the agent stopped reporting).", Enabled: true},
 		{Name: "Service failed", Kind: KindStatus, Status: "service_down", Severity: "warning", IntervalSec: 30, ForSec: 60, Annotation: "A systemd service is failed, or a watched service is not running.", Enabled: true},
 		{Name: "Container down", Kind: KindStatus, Status: "container_down", Severity: "warning", IntervalSec: 30, ForSec: 60, Annotation: "A Docker container is not running.", Enabled: true},
-		{Name: "Redis down", Kind: KindMetric, Metric: "redis_up", Reduce: "min", GroupBy: "redis", WindowSec: 300, Op: "<", Threshold: 1, Severity: "critical", ForSec: 120, Annotation: "A Redis does not answer, or it wants a password that Lumen does not have (see Redis in the menu).", Enabled: true},
+		{Name: "Redis down", Kind: KindMetric, Metric: "redis_up", Reduce: "min", GroupBy: "redis", WindowSec: 300, Op: "<", Threshold: 1, Severity: "critical", ForSec: 120, Annotation: "A Redis does not answer, or it wants a password that Kluard does not have (see Redis in the menu).", Enabled: true},
 		{Name: "Redis memory almost full", Kind: KindMetric, Metric: "redis_memory_utilization", Reduce: "max", GroupBy: "redis", WindowSec: 300, Op: ">", Threshold: 0.9, Severity: "warning", ForSec: 300, Annotation: "A Redis uses more than 90 percent of its maxmemory: it starts throwing keys away (or refusing writes), depending on its eviction policy.", Enabled: true},
 		{Name: "Disk almost full", Kind: KindMetric, Metric: "system.filesystem.utilization", Reduce: "max", GroupBy: "mountpoint", WindowSec: 300, Op: ">", Threshold: 0.9, Severity: "warning", ForSec: 300, Annotation: "A disk is more than 90 percent full.", Enabled: true},
 		{Name: "High CPU", Kind: KindMetric, Metric: "system.cpu.utilization", Reduce: "avg", GroupBy: "host", WindowSec: 600, Op: ">", Threshold: 0.9, Severity: "warning", ForSec: 600, Annotation: "CPU use has been above 90 percent for 10 minutes.", Enabled: true},
@@ -1282,11 +1285,11 @@ func Templates() []Rule {
 		{Name: "TLS certificate expires soon", Kind: KindMetric, Metric: "nextcloud_tls_cert_expiry_seconds", Reduce: "min", GroupBy: "instance", WindowSec: 900, Op: "<", Threshold: 1209600, Severity: "warning", ForSec: 0, Annotation: "The certificate of a Nextcloud instance expires in less than 14 days (or already has). If it renews automatically, the renewal is failing.", Enabled: true},
 		{Name: "TLS certificate not valid", Kind: KindMetric, Metric: "nextcloud_tls_cert_valid", Reduce: "min", GroupBy: "instance", WindowSec: 1800, Op: "<", Threshold: 1, Severity: "warning", ForSec: 600, Annotation: "The certificate is not trusted or not for this name (browsers will warn). Fine for an internal instance with its own authority: then do not use this rule.", Enabled: true},
 		{Name: "Nextcloud login check failing", Kind: KindMetric, Metric: "nextcloud_webdav_ok", Reduce: "min", GroupBy: "instance", WindowSec: 900, Op: "<", Threshold: 1, Severity: "critical", ForSec: 300, Annotation: "A user cannot log in and list their files over WebDAV: the web server, PHP, the database or the storage is failing even though the front page may answer. Needs an administrator user on the instance.", Enabled: true},
-		{Name: "Lumen: a disk is more than 80% full", Kind: KindStatus, Status: "lumen_disk", Threshold: 80, Severity: "warning", Annotation: "A disk that Lumen, Elasticsearch or ClickHouse lives on is getting full. At 85% Elasticsearch stops creating indices and at 95% it refuses writes; ClickHouse needs room to merge. Free space (docker builder prune -af is safe), shorten the retention, or make the disk bigger.", Enabled: true},
-		{Name: "Lumen: a disk is more than 90% full", Kind: KindStatus, Status: "lumen_disk", Threshold: 90, Severity: "critical", Annotation: "A disk that Lumen lives on is almost full: Elasticsearch is about to refuse writes and ClickHouse to go read-only. Free space now.", Enabled: true},
-		{Name: "Lumen: Elasticsearch is not green", Kind: KindStatus, Status: "lumen_elasticsearch", Threshold: 1, Severity: "warning", Annotation: "Elasticsearch, which holds users, dashboards and settings, is yellow or red or cannot be reached. Look at the disk first.", Enabled: true},
-		{Name: "Lumen: Elasticsearch is red", Kind: KindStatus, Status: "lumen_elasticsearch", Threshold: 2, Severity: "critical", Annotation: "Elasticsearch is red or cannot be reached: Lumen cannot read or save its settings. Look at the disk first.", Enabled: true},
-		{Name: "Lumen: ClickHouse cannot be reached or is full", Kind: KindStatus, Status: "lumen_clickhouse", Threshold: 90, Severity: "critical", Annotation: "Traces, logs and metrics cannot be stored or read: ClickHouse is down or its disk is over 90% full.", Enabled: true},
+		{Name: "Kluard: a disk is more than 80% full", Kind: KindStatus, Status: "kluard_disk", Threshold: 80, Severity: "warning", Annotation: "A disk that Kluard, Elasticsearch or ClickHouse lives on is getting full. At 85% Elasticsearch stops creating indices and at 95% it refuses writes; ClickHouse needs room to merge. Free space (docker builder prune -af is safe), shorten the retention, or make the disk bigger.", Enabled: true},
+		{Name: "Kluard: a disk is more than 90% full", Kind: KindStatus, Status: "kluard_disk", Threshold: 90, Severity: "critical", Annotation: "A disk that Kluard lives on is almost full: Elasticsearch is about to refuse writes and ClickHouse to go read-only. Free space now.", Enabled: true},
+		{Name: "Kluard: Elasticsearch is not green", Kind: KindStatus, Status: "kluard_elasticsearch", Threshold: 1, Severity: "warning", Annotation: "Elasticsearch, which holds users, dashboards and settings, is yellow or red or cannot be reached. Look at the disk first.", Enabled: true},
+		{Name: "Kluard: Elasticsearch is red", Kind: KindStatus, Status: "kluard_elasticsearch", Threshold: 2, Severity: "critical", Annotation: "Elasticsearch is red or cannot be reached: Kluard cannot read or save its settings. Look at the disk first.", Enabled: true},
+		{Name: "Kluard: ClickHouse cannot be reached or is full", Kind: KindStatus, Status: "kluard_clickhouse", Threshold: 90, Severity: "critical", Annotation: "Traces, logs and metrics cannot be stored or read: ClickHouse is down or its disk is over 90% full.", Enabled: true},
 		{Name: "Many errors in the logs", Kind: KindLog, LogSeverity: "ERROR", GroupBy: "service", WindowSec: 300, Op: ">", Threshold: 20, Severity: "warning", Annotation: "More than 20 ERROR log lines in 5 minutes.", Enabled: true},
 	}
 }

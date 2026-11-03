@@ -8,7 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/inmagma/lumen/internal/registry"
+	"github.com/getkluard/kluard/internal/registry"
 	"math"
 	"regexp"
 	"sort"
@@ -72,7 +72,7 @@ type Rule struct {
 var (
 	ops        = map[string]bool{">": true, ">=": true, "<": true, "<=": true, "==": true, "!=": true}
 	reduces    = map[string]bool{"avg": true, "max": true, "min": true, "last": true, "sum": true}
-	statuses   = map[string]bool{"host_down": true, "instance_down": true, "service_down": true, "container_down": true, "lumen_disk": true, "lumen_elasticsearch": true, "lumen_clickhouse": true}
+	statuses   = map[string]bool{"host_down": true, "instance_down": true, "service_down": true, "container_down": true, "kluard_disk": true, "kluard_elasticsearch": true, "kluard_clickhouse": true}
 	severities = map[string]bool{"critical": true, "warning": true, "info": true}
 	labelKeyRe = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_.-]{0,39}$`)
 )
@@ -163,19 +163,20 @@ func (r *Rule) Normalize() error {
 			return fmt.Errorf("group by must be a label name")
 		}
 	case KindStatus:
+		r.Status = canonStatus(r.Status)
 		if !statuses[r.Status] {
-			return fmt.Errorf("status must be host_down, instance_down, service_down, container_down, lumen_disk, lumen_elasticsearch or lumen_clickhouse")
+			return fmt.Errorf("status must be host_down, instance_down, service_down, container_down, kluard_disk, kluard_elasticsearch or kluard_clickhouse")
 		}
-		// the rules about Lumen itself use the threshold: how full a disk may be (percent), or how bad Elasticsearch may be (1 = not green, 2 = red)
+		// the rules about Kluard itself use the threshold: how full a disk may be (percent), or how bad Elasticsearch may be (1 = not green, 2 = red)
 		switch r.Status {
-		case "lumen_disk", "lumen_clickhouse":
+		case "kluard_disk", "kluard_clickhouse":
 			if r.Threshold == 0 {
-				r.Threshold = map[string]float64{"lumen_disk": 80, "lumen_clickhouse": 90}[r.Status]
+				r.Threshold = map[string]float64{"kluard_disk": 80, "kluard_clickhouse": 90}[r.Status]
 			}
 			if r.Threshold < 1 || r.Threshold > 100 {
 				return fmt.Errorf("the disk limit is a percentage between 1 and 100")
 			}
-		case "lumen_elasticsearch":
+		case "kluard_elasticsearch":
 			if r.Threshold == 0 {
 				r.Threshold = 1
 			}
@@ -352,4 +353,13 @@ type Event struct {
 	Labels   map[string]string `json:"labels"`
 	Value    float64           `json:"value"`
 	By       string            `json:"by,omitempty"`
+}
+
+// canonStatus turns the status names from the time the product was called Lumen (lumen_disk and so on) into the current
+// ones, so that rules that were saved earlier keep working.
+func canonStatus(s string) string {
+	if rest, ok := strings.CutPrefix(s, "lumen_"); ok {
+		return "kluard_" + rest
+	}
+	return s
 }

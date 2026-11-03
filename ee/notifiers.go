@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/inmagma/lumen/internal/alerts"
+	"github.com/getkluard/kluard/internal/alerts"
 )
 
 // RegisterEnterprise adds the ticket and on-call notifiers. The community core never imports this package.
@@ -58,7 +58,7 @@ func details(a alerts.AlertView, link string) string {
 		fmt.Fprintf(&b, "\n%s\n", a.Annotation)
 	}
 	if link != "" {
-		fmt.Fprintf(&b, "\nOpen in Lumen: %s\n", link)
+		fmt.Fprintf(&b, "\nOpen in Kluard: %s\n", link)
 	}
 	return b.String()
 }
@@ -76,7 +76,7 @@ func send(ctx context.Context, c *http.Client, method, rawURL string, headers ma
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
-	req.Header.Set("User-Agent", "Lumen-Alerts")
+	req.Header.Set("User-Agent", "Kluard-Alerts")
 	for k, v := range headers {
 		req.Header.Set(k, v)
 	}
@@ -137,9 +137,9 @@ func (pagerDuty) Send(ctx context.Context, d alerts.Deps, c alerts.Config, m ale
 			body["event_action"] = "resolve"
 		} else {
 			body["event_action"] = "trigger"
-			body["payload"] = map[string]any{"summary": summary(a), "source": "Lumen", "severity": sev[a.Severity], "custom_details": map[string]any{"labels": a.Labels, "value": a.Value, "annotation": a.Annotation, "since": a.Since}}
+			body["payload"] = map[string]any{"summary": summary(a), "source": "Kluard", "severity": sev[a.Severity], "custom_details": map[string]any{"labels": a.Labels, "value": a.Value, "annotation": a.Annotation, "since": a.Since}}
 			if m.Link != "" {
-				body["links"] = []map[string]string{{"href": m.Link, "text": "Open in Lumen"}}
+				body["links"] = []map[string]string{{"href": m.Link, "text": "Open in Kluard"}}
 			}
 		}
 		code, _, err := send(ctx, d.HTTP, "POST", endpoint, nil, body)
@@ -195,9 +195,9 @@ func (opsgenie) Send(ctx context.Context, d alerts.Deps, c alerts.Config, m aler
 		var code int
 		var err error
 		if m.Status == "resolved" {
-			code, _, err = send(ctx, d.HTTP, "POST", base+"/v2/alerts/"+url.PathEscape(a.Fingerprint)+"/close?identifierType=alias", h, map[string]string{"source": "Lumen", "note": "Resolved in Lumen"})
+			code, _, err = send(ctx, d.HTTP, "POST", base+"/v2/alerts/"+url.PathEscape(a.Fingerprint)+"/close?identifierType=alias", h, map[string]string{"source": "Kluard", "note": "Resolved in Kluard"})
 		} else {
-			code, _, err = send(ctx, d.HTTP, "POST", base+"/v2/alerts", h, map[string]any{"message": summary(a), "alias": a.Fingerprint, "description": details(a, m.Link), "priority": prio[a.Severity], "source": "Lumen", "details": a.Labels, "tags": []string{"lumen", a.Severity}})
+			code, _, err = send(ctx, d.HTTP, "POST", base+"/v2/alerts", h, map[string]any{"message": summary(a), "alias": a.Fingerprint, "description": details(a, m.Link), "priority": prio[a.Severity], "source": "Kluard", "details": a.Labels, "tags": []string{"kluard", a.Severity}})
 		}
 		if err != nil {
 			return alerts.Result{}, err
@@ -223,7 +223,7 @@ func (jira) Fields() []alerts.Field {
 		{Key: "api_token", Label: "API token or password", Kind: "secret", Required: true, Help: "Jira Cloud: an API token from the Atlassian account."},
 		{Key: "project_key", Label: "Project key", Kind: "text", Required: true, Help: "For example OPS."},
 		{Key: "issue_type", Label: "Issue type", Kind: "text", Default: "Task"},
-		{Key: "done_transition", Label: "Transition that closes a ticket", Kind: "text", Default: "Done", Help: "When an alert resolves, Lumen comments and moves the ticket with this transition, if it exists."},
+		{Key: "done_transition", Label: "Transition that closes a ticket", Kind: "text", Default: "Done", Help: "When an alert resolves, Kluard comments and moves the ticket with this transition, if it exists."},
 	}
 }
 func (jira) Validate(c alerts.Config) error {
@@ -263,7 +263,7 @@ func (jira) Send(ctx context.Context, d alerts.Deps, c alerts.Config, m alerts.M
 		case m.Status == "firing" && a.Ref == "": // a new ticket
 			code, body, err := send(ctx, d.HTTP, "POST", base+"/rest/api/2/issue", h, map[string]any{"fields": map[string]any{
 				"project": map[string]string{"key": c.Get("project_key")}, "issuetype": map[string]string{"name": issueType},
-				"summary": summary(a), "description": details(a, m.Link), "labels": []string{"lumen"}}})
+				"summary": summary(a), "description": details(a, m.Link), "labels": []string{"kluard"}}})
 			if err != nil {
 				return res, err
 			}
@@ -280,7 +280,7 @@ func (jira) Send(ctx context.Context, d alerts.Deps, c alerts.Config, m alerts.M
 				return res, err
 			}
 		case a.Ref != "": // resolved: comment, then close the ticket if the workflow has the transition
-			if err := comment(a.Ref, "Resolved in Lumen."); err != nil {
+			if err := comment(a.Ref, "Resolved in Kluard."); err != nil {
 				return res, err
 			}
 			want := c.Get("done_transition")
@@ -369,7 +369,7 @@ func (serviceNow) Send(ctx context.Context, d alerts.Deps, c alerts.Config, m al
 				return res, err
 			}
 		case a.Ref != "":
-			if err := patch(a.Ref, map[string]string{"state": "6", "close_code": "Solved (Permanently)", "close_notes": "Resolved in Lumen"}); err != nil {
+			if err := patch(a.Ref, map[string]string{"state": "6", "close_code": "Solved (Permanently)", "close_notes": "Resolved in Kluard"}); err != nil {
 				return res, err
 			}
 		}

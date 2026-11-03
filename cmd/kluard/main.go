@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"github.com/inmagma/lumen/internal/health"
-	"github.com/inmagma/lumen/internal/oidc"
+	"github.com/getkluard/kluard/internal/health"
+	"github.com/getkluard/kluard/internal/oidc"
 	"log/slog"
 	"net/http"
 	"os"
@@ -11,24 +11,24 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/inmagma/lumen/internal/alerts"
-	"github.com/inmagma/lumen/internal/audit"
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/backup"
-	"github.com/inmagma/lumen/internal/billing"
-	"github.com/inmagma/lumen/internal/branding"
-	"github.com/inmagma/lumen/internal/buildinfo"
-	"github.com/inmagma/lumen/internal/config"
-	"github.com/inmagma/lumen/internal/dashboards"
-	"github.com/inmagma/lumen/internal/install"
-	"github.com/inmagma/lumen/internal/license"
-	"github.com/inmagma/lumen/internal/metering"
-	"github.com/inmagma/lumen/internal/perm"
-	"github.com/inmagma/lumen/internal/registry"
-	"github.com/inmagma/lumen/internal/secretbox"
-	"github.com/inmagma/lumen/internal/server"
-	"github.com/inmagma/lumen/internal/store"
-	"github.com/inmagma/lumen/internal/tenants"
+	"github.com/getkluard/kluard/internal/alerts"
+	"github.com/getkluard/kluard/internal/audit"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/backup"
+	"github.com/getkluard/kluard/internal/billing"
+	"github.com/getkluard/kluard/internal/branding"
+	"github.com/getkluard/kluard/internal/buildinfo"
+	"github.com/getkluard/kluard/internal/config"
+	"github.com/getkluard/kluard/internal/dashboards"
+	"github.com/getkluard/kluard/internal/install"
+	"github.com/getkluard/kluard/internal/license"
+	"github.com/getkluard/kluard/internal/metering"
+	"github.com/getkluard/kluard/internal/perm"
+	"github.com/getkluard/kluard/internal/registry"
+	"github.com/getkluard/kluard/internal/secretbox"
+	"github.com/getkluard/kluard/internal/server"
+	"github.com/getkluard/kluard/internal/store"
+	"github.com/getkluard/kluard/internal/tenants"
 )
 
 func main() {
@@ -66,15 +66,15 @@ func main() {
 	}
 	switch {
 	case cfg.DevMode:
-		log.Warn("LUMEN_DEV_MODE=true: NO AUTHENTICATION, single tenant 'default'. Never use this on a network you do not control.")
+		log.Warn("KLUARD_DEV_MODE=true: NO AUTHENTICATION, single tenant 'default'. Never use this on a network you do not control.")
 	case !store.HasCredentials() && len(cfg.APIKeys) == 0:
-		log.Warn("no users or API keys exist: nobody can log in. Set LUMEN_ADMIN_USER/LUMEN_ADMIN_PASSWORD, or run: lumen users add NAME --tenant TENANT")
+		log.Warn("no users or API keys exist: nobody can log in. Set KLUARD_ADMIN_USER/KLUARD_ADMIN_PASSWORD, or run: kluard users add NAME --tenant TENANT")
 	}
 	authn := auth.New(store, cfg.APIKeys, cfg.DevMode)
 	secret := cfg.SecretKey
 	if secret == "" {
 		secret = string(store.Secret())
-		log.Warn("LUMEN_SECRET_KEY is not set: stored Nextcloud credentials are encrypted with the session secret instead. Set LUMEN_SECRET_KEY (deploy/gen-env.sh does).")
+		log.Warn("KLUARD_SECRET_KEY is not set: stored Nextcloud credentials are encrypted with the session secret instead. Set KLUARD_SECRET_KEY (deploy/gen-env.sh does).")
 	}
 	box, err := secretbox.New(secret)
 	if err != nil {
@@ -97,7 +97,7 @@ func main() {
 	}
 	// sign-in with an OpenID Connect provider, when one is set up under Settings
 	app.WithOIDC(&oidc.Service{DB: backend, Box: box, PublicURL: cfg.PublicURL, Secret: store.Secret, AllowInsecure: cfg.OIDCAllowHTTP})
-	// where backups go: the folder somebody chose in Settings, else LUMEN_BACKUP_DIR. It can change while Lumen runs.
+	// where backups go: the folder somebody chose in Settings, else KLUARD_BACKUP_DIR. It can change while Kluard runs.
 	backupDir, strict := cfg.BackupDir, false
 	if chosen := backup.LoadSaved(bg, backend); chosen != "" {
 		backupDir, strict = chosen, true
@@ -129,7 +129,7 @@ func main() {
 			go ten.Off.Run(bg, t.ID)
 		}
 	}
-	// Lumen looks at itself: the disk it writes to (the file system under the data and backup folders is the one under Docker's
+	// Kluard looks at itself: the disk it writes to (the file system under the data and backup folders is the one under Docker's
 	// volumes), Elasticsearch if it is used, and ClickHouse
 	src := health.Sources{Paths: map[string]string{"data": cfg.DataDir}, CH: ch, PathsFn: func() map[string]string {
 		if d := where.Get(); d != "" {
@@ -171,7 +171,7 @@ func main() {
 		go bk.Run(bg)
 		log.Info("daily backup of expiring data enabled", "dir", where.Get(), "chosen_in_settings", strict, "live_days", cfg.RetentionDays, "backup_days", cfg.BackupRetentionDays)
 	} else {
-		log.Warn("LUMEN_BACKUP_DIR is empty: data is deleted after the retention period without a backup", "retention_days", cfg.RetentionDays)
+		log.Warn("KLUARD_BACKUP_DIR is empty: data is deleted after the retention period without a backup", "retention_days", cfg.RetentionDays)
 	}
 	srv := &http.Server{
 		Addr:              cfg.Addr,
@@ -179,7 +179,7 @@ func main() {
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 	go func() {
-		log.Info("lumen started", "addr", cfg.Addr, "licence", string(lic.State()), "version", buildinfo.Version)
+		log.Info("kluard started", "addr", cfg.Addr, "licence", string(lic.State()), "version", buildinfo.Version)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Error("server error", "err", err)
 			os.Exit(1)

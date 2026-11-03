@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/inmagma/lumen/internal/audit"
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/perm"
+	"github.com/getkluard/kluard/internal/audit"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/perm"
 )
 
 // WithAudit gives the server the log in which every change somebody makes is recorded.
@@ -352,7 +352,7 @@ func (s *Server) getAuditLog(w http.ResponseWriter, r *http.Request, id edition.
 		return
 	}
 	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
-	w.Header().Set("Content-Disposition", `attachment; filename="lumen-audit-log.csv"`)
+	w.Header().Set("Content-Disposition", `attachment; filename="kluard-audit-log.csv"`)
 	cw := csv.NewWriter(w)
 	_ = cw.Write([]string{"time_utc", "who", "via", "ip", "what", "action", "target", "detail"})
 	for _, e := range out {

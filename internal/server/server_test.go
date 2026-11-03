@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/model"
-	"github.com/inmagma/lumen/internal/store"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/model"
+	"github.com/getkluard/kluard/internal/store"
 )
 
 type fakeStore struct {
@@ -190,7 +190,7 @@ func TestUIServed(t *testing.T) {
 	defer ts.Close()
 	resp, _ := http.Get(ts.URL + "/") // shell needs no auth; data endpoints still do
 	b, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode != 200 || !bytes.Contains(b, []byte("<title>Lumen</title>")) {
+	if resp.StatusCode != 200 || !bytes.Contains(b, []byte("<title>Kluard</title>")) {
 		t.Fatalf("ui not served: %d", resp.StatusCode)
 	}
 }

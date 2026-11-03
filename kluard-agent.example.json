@@ -1,6 +1,6 @@
 {
   "url": "http://localhost:4318",
-  "api_key": "YOUR_LUMEN_API_KEY",
+  "api_key": "YOUR_KLUARD_API_KEY",
   "interval_seconds": 15,
   "host_metrics": true,
   "self_metrics": true,

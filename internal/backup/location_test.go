@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/docstore"
+	"github.com/getkluard/kluard/internal/docstore"
 )
 
 func statfsFake(string) (uint64, uint64, error) { return 100 << 30, 40 << 30, nil }
@@ -68,7 +68,7 @@ func TestAChosenFolderIsChecked(t *testing.T) {
 	// on the same disk as the data is worth a warning
 	data := t.TempDir()
 	in = Check(good, roots, data, true, statfsFake)
-	if !in.SameDiskAsData || !strings.Contains(in.Warning, "same disk as Lumen's data") {
+	if !in.SameDiskAsData || !strings.Contains(in.Warning, "same disk as Kluard's data") {
 		t.Fatalf("both are under /tmp here, so one disk: %+v", in)
 	}
 }
@@ -95,7 +95,7 @@ func TestAChosenFolderThatIsNotThereIsNeverMade(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(base, "default", "telemetry")); err != nil {
 		t.Fatal("the default is made")
 	}
-	// and changing the folder while Lumen runs sends the next backup there
+	// and changing the folder while Kluard runs sends the next backup there
 	next := filepath.Join(base, "disk2")
 	os.Mkdir(next, 0o755)
 	where.Set(next, true)

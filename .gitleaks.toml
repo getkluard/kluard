@@ -1,7 +1,7 @@
 # Settings for gitleaks (https://github.com/gitleaks/gitleaks). Run:
 #   gitleaks detect --source . --log-opts="--all"
 # Everything that is allowed here was checked by hand and is not a secret.
-title = "Lumen"
+title = "Kluard"
 
 [extend]
 useDefault = true

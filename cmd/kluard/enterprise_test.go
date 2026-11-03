@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/inmagma/lumen/internal/alerts"
+	"github.com/getkluard/kluard/internal/alerts"
 )
 
 // Every build carries the Enterprise notifiers; only a licence in force lets them send. A build that left them out

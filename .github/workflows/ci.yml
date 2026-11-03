@@ -35,8 +35,8 @@ jobs:
           go test -race -count=1 -tags enterprise ./...
       - name: Build server and agent
         run: |
-          go build ./cmd/lumen ./cmd/lumen-agent
-          go build -tags enterprise -o /dev/null ./cmd/lumen
+          go build ./cmd/kluard ./cmd/kluard-agent
+          go build -tags enterprise -o /dev/null ./cmd/kluard
 
   agent-cross-build:
     name: Agent builds for ${{ matrix.goos }}/${{ matrix.goarch }}
@@ -53,7 +53,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - run: CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o /dev/null ./cmd/lumen-agent
+      - run: CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -o /dev/null ./cmd/kluard-agent
 
   sql:
     name: SQL against a real ClickHouse engine
@@ -67,7 +67,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install chdb
-      - run: LUMEN_DUMP_SQL=/tmp/sql.json go test -count=1 ./internal/store -run Dump
+      - run: KLUARD_DUMP_SQL=/tmp/sql.json go test -count=1 ./internal/store -run Dump
       - run: python3 scripts/test-sql.py /tmp/sql.json
 
   scripts:

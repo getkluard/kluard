@@ -10,10 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/buildinfo"
-	"github.com/inmagma/lumen/internal/dashboards"
-	"github.com/inmagma/lumen/internal/docstore"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/buildinfo"
+	"github.com/getkluard/kluard/internal/dashboards"
+	"github.com/getkluard/kluard/internal/docstore"
 )
 
 func rbacServer(t *testing.T) (*httptest.Server, *auth.Auth) {

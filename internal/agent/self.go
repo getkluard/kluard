@@ -11,14 +11,14 @@ import (
 	"time"
 )
 
-// Version is set at build time: -ldflags "-X github.com/inmagma/lumen/internal/agent.Version=1.2.3"
+// Version is set at build time: -ldflags "-X github.com/getkluard/kluard/internal/agent.Version=1.2.3"
 var Version = "dev"
 
 // SelfService is the service.name the agent reports its own metrics under.
-const SelfService = "lumen-agent"
+const SelfService = "kluard-agent"
 
 // Self tracks the agent's own health. The same numbers are (a) included in the regular
-// push to Lumen, so a silent or failing agent is visible, and (b) served at /metrics in
+// push to Kluard, so a silent or failing agent is visible, and (b) served at /metrics in
 // Prometheus format for external scrapers.
 type Self struct {
 	selfUpdate  string // what this agent can do about updating itself ("systemd", "exec" or "")
@@ -32,16 +32,16 @@ type Self struct {
 	scrapeErrs  map[string]float64 // target -> failed scrapes
 	lastSuccess map[string]time.Time
 	rejected    int
-	lumenURL    string
+	kluardURL   string
 	ipAt        time.Time
 	ip          string
 	ips         []string
 }
 
-// SetLumenURL tells the agent which server it reports to, so it can work out which of its addresses reaches it.
-func (s *Self) SetLumenURL(u string) {
+// SetKluardURL tells the agent which server it reports to, so it can work out which of its addresses reaches it.
+func (s *Self) SetKluardURL(u string) {
 	s.mu.Lock()
-	s.lumenURL = u
+	s.kluardURL = u
 	s.ipAt = time.Time{}
 	s.mu.Unlock()
 }
@@ -93,7 +93,7 @@ func (s *Self) Collect(service string, now int64) []Point {
 		out = append(out, Point{Service: service, Name: name, Type: typ, Value: v, Attrs: a, TimeNs: now})
 	}
 	if time.Since(s.ipAt) > 5*time.Minute { // addresses rarely change; looking them up costs a route lookup
-		s.ip, s.ips = LocalIPs(s.lumenURL)
+		s.ip, s.ips = LocalIPs(s.kluardURL)
 		s.ipAt = time.Now()
 	}
 	info := map[string]string{"version": Version, "host": s.host, "os": runtime.GOOS + "/" + runtime.GOARCH}
@@ -107,23 +107,23 @@ func (s *Self) Collect(service string, now int64) []Point {
 		info["ip"] = s.ip
 		info["ips"] = strings.Join(s.ips, ",")
 	}
-	add("lumen_agent_info", "gauge", 1, info)
-	add("lumen_agent_uptime_seconds", "gauge", time.Since(s.start).Seconds(), nil)
-	add("lumen_agent_log_paths_rejected", "gauge", float64(s.rejected), nil)
+	add("kluard_agent_info", "gauge", 1, info)
+	add("kluard_agent_uptime_seconds", "gauge", time.Since(s.start).Seconds(), nil)
+	add("kluard_agent_log_paths_rejected", "gauge", float64(s.rejected), nil)
 	for sig, v := range s.sent {
-		add("lumen_agent_items_sent_total", "sum", v, map[string]string{"signal": sig})
+		add("kluard_agent_items_sent_total", "sum", v, map[string]string{"signal": sig})
 	}
 	for sig, v := range s.sendErrors {
-		add("lumen_agent_send_errors_total", "sum", v, map[string]string{"signal": sig})
+		add("kluard_agent_send_errors_total", "sum", v, map[string]string{"signal": sig})
 	}
 	for sig, t := range s.lastSuccess {
-		add("lumen_agent_last_successful_send_timestamp_seconds", "gauge", float64(t.Unix()), map[string]string{"signal": sig})
+		add("kluard_agent_last_successful_send_timestamp_seconds", "gauge", float64(t.Unix()), map[string]string{"signal": sig})
 	}
 	for t, v := range s.scrapes {
-		add("lumen_agent_scrapes_total", "sum", v, map[string]string{"target": t})
+		add("kluard_agent_scrapes_total", "sum", v, map[string]string{"target": t})
 	}
 	for t, v := range s.scrapeErrs {
-		add("lumen_agent_scrape_errors_total", "sum", v, map[string]string{"target": t})
+		add("kluard_agent_scrape_errors_total", "sum", v, map[string]string{"target": t})
 	}
 	return out
 }
@@ -173,7 +173,7 @@ func (s *Self) Handler() http.Handler {
 	return mux
 }
 
-// SetSelfUpdate says how this agent can update itself, so that the Lumen UI knows whether to offer a one-click update.
+// SetSelfUpdate says how this agent can update itself, so that the Kluard UI knows whether to offer a one-click update.
 func (s *Self) SetSelfUpdate(mode string) {
 	s.mu.Lock()
 	s.selfUpdate = mode

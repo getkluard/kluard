@@ -12,7 +12,7 @@ import (
 	"testing/fstest"
 	"time"
 
-	"github.com/inmagma/lumen/internal/docstore"
+	"github.com/getkluard/kluard/internal/docstore"
 )
 
 var t0 = time.Date(2026, 10, 5, 12, 0, 0, 0, time.UTC)
@@ -69,7 +69,7 @@ func TestRoundTripAndTampering(t *testing.T) {
 	if _, err := Parse(issue(t, otherPriv, "main", nil), keys); err == nil || !strings.Contains(err.Error(), "signature does not match") {
 		t.Fatalf("a licence signed by someone else's key: %v", err)
 	}
-	if _, err := Parse(issue(t, otherPriv, "other", nil), keys); err == nil || !strings.Contains(err.Error(), `"other", which this build of Lumen does not trust`) {
+	if _, err := Parse(issue(t, otherPriv, "other", nil), keys); err == nil || !strings.Contains(err.Error(), `"other", which this build of Kluard does not trust`) {
 		t.Fatalf("%v", err)
 	}
 	if _, err := Parse(raw, Keys{}); err == nil || !strings.Contains(err.Error(), "trusts no licence keys") {
@@ -255,7 +255,7 @@ func TestManagerLifecycle(t *testing.T) {
 
 func TestLicenceFileOverridesAndIsPickedUp(t *testing.T) {
 	dir := t.TempDir()
-	file := filepath.Join(dir, "lumen.license")
+	file := filepath.Join(dir, "kluard.license")
 	m, priv, c, _ := newManager(t, file)
 	if m.State() != StateNone {
 		t.Fatal("a missing file is not an error")

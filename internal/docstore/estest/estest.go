@@ -1,5 +1,5 @@
 // Package estest provides a tiny in-memory fake of the Elasticsearch REST API for tests. It implements only what
-// Lumen's client uses (index create, _doc/_create/_search, optimistic concurrency) and is NOT a substitute for
+// Kluard's client uses (index create, _doc/_create/_search, optimistic concurrency) and is NOT a substitute for
 // testing against a real Elasticsearch.
 package estest
 

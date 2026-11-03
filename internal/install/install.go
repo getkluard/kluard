@@ -1,5 +1,5 @@
 // Package install serves the agent installer scripts and agent binaries, so a new machine
-// can be enrolled with one command copied from the Lumen UI.
+// can be enrolled with one command copied from the Kluard UI.
 package install
 
 import (
@@ -19,10 +19,10 @@ var scripts embed.FS
 
 var (
 	hostRe = regexp.MustCompile(`^[A-Za-z0-9.-]+(:[0-9]{1,5})?$`)
-	fileRe = regexp.MustCompile(`^(lumen-agent-(linux|windows)-(amd64|arm64)(\.exe)?|SHA256SUMS)$`)
+	fileRe = regexp.MustCompile(`^((kluard|lumen)-agent-(linux|windows)-(amd64|arm64)(\.exe)?|SHA256SUMS)$`)
 )
 
-// ValidatePublicURL checks a configured LUMEN_PUBLIC_URL. The value is written into shell and
+// ValidatePublicURL checks a configured KLUARD_PUBLIC_URL. The value is written into shell and
 // PowerShell scripts, so only plain http(s)://host[:port] is accepted.
 func ValidatePublicURL(u string) error {
 	if u == "" {
@@ -30,7 +30,7 @@ func ValidatePublicURL(u string) error {
 	}
 	p, err := url.Parse(u)
 	if err != nil || (p.Scheme != "http" && p.Scheme != "https") || !hostRe.MatchString(p.Host) || (p.Path != "" && p.Path != "/") {
-		return fmt.Errorf("LUMEN_PUBLIC_URL must look like https://lumen.example.com[:port], got %q", u)
+		return fmt.Errorf("KLUARD_PUBLIC_URL must look like https://kluard.example.com[:port], got %q", u)
 	}
 	return nil
 }
@@ -49,7 +49,7 @@ func BaseURL(publicURL string, r *http.Request) (string, error) {
 		scheme = x
 	}
 	if !hostRe.MatchString(r.Host) {
-		return "", errors.New("invalid Host header; set LUMEN_PUBLIC_URL")
+		return "", errors.New("invalid Host header; set KLUARD_PUBLIC_URL")
 	}
 	return scheme + "://" + r.Host, nil
 }
@@ -69,7 +69,7 @@ func Script(name, contentType, publicURL string) http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", contentType)
 		w.Header().Set("Cache-Control", "no-store")
-		w.Write([]byte(strings.ReplaceAll(string(b), "__LUMEN_URL__", base)))
+		w.Write([]byte(strings.ReplaceAll(string(b), "__KLUARD_URL__", base)))
 	}
 }
 

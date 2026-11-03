@@ -6,19 +6,19 @@ import (
 	"path/filepath"
 	"regexp"
 
-	"github.com/inmagma/lumen/internal/backup"
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/health"
-	"github.com/inmagma/lumen/internal/perm"
+	"github.com/getkluard/kluard/internal/backup"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/health"
+	"github.com/getkluard/kluard/internal/perm"
 )
 
 // BackupWhere is what the setting "where backups are kept" needs.
 type BackupWhere struct {
 	DB      docstore.Backend
 	Where   *backup.Where
-	Default string   // the folder when nobody has chosen one (LUMEN_BACKUP_DIR)
-	Roots   []string // where a folder may be (LUMEN_BACKUP_ROOTS)
+	Default string   // the folder when nobody has chosen one (KLUARD_BACKUP_DIR)
+	Roots   []string // where a folder may be (KLUARD_BACKUP_ROOTS)
 	DataDir string
 }
 

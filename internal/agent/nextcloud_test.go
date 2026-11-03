@@ -148,9 +148,9 @@ func TestNextcloudLogFormat(t *testing.T) {
 
 func TestLoadConfigEnv(t *testing.T) {
 	env := map[string]string{
-		"LUMEN_AGENT_URL": "http://l:4318", "LUMEN_AGENT_API_KEY": "k", "LUMEN_AGENT_DOCKER_LOGS": "1",
-		"LUMEN_AGENT_HOST_METRICS": "false", "LUMEN_AGENT_NEXTCLOUD_URL": "https://c.example", "LUMEN_AGENT_NEXTCLOUD_TOKEN": "t",
-		"LUMEN_AGENT_LOG_PATHS": "/a/*.log, /b/*.log",
+		"KLUARD_AGENT_URL": "http://l:4318", "KLUARD_AGENT_API_KEY": "k", "KLUARD_AGENT_DOCKER_LOGS": "1",
+		"KLUARD_AGENT_HOST_METRICS": "false", "KLUARD_AGENT_NEXTCLOUD_URL": "https://c.example", "KLUARD_AGENT_NEXTCLOUD_TOKEN": "t",
+		"KLUARD_AGENT_LOG_PATHS": "/a/*.log, /b/*.log",
 	}
 	c, err := LoadConfig(filepath.Join(t.TempDir(), "missing.json"), func(k string) string { return env[k] })
 	if err != nil {

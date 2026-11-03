@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/inmagma/lumen/internal/model"
+	"github.com/getkluard/kluard/internal/model"
 )
 
 func f(v float64) *float64 { return &v }

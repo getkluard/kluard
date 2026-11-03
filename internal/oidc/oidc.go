@@ -28,8 +28,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/secretbox"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/secretbox"
 )
 
 const (
@@ -38,7 +38,7 @@ const (
 	// CollLinks holds which provider identity belongs to which local user.
 	CollLinks = "oidc_links"
 
-	CookieName = "lumen_oidc"
+	CookieName = "kluard_oidc"
 	skew       = 60 * time.Second
 	flowTTL    = 10 * time.Minute
 )
@@ -174,7 +174,7 @@ func (s *Service) CheckURL(raw string) error {
 		if s.AllowInsecure || h == "localhost" || h == "127.0.0.1" || h == "::1" {
 			return nil
 		}
-		return fmt.Errorf("%s is not https. A provider is reached over https; (for one inside a closed network, set LUMEN_OIDC_ALLOW_HTTP=1)", raw)
+		return fmt.Errorf("%s is not https. A provider is reached over https; (for one inside a closed network, set KLUARD_OIDC_ALLOW_HTTP=1)", raw)
 	}
 	return fmt.Errorf("%q must start with https://", raw)
 }
@@ -278,7 +278,7 @@ func (s *Service) unsign(v string) ([]byte, bool) {
 // returns where to send the browser.
 func (s *Service) Begin(ctx context.Context, w http.ResponseWriter, r *http.Request, c Config) (string, error) {
 	if s.RedirectURI() == "" {
-		return "", errors.New("LUMEN_PUBLIC_URL is not set, so Lumen does not know the address the provider sends people back to")
+		return "", errors.New("KLUARD_PUBLIC_URL is not set, so Kluard does not know the address the provider sends people back to")
 	}
 	d, err := s.Discover(ctx, c)
 	if err != nil {
@@ -474,7 +474,7 @@ func (s *Service) verify(ctx context.Context, c Config, d *discovery, token, non
 	case cl.Exp == 0 || now.After(time.Unix(int64(cl.Exp), 0).Add(skew)):
 		return Identity{}, errors.New("the token has expired")
 	case cl.Iat != 0 && time.Unix(int64(cl.Iat), 0).After(now.Add(skew)):
-		return Identity{}, errors.New("the token is from the future: the clocks of Lumen and the provider differ")
+		return Identity{}, errors.New("the token is from the future: the clocks of Kluard and the provider differ")
 	case cl.Nbf != 0 && time.Unix(int64(cl.Nbf), 0).After(now.Add(skew)):
 		return Identity{}, errors.New("the token is not valid yet")
 	case cl.Nonce == "" || subtle.ConstantTimeCompare([]byte(cl.Nonce), []byte(nonce)) != 1:

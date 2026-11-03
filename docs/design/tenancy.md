@@ -8,7 +8,7 @@
 
 ## 1. Summary
 
-Lumen already separates customers by *tenant*. This proposal adds what both of our buyers need on top of that: an **operator level above the tenants** (the people who run Lumen), **tenant records** with limits and lifecycle, **usage metering**, **per-tenant retention and branding**, and, later, **dedicated storage** for tenants that need hard isolation.
+Kluard already separates customers by *tenant*. This proposal adds what both of our buyers need on top of that: an **operator level above the tenants** (the people who run Kluard), **tenant records** with limits and lifecycle, **usage metering**, **per-tenant retention and branding**, and, later, **dedicated storage** for tenants that need hard isolation.
 
 The one-line recommendation: **keep a flat list of tenants and add an operator layer above it**, and leave room for a parent/child relationship between tenants without building it yet.
 
@@ -39,7 +39,7 @@ The same primitives serve both: tenant, operator, quota, usage, audit.
 
 | # | Requirement | Both buyers? |
 |---|---|---|
-| R1 | A person who runs Lumen can see and manage all tenants, without being able to read their data by accident | Yes |
+| R1 | A person who runs Kluard can see and manage all tenants, without being able to read their data by accident | Yes |
 | R2 | Create, suspend, resume and offboard a tenant, including a complete purge of its data | Yes |
 | R3 | Limits per tenant (hosts, users, ingest rate, stored volume) with clear errors and warnings | Yes |
 | R4 | Usage per tenant and day, exportable, suitable for billing or chargeback | Yes |
@@ -103,7 +103,7 @@ Limits are *soft* by default (warnings) and *hard* when the operator chooses. A 
 ### 6.5 Usage metering
 
 - The server counts accepted items and bytes per tenant and signal in memory and writes them once a minute to a ClickHouse table `usage_events`, rolled up daily into `usage_daily`: tenant, day, signal, items, bytes, distinct hosts, instances, queries.
-- Export as CSV or JSON through the API, for the operator's own billing. Lumen does **not** do billing.
+- Export as CSV or JSON through the API, for the operator's own billing. Kluard does **not** do billing.
 - Metering is accurate enough for billing *guidance*. The definition ("accepted OTLP payload bytes") is documented, so customers can verify it.
 
 ### 6.6 Retention per tenant
@@ -122,7 +122,7 @@ Backups follow the tenant's own setting too: per-tenant backup retention, since 
 
 - Name and logo become per tenant. The sign-in page does not know the tenant before sign-in, so the tenant is chosen by **host name**: `customer.example.com` maps to a tenant, and the sign-in page shows that tenant's branding. The bare host name belongs to a default tenant.
 - On a tenant's host name, sign-in is **limited to that tenant's users** (and operators). That also stops anyone from discovering which tenants exist.
-- TLS for custom domains stays with the reverse proxy, as it does today. Lumen only maps the host name.
+- TLS for custom domains stays with the reverse proxy, as it does today. Kluard only maps the host name.
 - A tenant's logo is served with the same restrictions as today (verified by content, no scripts).
 
 ### 6.8 Isolation

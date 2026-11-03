@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Lumen preflight: checks the host before installation. Read-only, changes nothing.
+# Kluard preflight: checks the host before installation. Read-only, changes nothing.
 # Exit code 1 if any check FAILs; WARNs are advisory.
 set -u
 FAIL=0; WARN=0
@@ -7,7 +7,7 @@ ok()   { printf '  \033[32mPASS\033[0m  %s\n' "$*"; }
 warn() { printf '  \033[33mWARN\033[0m  %s\n' "$*"; WARN=$((WARN+1)); }
 fail() { printf '  \033[31mFAIL\033[0m  %s\n' "$*"; FAIL=$((FAIL+1)); }
 have() { command -v "$1" >/dev/null 2>&1; }
-PORT="${LUMEN_PORT:-4318}"
+PORT="${KLUARD_PORT:-4318}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 
 echo "Host"
@@ -35,7 +35,7 @@ NOFILE=$(ulimit -n); [ "$NOFILE" -ge 65536 ] && ok "open files limit: $NOFILE" |
 
 MMC=$(cat /proc/sys/vm/max_map_count 2>/dev/null || echo 0)
 if [ "$MMC" -ge 262144 ]; then ok "vm.max_map_count: $MMC (Elasticsearch needs >= 262144)"
-else fail "vm.max_map_count is $MMC, Elasticsearch needs >= 262144. Fix: sudo sysctl -w vm.max_map_count=262144 && echo 'vm.max_map_count=262144' | sudo tee /etc/sysctl.d/99-lumen.conf"; fi
+else fail "vm.max_map_count is $MMC, Elasticsearch needs >= 262144. Fix: sudo sysctl -w vm.max_map_count=262144 && echo 'vm.max_map_count=262144' | sudo tee /etc/sysctl.d/99-kluard.conf"; fi
 
 echo "Time"
 if have timedatectl && [ "$(timedatectl show -p NTPSynchronized --value 2>/dev/null)" = "yes" ]; then
@@ -64,10 +64,10 @@ if have ss; then
 else warn "ss not found, skipped port checks"; fi
 if have firewall-cmd && systemctl is-active --quiet firewalld 2>/dev/null; then
   firewall-cmd --query-port="$PORT/tcp" >/dev/null 2>&1 && ok "firewalld: $PORT/tcp open" \
-    || warn "firewalld: $PORT/tcp not opened. Docker-published ports are normally reachable regardless of firewalld, so do not rely on it to restrict access: set LUMEN_BIND=127.0.0.1 and use a TLS proxy"
+    || warn "firewalld: $PORT/tcp not opened. Docker-published ports are normally reachable regardless of firewalld, so do not rely on it to restrict access: set KLUARD_BIND=127.0.0.1 and use a TLS proxy"
 elif have ufw && ufw status 2>/dev/null | grep -q "Status: active"; then
   ufw status 2>/dev/null | grep -q "$PORT/tcp" && ok "ufw: $PORT/tcp open" \
-    || warn "ufw: $PORT/tcp not opened (sudo ufw allow $PORT/tcp). Docker-published ports bypass ufw, so do not rely on it to restrict access: set LUMEN_BIND=127.0.0.1 and use a TLS proxy"
+    || warn "ufw: $PORT/tcp not opened (sudo ufw allow $PORT/tcp). Docker-published ports bypass ufw, so do not rely on it to restrict access: set KLUARD_BIND=127.0.0.1 and use a TLS proxy"
 else ok "no active firewalld or ufw"; fi
 if have getenforce; then
   case "$(getenforce)" in Enforcing) warn "SELinux enforcing: fine, but bind-mounts need :z/:Z (the shipped compose uses named volumes, so it is unaffected)";; *) ok "SELinux: $(getenforce)";; esac
@@ -83,8 +83,8 @@ if [ -f "$HERE/.env" ]; then
   ok "deploy/.env exists"
   [ "$(stat -c %a "$HERE/.env")" = 600 ] && ok ".env permissions 600" || warn ".env should be chmod 600"
   grep -q '^ELASTIC_PASSWORD=.\+' "$HERE/.env" && ok "Elasticsearch password configured" || fail "ELASTIC_PASSWORD missing in .env (run deploy/gen-env.sh or use dev.sh / install.sh)"
-  grep -q '^LUMEN_SECRET_KEY=.\+' "$HERE/.env" && ok "secret key configured" || fail "LUMEN_SECRET_KEY missing in .env (run deploy/gen-env.sh, or dev.sh / install.sh which add it)"
-  grep -q '^LUMEN_ADMIN_PASSWORD=.\+' "$HERE/.env" && ok "admin login configured" || warn "no LUMEN_ADMIN_PASSWORD in .env: create a user with: lumen users add NAME --tenant TENANT"
+  grep -q '^KLUARD_SECRET_KEY=.\+' "$HERE/.env" && ok "secret key configured" || fail "KLUARD_SECRET_KEY missing in .env (run deploy/gen-env.sh, or dev.sh / install.sh which add it)"
+  grep -q '^KLUARD_ADMIN_PASSWORD=.\+' "$HERE/.env" && ok "admin login configured" || warn "no KLUARD_ADMIN_PASSWORD in .env: create a user with: kluard users add NAME --tenant TENANT"
 else warn "deploy/.env missing: run deploy/gen-env.sh"; fi
 
 echo

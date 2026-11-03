@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/docstore/estest"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/docstore/estest"
 )
 
 func init() { Iterations = 1000 } // fast tests; production default is 600,000
@@ -179,7 +179,7 @@ func TestImportLegacyAuthFile(t *testing.T) {
 	dir := t.TempDir()
 	h, _ := HashPassword("old-password-123")
 	legacy := `{"session_secret":"x","users":{"old":{"name":"old","tenant":"acme","hash":"` + h + `","created":"2026-01-01T00:00:00Z"}},` +
-		`"keys":{"k1":{"id":"k1","name":"vm","tenant":"acme","prefix":"lmn_abcd","hash":"` + hashKey("lmn_oldkey") + `","created":"2026-01-01T00:00:00Z"}}}`
+		`"keys":{"k1":{"id":"k1","name":"vm","tenant":"acme","prefix":"klu_abcd","hash":"` + hashKey("klu_oldkey") + `","created":"2026-01-01T00:00:00Z"}}}`
 	os.WriteFile(filepath.Join(dir, "auth.json"), []byte(legacy), 0o600)
 	s, _ := OpenDir(dir)
 	n, err := ImportLegacy(s, dir)
@@ -189,7 +189,7 @@ func TestImportLegacyAuthFile(t *testing.T) {
 	if _, ok := s.VerifyLogin("old", "old-password-123"); !ok {
 		t.Fatal("imported user must be able to log in")
 	}
-	if tenant, ok := s.LookupKey("lmn_oldkey"); !ok || tenant != "acme" {
+	if tenant, ok := s.LookupKey("klu_oldkey"); !ok || tenant != "acme" {
 		t.Fatal("imported key must still work")
 	}
 	if _, err := os.Stat(filepath.Join(dir, "auth.json.migrated")); err != nil {

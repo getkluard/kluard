@@ -6,10 +6,10 @@ import (
 	"sort"
 	"time"
 
-	"github.com/inmagma/lumen/internal/billing"
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/perm"
+	"github.com/getkluard/kluard/internal/billing"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/perm"
 )
 
 // Billing is what the invoice basis needs: the prices, the recorded usage, and a way to bring today's numbers in.
@@ -209,7 +209,7 @@ func (s *Server) getBillingReport(w http.ResponseWriter, r *http.Request, id edi
 			view = "lines"
 		}
 		w.Header().Set("Content-Type", "text/csv; charset=utf-8")
-		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="lumen-billing-%s-%s.csv"`, label, view))
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="kluard-billing-%s-%s.csv"`, label, view))
 		w.Header().Set("Cache-Control", "no-store")
 		billing.WriteCSV(w, rep, view, r.URL.Query().Get("locale"))
 		return

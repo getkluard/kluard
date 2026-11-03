@@ -1,4 +1,4 @@
-// Package health lets Lumen look at itself: the disk it writes to, the state of Elasticsearch and ClickHouse, and what takes
+// Package health lets Kluard look at itself: the disk it writes to, the state of Elasticsearch and ClickHouse, and what takes
 // the space. It is there so that an administrator is told when a disk reaches 80 percent, not when the cluster has turned red.
 package health
 
@@ -64,7 +64,7 @@ type CH struct {
 // Report is everything at one moment.
 type Report struct {
 	At       time.Time `json:"at"`
-	Disks    []Disk    `json:"disks"` // where Lumen keeps its own files
+	Disks    []Disk    `json:"disks"` // where Kluard keeps its own files
 	ES       *ES       `json:"elasticsearch,omitempty"`
 	CH       *CH       `json:"clickhouse,omitempty"`
 	Problems []Problem `json:"problems"`
@@ -103,7 +103,7 @@ type View struct {
 	Disk Disk
 }
 
-// Merged is one disk, with every part that sees it. Lumen's files, Elasticsearch and ClickHouse usually live on the same
+// Merged is one disk, with every part that sees it. Kluard's files, Elasticsearch and ClickHouse usually live on the same
 // disk, and it must be one problem, not three.
 type Merged struct {
 	Who  []string
@@ -146,7 +146,7 @@ func joinWho(w []string) string {
 func Views(r Report) []View {
 	var v []View
 	for _, d := range r.Disks {
-		v = append(v, View{"Lumen's " + d.Name + " (" + d.Path + ")", d})
+		v = append(v, View{"Kluard's " + d.Name + " (" + d.Path + ")", d})
 	}
 	if r.ES != nil {
 		for _, n := range r.ES.Nodes {
@@ -223,7 +223,7 @@ func yellowAdvice(e *ES) string {
 			}
 		}
 		if replicas && len(e.Nodes) <= 1 {
-			return "These are copies (replicas) that wait for a second node, which a single-node cluster does not have. Nothing is lost. To make it green: PUT /INDEX/_settings with {\"index\":{\"number_of_replicas\":0}} (Lumen does this for its own indices when it starts)."
+			return "These are copies (replicas) that wait for a second node, which a single-node cluster does not have. Nothing is lost. To make it green: PUT /INDEX/_settings with {\"index\":{\"number_of_replicas\":0}} (Kluard does this for its own indices when it starts)."
 		}
 	}
 	return "Check why with GET /_cluster/allocation/explain; a full disk is the usual reason."
@@ -368,7 +368,7 @@ func reason(err error) string {
 }
 
 // systemLogsLimit is how much of ClickHouse's own diagnostic logs (database "system") is worth a warning. They are for
-// debugging ClickHouse and Lumen has no use for them, but by default they grow without a limit.
+// debugging ClickHouse and Kluard has no use for them, but by default they grow without a limit.
 const systemLogsLimit = 2 << 30
 
 // systemLogsProblem warns when the tables ClickHouse keeps about itself take more than the limit and more than the telemetry.
@@ -389,6 +389,6 @@ func systemLogsProblem(tables []Table) *Problem {
 		return nil
 	}
 	return &Problem{Component: "clickhouse", Subject: "clickhouse logs", Level: "warning",
-		Text:   fmt.Sprintf("ClickHouse's own logs take %s (%s), more than the telemetry (%s). They are for debugging ClickHouse and are not used by Lumen.", Size(sys), strings.Join(names, ", "), Size(own)),
-		Advice: "Switch them off with deploy/clickhouse/lumen.xml (mounted by deploy/docker-compose.yml; see the README, \"ClickHouse's own logs\"), then empty them: TRUNCATE TABLE system.text_log, and the same for system.trace_log."}
+		Text:   fmt.Sprintf("ClickHouse's own logs take %s (%s), more than the telemetry (%s). They are for debugging ClickHouse and are not used by Kluard.", Size(sys), strings.Join(names, ", "), Size(own)),
+		Advice: "Switch them off with deploy/clickhouse/kluard.xml (mounted by deploy/docker-compose.yml; see the README, \"ClickHouse's own logs\"), then empty them: TRUNCATE TABLE system.text_log, and the same for system.trace_log."}
 }

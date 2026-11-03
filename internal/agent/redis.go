@@ -18,10 +18,10 @@ import (
 
 // Redis monitoring. The agent finds Redis running in Docker by itself (an image called redis, valkey or keydb) and also
 // checks addresses it was told about. A Redis without a password just works. A Redis with a password is reported as
-// "needs a password" until one is given in the Lumen UI; the server hands it to this agent, which uses it for exactly that
+// "needs a password" until one is given in the Kluard UI; the server hands it to this agent, which uses it for exactly that
 // Redis. The client below speaks the little of the Redis protocol that is needed (AUTH and INFO), so nothing is installed.
 
-// RedisTarget is one Redis to check. Name is what it is called in Lumen (the container name when it is found by itself).
+// RedisTarget is one Redis to check. Name is what it is called in Kluard (the container name when it is found by itself).
 type RedisTarget struct {
 	Name      string `json:"name"`
 	Container string `json:"container,omitempty"` // the Docker container this is (matches the discovered one)
@@ -293,7 +293,7 @@ func DiscoverRedis(ctx context.Context, socket string) ([]DiscoveredRedis, error
 func redisFromContainers(cs []dockerRedisContainer) []DiscoveredRedis {
 	var out []DiscoveredRedis
 	for _, c := range cs {
-		if c.State != "running" || len(c.Names) == 0 || !redisImage(c.Image) || c.Labels["lumen.redis"] == "false" {
+		if c.State != "running" || len(c.Names) == 0 || !redisImage(c.Image) || c.Labels["kluard.redis"] == "false" {
 			continue
 		}
 		name := strings.TrimPrefix(c.Names[0], "/")
@@ -306,7 +306,7 @@ func redisFromContainers(cs []dockerRedisContainer) []DiscoveredRedis {
 				}
 			}
 		}
-		if v := c.Labels["lumen.redis.port"]; v != "" {
+		if v := c.Labels["kluard.redis.port"]; v != "" {
 			if n, err := strconv.Atoi(v); err == nil && n > 0 && n < 65536 {
 				private = n
 			}

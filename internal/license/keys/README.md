@@ -5,5 +5,5 @@ only if it is signed by one of these keys. The keys are built into the program: 
 nothing outside the build can add a key.
 
 This directory is empty in the open-source repository, so no licence can be verified and the program runs as the
-Community edition. The publisher of a commercial build creates a key pair with `lumen-license keygen`, commits the
+Community edition. The publisher of a commercial build creates a key pair with `kluard-license keygen`, commits the
 `.pub` file here and keeps the private key secret (see docs/LICENSING.md).

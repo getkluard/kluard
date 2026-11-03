@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/license"
+	"github.com/getkluard/kluard/internal/license"
 )
 
 func runTool(t *testing.T, args ...string) (string, string, int) {

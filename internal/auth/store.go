@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/inmagma/lumen/internal/docstore"
+	"github.com/getkluard/kluard/internal/docstore"
 )
 
 var (
@@ -340,7 +340,7 @@ func (s *Store) CreateKey(tenant, name string) (string, APIKey, error) {
 	if len(name) > 80 {
 		name = name[:80]
 	}
-	plain := "lmn_" + RandomToken(24)
+	plain := "klu_" + RandomToken(24)
 	h := hashKey(plain)
 	k := APIKey{ID: h[:12], Name: name, Tenant: tenant, Prefix: plain[:8], Hash: h, Created: time.Now().UTC()}
 	c, cancel := ctx()

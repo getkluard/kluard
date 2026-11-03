@@ -16,14 +16,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/audit"
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/dashboards"
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/license"
-	"github.com/inmagma/lumen/internal/metering"
-	"github.com/inmagma/lumen/internal/perm"
-	"github.com/inmagma/lumen/internal/tenants"
+	"github.com/getkluard/kluard/internal/audit"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/dashboards"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/license"
+	"github.com/getkluard/kluard/internal/metering"
+	"github.com/getkluard/kluard/internal/perm"
+	"github.com/getkluard/kluard/internal/tenants"
 )
 
 type purgeFake struct{ purged []string }
@@ -530,7 +530,7 @@ func TestOffboardingThroughTheConsole(t *testing.T) {
 	code(gary, "POST", e.ts.URL+"/api/v1/dashboards", `{"name":"mine","description":"","panels":[]}`)
 	// export: a zip without secrets
 	r, b := do(ops, "GET", e.ts.URL+"/api/v1/operator/tenants/gone/export", "")
-	if r.StatusCode != 200 || r.Header.Get("Content-Type") != "application/zip" || !strings.Contains(r.Header.Get("Content-Disposition"), "lumen-tenant-gone-") {
+	if r.StatusCode != 200 || r.Header.Get("Content-Type") != "application/zip" || !strings.Contains(r.Header.Get("Content-Disposition"), "kluard-tenant-gone-") {
 		t.Fatalf("%d %v", r.StatusCode, r.Header)
 	}
 	zr, err := zip.NewReader(bytes.NewReader(b), int64(len(b)))
@@ -596,7 +596,7 @@ func TestOffboardingThroughTheConsole(t *testing.T) {
 }
 
 func infoBody(host, role string) string {
-	return `{"resourceMetrics":[{"resource":{"attributes":[{"key":"service.name","value":{"stringValue":"lumen-agent"}},{"key":"host.name","value":{"stringValue":"` + host + `"}}]},"scopeMetrics":[{"metrics":[{"name":"lumen_agent_info","gauge":{"dataPoints":[{"timeUnixNano":"1700000000000000000","asDouble":1,"attributes":[{"key":"role","value":{"stringValue":"` + role + `"}}]}]}}]}]}]}`
+	return `{"resourceMetrics":[{"resource":{"attributes":[{"key":"service.name","value":{"stringValue":"kluard-agent"}},{"key":"host.name","value":{"stringValue":"` + host + `"}}]},"scopeMetrics":[{"metrics":[{"name":"kluard_agent_info","gauge":{"dataPoints":[{"timeUnixNano":"1700000000000000000","asDouble":1,"attributes":[{"key":"role","value":{"stringValue":"` + role + `"}}]}]}}]}]}]}`
 }
 
 func TestAnAgentThatOnlyChecksInstancesIsNotACountedHost(t *testing.T) {

@@ -1,4 +1,4 @@
-// Package agent implements the collectors and the OTLP/JSON sender used by lumen-agent.
+// Package agent implements the collectors and the OTLP/JSON sender used by kluard-agent.
 package agent
 
 import (

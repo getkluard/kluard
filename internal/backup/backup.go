@@ -4,7 +4,7 @@
 //
 //	<dir>/telemetry/YYYY-MM-DD/<tenant>/otel_logs.jsonl.gz   (also otel_spans, otel_metrics)
 //	<dir>/telemetry/YYYY-MM-DD/DONE                           (written last: the day is complete)
-//	<dir>/config/lumen-config-YYYY-MM-DD.json.gz              (users, groups, dashboards, hosts, instances)
+//	<dir>/config/kluard-config-YYYY-MM-DD.json.gz              (users, groups, dashboards, hosts, instances)
 //
 // "Loading" a day copies it into the *_archive tables, where the UI can query it (Archive switch). The files are plain
 // gzip, so they can also be read with zcat or loaded into any other tool.
@@ -26,7 +26,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/inmagma/lumen/internal/docstore"
+	"github.com/getkluard/kluard/internal/docstore"
 )
 
 // Tables are the telemetry tables that are backed up, with the short names used in the API.
@@ -54,7 +54,7 @@ type Source interface {
 
 type Manager struct {
 	Dir      string
-	Where    *Where // when set, the folder is read from here each time: it can be changed while Lumen runs
+	Where    *Where // when set, the folder is read from here each time: it can be changed while Kluard runs
 	Src      Source
 	Docs     docstore.Backend // for the daily configuration dump; may be nil
 	DataDays int              // days of live data in ClickHouse: how far back a first run backfills
@@ -257,7 +257,7 @@ func (m *Manager) dumpConfig(ctx context.Context, today time.Time) error {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return err
 	}
-	name := filepath.Join(dir, "lumen-config-"+today.Format("2006-01-02")+".json.gz")
+	name := filepath.Join(dir, "kluard-config-"+today.Format("2006-01-02")+".json.gz")
 	if _, err := os.Stat(name); err == nil {
 		return nil
 	}
@@ -291,7 +291,7 @@ func (m *Manager) dumpConfig(ctx context.Context, today time.Time) error {
 	if err := os.Rename(tmp, name); err != nil {
 		return err
 	}
-	files, _ := filepath.Glob(filepath.Join(dir, "lumen-config-*.json.gz"))
+	files, _ := filepath.Glob(filepath.Join(dir, "kluard-config-*.json.gz"))
 	sort.Strings(files)
 	for len(files) > 30 {
 		os.Remove(files[0])

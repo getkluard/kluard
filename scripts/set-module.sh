@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Rename the Go module path before publishing, e.g.:
-#   ./scripts/set-module.sh github.com/YOUR_USER/lumen
+#   ./scripts/set-module.sh github.com/YOUR_USER/kluard
 # Rewrites go.mod, all imports and the build flags that reference the path, then checks the build.
 set -euo pipefail
 cd "$(dirname "$0")/.."

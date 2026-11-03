@@ -8,7 +8,7 @@
 
 ## 1. Summary
 
-Lumen shows what is wrong but cannot yet **tell anyone**. This proposal adds an alerting engine to the open core, with email, webhook, Slack and Teams, and defines the extension point through which Enterprise adds Jira, ServiceNow, PagerDuty, Opsgenie, escalation and on-call.
+Kluard shows what is wrong but cannot yet **tell anyone**. This proposal adds an alerting engine to the open core, with email, webhook, Slack and Teams, and defines the extension point through which Enterprise adds Jira, ServiceNow, PagerDuty, Opsgenie, escalation and on-call.
 
 The principle: **the core evaluates and delivers; Enterprise adds who gets woken up and which system receives a ticket.**
 
@@ -23,7 +23,7 @@ The principle: **the core evaluates and delivers; Enterprise adds who gets woken
 
 **Non-goals (for now)**
 - Anomaly detection and forecasting (Enterprise, later).
-- An incident-management product. Lumen hands alerts to the tools that do that.
+- An incident-management product. Kluard hands alerts to the tools that do that.
 - Notifying mobile apps directly.
 
 ## 3. What exists today that we can reuse
@@ -96,7 +96,7 @@ The core defines what a **notifier** is: a name, a way to validate its settings,
 | **Email** (SMTP with TLS and authentication) | Community |
 | **Webhook** (JSON, signed with a secret, custom headers) | Community |
 | **Slack**, **Microsoft Teams** (incoming webhooks) | Community |
-| **Heartbeat** (a regular outgoing ping to an outside service, so you notice when Lumen itself is down) | Community |
+| **Heartbeat** (a regular outgoing ping to an outside service, so you notice when Kluard itself is down) | Community |
 | **PagerDuty**, **Opsgenie** | Enterprise |
 | **Jira**, **ServiceNow** (create a ticket, add comments on repeats, close it on recovery, remember which alert belongs to which ticket) | Enterprise |
 | **Escalation policies and on-call schedules** (notify A now, B after 15 minutes if nobody acknowledged; rotations; overrides) | Enterprise |
@@ -104,7 +104,7 @@ The core defines what a **notifier** is: a name, a way to validate its settings,
 
 ### 7.4 Messages
 
-Message texts are templates over a small set of fields (rule, labels, value, state, link to Lumen). Templates cannot call functions or read anything else, so a template can never leak data or run code. Enterprise adds per-channel templates and a template gallery.
+Message texts are templates over a small set of fields (rule, labels, value, state, link to Kluard). Templates cannot call functions or read anything else, so a template can never leak data or run code. Enterprise adds per-channel templates and a template gallery.
 
 ## 8. Acknowledging and silencing
 
@@ -140,7 +140,7 @@ Shipped as templates the administrator can enable in one click (some enabled by 
 | High CPU | above 90 per cent for 10 minutes |
 | Backup missing | no successful backup in 36 hours |
 | Log paths refused | an agent refused log paths from the server |
-| Lumen unwell | the database does not answer, ingest errors, alert delivery failing |
+| Kluard unwell | the database does not answer, ingest errors, alert delivery failing |
 | Disk full in 24 hours (forecast) | Enterprise |
 
 ## 12. Interface and API
@@ -155,7 +155,7 @@ New document collections: rules, routes, channels (with sealed secrets), silence
 
 ## 14. Watching the watcher
 
-Lumen reports its own alerting as metrics: evaluations, evaluation time, errors, alerts by state, notifications sent and failed, and queue length. The **heartbeat** channel and the built-in "Lumen unwell" rules cover the case where Lumen cannot tell you itself.
+Kluard reports its own alerting as metrics: evaluations, evaluation time, errors, alerts by state, notifications sent and failed, and queue length. The **heartbeat** channel and the built-in "Kluard unwell" rules cover the case where Kluard cannot tell you itself.
 
 ## 15. Failure modes
 

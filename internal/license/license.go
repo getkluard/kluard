@@ -1,5 +1,5 @@
-// Package license checks Lumen Enterprise and Operator licences. A licence is a small signed file that is verified
-// offline against public keys built into the program: Lumen never contacts anyone to check it (see docs/EDITIONS.md).
+// Package license checks Kluard Enterprise and Operator licences. A licence is a small signed file that is verified
+// offline against public keys built into the program: Kluard never contacts anyone to check it (see docs/EDITIONS.md).
 package license
 
 import (
@@ -37,7 +37,7 @@ var ErrInvalid = errors.New("invalid licence")
 
 func bad(f string, a ...any) error { return fmt.Errorf("%w: %s", ErrInvalid, fmt.Sprintf(f, a...)) }
 
-// Limits are soft: Lumen warns when they are reached or exceeded and never refuses data because of them. Zero = no limit.
+// Limits are soft: Kluard warns when they are reached or exceeded and never refuses data because of them. Zero = no limit.
 type Limits struct {
 	Hosts   int `json:"hosts,omitempty"`
 	Tenants int `json:"tenants,omitempty"`
@@ -73,7 +73,7 @@ type License struct {
 // Keys are the trusted public keys by id.
 type Keys map[string]ed25519.PublicKey
 
-func message(payload []byte) []byte { return append([]byte("LUMEN-LICENSE-V1\n"), payload...) }
+func message(payload []byte) []byte { return append([]byte("KLUARD-LICENSE-V1\n"), payload...) }
 
 var knownEditions = map[string]bool{Enterprise: true, Operator: true}
 
@@ -122,18 +122,18 @@ func Sign(priv ed25519.PrivateKey, keyID string, p Payload) ([]byte, error) {
 // Parse verifies a licence file against the trusted keys and returns it. It does not look at the clock.
 func Parse(data []byte, keys Keys) (License, error) {
 	if len(data) == 0 || len(data) > maxSize {
-		return License{}, bad("that is not a Lumen licence file")
+		return License{}, bad("that is not a Kluard licence file")
 	}
 	var f File
 	if err := json.Unmarshal(data, &f); err != nil || f.Format != formatName || f.Payload == "" || f.Signature == "" {
-		return License{}, bad("that is not a Lumen licence file (it should be the .license file you were sent, as it is)")
+		return License{}, bad("that is not a Kluard licence file (it should be the .license file you were sent, as it is)")
 	}
 	pub, ok := keys[f.KeyID]
 	if !ok {
 		if len(keys) == 0 {
-			return License{}, bad("this build of Lumen trusts no licence keys, so it cannot verify licences; the publisher's public key is missing from internal/license/keys/ (see docs/LICENSING.md)")
+			return License{}, bad("this build of Kluard trusts no licence keys, so it cannot verify licences; the publisher's public key is missing from internal/license/keys/ (see docs/LICENSING.md)")
 		}
-		return License{}, bad("the licence is signed with the key %q, which this build of Lumen does not trust", f.KeyID)
+		return License{}, bad("the licence is signed with the key %q, which this build of Kluard does not trust", f.KeyID)
 	}
 	body, err := base64.StdEncoding.DecodeString(f.Payload)
 	sig, err2 := base64.StdEncoding.DecodeString(f.Signature)
@@ -227,7 +227,7 @@ func Unverified(data []byte) (Payload, error) {
 	var f File
 	var p Payload
 	if err := json.Unmarshal(data, &f); err != nil || f.Format != formatName {
-		return p, bad("that is not a Lumen licence file")
+		return p, bad("that is not a Kluard licence file")
 	}
 	body, err := base64.StdEncoding.DecodeString(f.Payload)
 	if err != nil || json.Unmarshal(body, &p) != nil {

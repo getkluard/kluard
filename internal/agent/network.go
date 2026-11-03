@@ -63,10 +63,10 @@ func usableIPs(ifs []nic, primary string) []string {
 	return out
 }
 
-// outboundIP is the local address the operating system would use to reach the Lumen server. Nothing is sent:
+// outboundIP is the local address the operating system would use to reach the Kluard server. Nothing is sent:
 // connecting a UDP socket only makes the system pick a route.
-func outboundIP(lumenURL string) string {
-	u, err := url.Parse(lumenURL)
+func outboundIP(kluardURL string) string {
+	u, err := url.Parse(kluardURL)
 	if err != nil || u.Hostname() == "" {
 		return ""
 	}
@@ -107,9 +107,9 @@ func systemNICs() []nic {
 	return out
 }
 
-// LocalIPs returns the address used to reach Lumen (the one to show first) and this machine's other usable addresses.
-func LocalIPs(lumenURL string) (primary string, all []string) {
-	primary = outboundIP(lumenURL)
+// LocalIPs returns the address used to reach Kluard (the one to show first) and this machine's other usable addresses.
+func LocalIPs(kluardURL string) (primary string, all []string) {
+	primary = outboundIP(kluardURL)
 	all = usableIPs(systemNICs(), primary)
 	if primary == "" && len(all) > 0 {
 		primary = all[0]

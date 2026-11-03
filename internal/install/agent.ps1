@@ -1,22 +1,22 @@
 <#
-Lumen agent installer for Windows. Run in an elevated (Administrator) PowerShell:
+Kluard agent installer for Windows. Run in an elevated (Administrator) PowerShell:
 
-  & ([scriptblock]::Create((irm __LUMEN_URL__/install/agent.ps1))) -Key YOUR_API_KEY
+  & ([scriptblock]::Create((irm __KLUARD_URL__/install/agent.ps1))) -Key YOUR_API_KEY
 
 Options:  -LogPath 'C:\logs\*.log' (repeatable)   -Url <override>   -Uninstall
 #>
 param(
-  [string]$Key = $env:LUMEN_KEY,
-  [string]$Url = "__LUMEN_URL__",
+  [string]$Key = $env:KLUARD_KEY,
+  [string]$Url = "__KLUARD_URL__",
   [string[]]$LogPath = @(),
   [switch]$Uninstall
 )
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$Task = 'LumenAgent'
-$BinDir = Join-Path $env:ProgramFiles 'Lumen'
-$ConfDir = Join-Path $env:ProgramData 'Lumen'
-$Exe = Join-Path $BinDir 'lumen-agent.exe'
+$Task = 'KluardAgent'
+$BinDir = Join-Path $env:ProgramFiles 'Kluard'
+$ConfDir = Join-Path $env:ProgramData 'Kluard'
+$Exe = Join-Path $BinDir 'kluard-agent.exe'
 $Conf = Join-Path $ConfDir 'agent.json'
 
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
@@ -25,17 +25,17 @@ if (-not $isAdmin) { throw 'Run this in an elevated PowerShell (Run as administr
 if ($Uninstall) {
   Stop-ScheduledTask -TaskName $Task -ErrorAction SilentlyContinue
   Unregister-ScheduledTask -TaskName $Task -Confirm:$false -ErrorAction SilentlyContinue
-  Get-Process lumen-agent -ErrorAction SilentlyContinue | Stop-Process -Force
+  Get-Process kluard-agent -ErrorAction SilentlyContinue | Stop-Process -Force
   Remove-Item $BinDir, $ConfDir -Recurse -Force -ErrorAction SilentlyContinue
-  Write-Host 'Lumen agent removed.'; return
+  Write-Host 'Kluard agent removed.'; return
 }
 
 if (-not $Key) { throw 'An API key is required: -Key YOUR_API_KEY' }
 if ($Key -notmatch '^[A-Za-z0-9_.-]+$') { throw 'The API key contains unexpected characters.' }
-if ($Url -notmatch '^https?://[A-Za-z0-9.:-]+$') { throw "Invalid Lumen URL: $Url" }
+if ($Url -notmatch '^https?://[A-Za-z0-9.:-]+$') { throw "Invalid Kluard URL: $Url" }
 
 $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'amd64' }
-$name = "lumen-agent-windows-$arch.exe"
+$name = "kluard-agent-windows-$arch.exe"
 $tmp = Join-Path ([IO.Path]::GetTempPath()) ([guid]::NewGuid().ToString())
 New-Item -ItemType Directory -Path $tmp | Out-Null
 try {
@@ -47,7 +47,7 @@ try {
   if (-not $want -or $want.ToLower() -ne $have) { throw 'Checksum mismatch: the download is corrupt, refusing to install.' }
 
   Stop-ScheduledTask -TaskName $Task -ErrorAction SilentlyContinue
-  Get-Process lumen-agent -ErrorAction SilentlyContinue | Stop-Process -Force
+  Get-Process kluard-agent -ErrorAction SilentlyContinue | Stop-Process -Force
   New-Item -ItemType Directory -Force -Path $BinDir, $ConfDir | Out-Null
   Copy-Item (Join-Path $tmp $name) $Exe -Force
 } finally { Remove-Item $tmp -Recurse -Force -ErrorAction SilentlyContinue }
@@ -67,7 +67,7 @@ $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoi
 Register-ScheduledTask -TaskName $Task -Action $action -Trigger $trigger -Principal $principal -Settings $settings -Force | Out-Null
 Start-ScheduledTask -TaskName $Task
 Start-Sleep -Seconds 3
-if (Get-Process lumen-agent -ErrorAction SilentlyContinue) {
-  Write-Host 'Lumen agent installed and running. Data should appear in Lumen within a minute.'
+if (Get-Process kluard-agent -ErrorAction SilentlyContinue) {
+  Write-Host 'Kluard agent installed and running. Data should appear in Kluard within a minute.'
   Write-Host 'Remove: re-run this script with -Uninstall'
-} else { throw 'The agent did not start. Check Task Scheduler > LumenAgent > History.' }
+} else { throw 'The agent did not start. Check Task Scheduler > KluardAgent > History.' }

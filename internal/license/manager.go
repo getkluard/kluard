@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/inmagma/lumen/internal/docstore"
+	"github.com/getkluard/kluard/internal/docstore"
 )
 
 const (
@@ -16,7 +16,7 @@ const (
 	docID = "license"
 )
 
-// Manager holds the licence in force. It is read from LUMEN_LICENSE_FILE if that is set and the file exists (so a renewal
+// Manager holds the licence in force. It is read from KLUARD_LICENSE_FILE if that is set and the file exists (so a renewal
 // can be dropped in as a file), otherwise from what an administrator saved in the interface.
 type Manager struct {
 	db   docstore.Backend

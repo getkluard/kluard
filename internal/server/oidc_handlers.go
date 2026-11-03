@@ -8,11 +8,11 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/inmagma/lumen/internal/audit"
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/oidc"
-	"github.com/inmagma/lumen/internal/perm"
+	"github.com/getkluard/kluard/internal/audit"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/oidc"
+	"github.com/getkluard/kluard/internal/perm"
 )
 
 // WithOIDC turns on sign-in with an OpenID Connect provider (when it is set up under Settings).
@@ -307,7 +307,7 @@ func (s *Server) putOIDC(w http.ResponseWriter, r *http.Request, id edition.Iden
 			return
 		}
 		if s.oidc.RedirectURI() == "" {
-			bad("LUMEN_PUBLIC_URL is not set, so Lumen does not know the address to register at the provider. Set it, restart, and try again")
+			bad("KLUARD_PUBLIC_URL is not set, so Kluard does not know the address to register at the provider. Set it, restart, and try again")
 			return
 		}
 		s.oidc.Forget()

@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/inmagma/lumen/internal/backup"
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/perm"
+	"github.com/getkluard/kluard/internal/backup"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/perm"
 )
 
 // BackupInfo is shown in the UI so people know what is configured.
@@ -123,6 +123,6 @@ func (s *Server) downloadBackup(w http.ResponseWriter, r *http.Request, id editi
 	defer f.Close()
 	st, _ := f.Stat()
 	w.Header().Set("Content-Type", "application/gzip")
-	w.Header().Set("Content-Disposition", `attachment; filename="lumen-`+id.Tenant+`-`+r.PathValue("day")+`-`+r.PathValue("table")+`.jsonl.gz"`)
+	w.Header().Set("Content-Disposition", `attachment; filename="kluard-`+id.Tenant+`-`+r.PathValue("day")+`-`+r.PathValue("table")+`.jsonl.gz"`)
 	http.ServeContent(w, r, "", st.ModTime(), f)
 }

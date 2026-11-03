@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/model"
-	"github.com/inmagma/lumen/internal/secretbox"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/model"
+	"github.com/getkluard/kluard/internal/secretbox"
 )
 
 type clock struct{ t time.Time }
@@ -123,7 +123,7 @@ func newEnvOn(t *testing.T, db docstore.Backend, clk *clock) *env {
 	q, r := &scriptQ{}, &rec{}
 	reg := NewRegistry()
 	reg.Register(recNotifier{r})
-	e := &Engine{DB: db, Box: box, Eval: &Evaluator{Q: q, St: fakeSt{}}, Reg: reg, Now: clk.Now, GroupWait: 30 * time.Second, RepeatEvery: 4 * time.Hour, Backoff: []time.Duration{10 * time.Second, 30 * time.Second}, PublicURL: "https://lumen.example.com"}
+	e := &Engine{DB: db, Box: box, Eval: &Evaluator{Q: q, St: fakeSt{}}, Reg: reg, Now: clk.Now, GroupWait: 30 * time.Second, RepeatEvery: 4 * time.Hour, Backoff: []time.Duration{10 * time.Second, 30 * time.Second}, PublicURL: "https://kluard.example.com"}
 	return &env{e, q, r, clk, db}
 }
 
@@ -179,7 +179,7 @@ func TestFiresGroupsOneMessageAndResolves(t *testing.T) {
 		t.Fatalf("one message for both alerts, got %d", v.r.count())
 	}
 	m := v.r.last()
-	if m.Status != "firing" || len(m.Alerts) != 2 || m.Title != "[FIRING] Disk almost full (2 alerts)" || m.Tenant != "acme" || m.Link != "https://lumen.example.com/#/alerts" || !strings.Contains(m.Body, "host=web1") {
+	if m.Status != "firing" || len(m.Alerts) != 2 || m.Title != "[FIRING] Disk almost full (2 alerts)" || m.Tenant != "acme" || m.Link != "https://kluard.example.com/#/alerts" || !strings.Contains(m.Body, "host=web1") {
 		t.Fatalf("message: %+v", m)
 	}
 	if f, p := v.e.Counts("acme"); f != 2 || p != 0 {
@@ -392,7 +392,7 @@ func TestRetriesWithBackoffThenGivesUpThenRepeats(t *testing.T) {
 		t.Fatalf("health recovers: %+v", h)
 	}
 	_ = ch
-	// a destination that stays down: after the last retry Lumen gives up and says so
+	// a destination that stays down: after the last retry Kluard gives up and says so
 	v2 := newEnv(t)
 	v2.channel(t, "acme", "ops", ChannelIn{})
 	v2.rule(t, "acme", diskRule())
@@ -634,7 +634,7 @@ func TestChannelSecretsAreSealedAndNeverReturned(t *testing.T) {
 	v2 := &Engine{DB: v.db, Box: box2, Eval: v.e.Eval, Reg: v.e.Reg, Now: v.clk.Now}
 	v.e.PutChannel("acme", out.ID, ChannelIn{Name: "ops", Type: "rec", Enabled: true, Settings: map[string]string{"target": "y"}, Secrets: map[string]string{"token": "again"}})
 	v2.Load()
-	if err := v2.TestChannel(context.Background(), "acme", out.ID); err == nil || !strings.Contains(err.Error(), "LUMEN_SECRET_KEY") {
+	if err := v2.TestChannel(context.Background(), "acme", out.ID); err == nil || !strings.Contains(err.Error(), "KLUARD_SECRET_KEY") {
 		t.Fatalf("%v", err)
 	}
 	for i := 0; i < MaxChannelsPerTenant; i++ {
@@ -778,7 +778,7 @@ func TestEnterpriseChannelsNeedALicence(t *testing.T) {
 	v.e.License = lic
 	ent := ChannelIn{Name: "tickets", Type: "ent", Enabled: true, Settings: map[string]string{"target": "x"}}
 	// without a licence an Enterprise channel cannot be created, and the reason says what to do
-	if _, err := v.e.PutChannel("acme", "", ent); !errors.Is(err, ErrInvalid) || !strings.Contains(err.Error(), "needs a Lumen Enterprise licence") || !strings.Contains(err.Error(), "Settings") {
+	if _, err := v.e.PutChannel("acme", "", ent); !errors.Is(err, ErrInvalid) || !strings.Contains(err.Error(), "needs a Kluard Enterprise licence") || !strings.Contains(err.Error(), "Settings") {
 		t.Fatalf("%v", err)
 	}
 	if _, err := v.e.PutChannel("acme", "", ChannelIn{Name: "ok", Type: "rec", Enabled: true, Settings: map[string]string{"target": "x"}}); err != nil {
@@ -824,7 +824,7 @@ func TestEnterpriseChannelsNeedALicence(t *testing.T) {
 			tickets = c
 		}
 	}
-	if !tickets.Locked || !strings.Contains(tickets.Health.Error, "needs a Lumen Enterprise licence") {
+	if !tickets.Locked || !strings.Contains(tickets.Health.Error, "needs a Kluard Enterprise licence") {
 		t.Fatalf("the channel is marked and says why: %+v", tickets)
 	}
 	if err := v.e.TestChannel(context.Background(), "acme", entCh.ID); !errors.Is(err, ErrInvalid) {

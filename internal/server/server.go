@@ -6,9 +6,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/inmagma/lumen/internal/audit"
-	"github.com/inmagma/lumen/internal/health"
-	"github.com/inmagma/lumen/internal/oidc"
+	"github.com/getkluard/kluard/internal/audit"
+	"github.com/getkluard/kluard/internal/health"
+	"github.com/getkluard/kluard/internal/oidc"
 	"io"
 	"log/slog"
 	"net/http"
@@ -17,20 +17,20 @@ import (
 	"sync"
 	"time"
 
-	"github.com/inmagma/lumen/internal/alerts"
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/backup"
-	"github.com/inmagma/lumen/internal/branding"
-	"github.com/inmagma/lumen/internal/dashboards"
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/install"
-	"github.com/inmagma/lumen/internal/license"
-	"github.com/inmagma/lumen/internal/model"
-	"github.com/inmagma/lumen/internal/otlp"
-	"github.com/inmagma/lumen/internal/perm"
-	"github.com/inmagma/lumen/internal/registry"
-	"github.com/inmagma/lumen/internal/store"
-	"github.com/inmagma/lumen/internal/ui"
+	"github.com/getkluard/kluard/internal/alerts"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/backup"
+	"github.com/getkluard/kluard/internal/branding"
+	"github.com/getkluard/kluard/internal/dashboards"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/install"
+	"github.com/getkluard/kluard/internal/license"
+	"github.com/getkluard/kluard/internal/model"
+	"github.com/getkluard/kluard/internal/otlp"
+	"github.com/getkluard/kluard/internal/perm"
+	"github.com/getkluard/kluard/internal/registry"
+	"github.com/getkluard/kluard/internal/store"
+	"github.com/getkluard/kluard/internal/ui"
 )
 
 const maxBody = 16 << 20 // 16 MiB after decompression
@@ -174,7 +174,7 @@ type decodeError struct{ error }
 func metricHosts(rows []model.MetricPoint) (hosts, checkers []string) {
 	seenH, seenC := map[string]bool{}, map[string]bool{}
 	for _, r := range rows { // an agent says what it is in its info line
-		if r.Name == "lumen_agent_info" && r.Attrs["role"] == "checker" && r.Attrs["host"] != "" && !seenC[r.Attrs["host"]] {
+		if (r.Name == "kluard_agent_info" || r.Name == "lumen_agent_info") && r.Attrs["role"] == "checker" && r.Attrs["host"] != "" && !seenC[r.Attrs["host"]] {
 			seenC[r.Attrs["host"]] = true
 			checkers = append(checkers, r.Attrs["host"])
 		}

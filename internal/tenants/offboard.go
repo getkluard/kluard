@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/inmagma/lumen/internal/docstore"
+	"github.com/getkluard/kluard/internal/docstore"
 )
 
 // Purger removes a tenant's telemetry from the shared tables and reports what is left (the telemetry store implements it).
@@ -262,6 +262,6 @@ func (s *Service) Export(w io.Writer, id string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(f, "Export of the tenant %q from Lumen, made %s.\n\nIt contains the tenant's settings and documents as JSON: users (without passwords), groups, dashboards, hosts, instances, alert rules, silences and channels (without secrets), usage and the access log.\nIt does not contain traces, logs and metrics: those are in the daily backups (one directory per day and tenant, JSON lines compressed with gzip).\nPasswords, API-key hashes and stored tokens are never exported.\n", id, s.Now().UTC().Format(time.RFC3339))
+	fmt.Fprintf(f, "Export of the tenant %q from Kluard, made %s.\n\nIt contains the tenant's settings and documents as JSON: users (without passwords), groups, dashboards, hosts, instances, alert rules, silences and channels (without secrets), usage and the access log.\nIt does not contain traces, logs and metrics: those are in the daily backups (one directory per day and tenant, JSON lines compressed with gzip).\nPasswords, API-key hashes and stored tokens are never exported.\n", id, s.Now().UTC().Format(time.RFC3339))
 	return zw.Close()
 }

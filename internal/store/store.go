@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/inmagma/lumen/internal/model"
+	"github.com/getkluard/kluard/internal/model"
 )
 
 // Store is the seam between the API and the database. Every method is tenant-scoped:

@@ -35,7 +35,7 @@ func TestUsableIPs(t *testing.T) {
 	if !reflect.DeepEqual(got, []string{"192.168.20.131", "10.0.0.7"}) {
 		t.Fatalf("machine addresses only: no loopback, link-local, IPv6 (IPv4 exists), container bridges, down interfaces or duplicates: %v", got)
 	}
-	// the address used to reach Lumen is listed first
+	// the address used to reach Kluard is listed first
 	if got := usableIPs(ifs, "10.0.0.7"); !reflect.DeepEqual(got, []string{"10.0.0.7", "192.168.20.131"}) {
 		t.Fatalf("primary first: %v", got)
 	}
@@ -56,7 +56,7 @@ func TestOutboundIP(t *testing.T) {
 	if outboundIP("") != "" || outboundIP("::not a url::") != "" || outboundIP("ftp://x") != "" {
 		t.Fatal("garbage gives no address")
 	}
-	// Lumen on the same machine (loopback): the route says 127.0.0.1, which identifies nothing, so it is ignored
+	// Kluard on the same machine (loopback): the route says 127.0.0.1, which identifies nothing, so it is ignored
 	if got := outboundIP("http://127.0.0.1:4318"); got != "" {
 		t.Fatalf("loopback must not be reported as the machine's address: %q", got)
 	}
@@ -73,8 +73,8 @@ func TestInfoMetricCarriesAddresses(t *testing.T) {
 	s := NewSelf("web1")
 	s.ip, s.ips, s.ipAt = "192.168.20.131", []string{"192.168.20.131", "10.0.0.7"}, timeNow()
 	var info *Point
-	for _, p := range s.Collect("lumen-agent", 1) {
-		if p.Name == "lumen_agent_info" {
+	for _, p := range s.Collect("kluard-agent", 1) {
+		if p.Name == "kluard_agent_info" {
 			p := p
 			info = &p
 		}
@@ -84,8 +84,8 @@ func TestInfoMetricCarriesAddresses(t *testing.T) {
 	}
 	s2 := NewSelf("noip")
 	s2.ipAt = timeNow() // no address found: the labels are left out rather than sent empty
-	for _, p := range s2.Collect("lumen-agent", 1) {
-		if p.Name == "lumen_agent_info" {
+	for _, p := range s2.Collect("kluard-agent", 1) {
+		if p.Name == "kluard_agent_info" {
 			if _, ok := p.Attrs["ip"]; ok {
 				t.Fatal("no empty ip label")
 			}

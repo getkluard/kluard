@@ -27,8 +27,8 @@ func deps(allowPrivate bool) Deps {
 func msg() Message {
 	al := []AlertView{{Fingerprint: "f1", RuleName: "Disk almost full", Severity: "critical", State: "firing", Labels: map[string]string{"host": "web1", "mountpoint": "/data"}, Value: 95.2, Since: t0, Annotation: "Free some space"},
 		{Fingerprint: "f2", RuleName: "Disk almost full", Severity: "critical", State: "firing", Labels: map[string]string{"host": "web2"}, Value: 91, Since: t0}}
-	title, body := Compose("firing", al, "https://lumen.example.com/#/alerts")
-	return Message{Tenant: "acme", Channel: "ops", Status: "firing", GroupKey: "c1|r1|firing", Title: title, Body: body, Link: "https://lumen.example.com/#/alerts", Alerts: al}
+	title, body := Compose("firing", al, "https://kluard.example.com/#/alerts")
+	return Message{Tenant: "acme", Channel: "ops", Status: "firing", GroupKey: "c1|r1|firing", Title: title, Body: body, Link: "https://kluard.example.com/#/alerts", Alerts: al}
 }
 
 func TestComposeMessage(t *testing.T) {
@@ -65,16 +65,16 @@ func TestWebhookIsSignedAndStructured(t *testing.T) {
 	if err := json.Unmarshal(gotBody, &p); err != nil || p.Version != "1" || p.Status != "firing" || p.Tenant != "acme" || len(p.Alerts) != 2 || p.Alerts[0].Labels["host"] != "web1" || p.Alerts[0].Value != 95.2 {
 		t.Fatalf("payload: %s %v", gotBody, err)
 	}
-	ts := hdr.Get("X-Lumen-Timestamp")
-	if ts != fmt.Sprint(t0.Unix()) || hdr.Get("X-Lumen-Signature") != Sign("s3cret", ts, gotBody) || !strings.HasPrefix(hdr.Get("X-Lumen-Signature"), "sha256=") {
+	ts := hdr.Get("X-Kluard-Timestamp")
+	if ts != fmt.Sprint(t0.Unix()) || hdr.Get("X-Kluard-Signature") != Sign("s3cret", ts, gotBody) || !strings.HasPrefix(hdr.Get("X-Kluard-Signature"), "sha256=") {
 		t.Fatalf("the signature must be the HMAC of timestamp.body so receivers can verify it: %v", hdr)
 	}
-	if Sign("other", ts, gotBody) == hdr.Get("X-Lumen-Signature") {
+	if Sign("other", ts, gotBody) == hdr.Get("X-Kluard-Signature") {
 		t.Fatal("a different secret gives a different signature")
 	}
 	// without a secret there is no signature header
 	cfg.Secrets = nil
-	if _, err := n.Send(context.Background(), deps(true), cfg, msg()); err != nil || hdr.Get("X-Lumen-Signature") != "" && false {
+	if _, err := n.Send(context.Background(), deps(true), cfg, msg()); err != nil || hdr.Get("X-Kluard-Signature") != "" && false {
 		t.Fatal(err)
 	}
 	// an error answer is an error, and the URL (which may hold a secret) is not in the message
@@ -282,7 +282,7 @@ func (s *smtpServer) port() string { _, p, _ := net.SplitHostPort(s.ln.Addr().St
 func TestEmailIsDelivered(t *testing.T) {
 	s := newSMTP(t)
 	n := emailNotifier{}
-	cfg := Config{Settings: map[string]string{"to": "ops@example.com, Boss <boss@example.com>", "from": "Lumen <lumen@example.com>", "host": "127.0.0.1", "port": s.port(), "security": "none", "username": "lumen"}, Secrets: map[string]string{"password": "pw"}}
+	cfg := Config{Settings: map[string]string{"to": "ops@example.com, Boss <boss@example.com>", "from": "Kluard <kluard@example.com>", "host": "127.0.0.1", "port": s.port(), "security": "none", "username": "kluard"}, Secrets: map[string]string{"password": "pw"}}
 	if err := n.Validate(cfg); err != nil {
 		t.Fatal(err)
 	}
@@ -291,7 +291,7 @@ func TestEmailIsDelivered(t *testing.T) {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if !strings.Contains(s.from, "lumen@example.com") || len(s.rcpts) != 2 || !strings.Contains(s.rcpts[1], "boss@example.com") || s.user != "lumen:pw" {
+	if !strings.Contains(s.from, "kluard@example.com") || len(s.rcpts) != 2 || !strings.Contains(s.rcpts[1], "boss@example.com") || s.user != "kluard:pw" {
 		t.Fatalf("envelope: from %q rcpts %v login %q", s.from, s.rcpts, s.user)
 	}
 	m, err := mail.ReadMessage(strings.NewReader(strings.ReplaceAll(s.data, "\n", "\r\n")))
@@ -309,7 +309,7 @@ func TestEmailIsDelivered(t *testing.T) {
 
 func TestEmailCannotBeUsedForHeaderInjection(t *testing.T) {
 	s := newSMTP(t)
-	cfg := Config{Settings: map[string]string{"to": "ops@example.com", "from": "lumen@example.com", "host": "127.0.0.1", "port": s.port(), "security": "none"}}
+	cfg := Config{Settings: map[string]string{"to": "ops@example.com", "from": "kluard@example.com", "host": "127.0.0.1", "port": s.port(), "security": "none"}}
 	m := msg()
 	m.Title = "[FIRING] bad\r\nBcc: attacker@evil.example\r\nSubject: hacked"
 	if _, err := (emailNotifier{}).Send(context.Background(), deps(true), cfg, m); err != nil {
@@ -333,7 +333,7 @@ func TestEmailCannotBeUsedForHeaderInjection(t *testing.T) {
 
 func TestEmailErrorsAreClear(t *testing.T) {
 	s := newSMTP(t)
-	base := map[string]string{"to": "ops@example.com", "from": "lumen@example.com", "host": "127.0.0.1", "port": s.port(), "security": "none"}
+	base := map[string]string{"to": "ops@example.com", "from": "kluard@example.com", "host": "127.0.0.1", "port": s.port(), "security": "none"}
 	// a wrong password
 	s.authFail = true
 	cfg := Config{Settings: map[string]string{"to": base["to"], "from": base["from"], "host": base["host"], "port": base["port"], "security": "none", "username": "u"}, Secrets: map[string]string{"password": "bad"}}

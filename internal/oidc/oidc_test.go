@@ -21,8 +21,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/secretbox"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/secretbox"
 )
 
 func b64u(b []byte) string { return base64.RawURLEncoding.EncodeToString(b) }
@@ -125,7 +125,7 @@ func (p *idp) sign(alg, kid string, claims map[string]any, sig func([]byte) []by
 }
 
 func (p *idp) claims(nonce string, now time.Time) map[string]any {
-	return map[string]any{"iss": p.srv.URL, "sub": "user-1", "aud": "lumen-client", "exp": now.Add(time.Hour).Unix(), "iat": now.Unix(), "nonce": nonce, "email": "Alice@Example.com", "email_verified": true, "name": "Alice A"}
+	return map[string]any{"iss": p.srv.URL, "sub": "user-1", "aud": "kluard-client", "exp": now.Add(time.Hour).Unix(), "iat": now.Unix(), "nonce": nonce, "email": "Alice@Example.com", "email_verified": true, "name": "Alice A"}
 }
 
 type env struct {
@@ -141,8 +141,8 @@ func newEnv(t *testing.T) *env {
 	db, _ := docstore.OpenFile(t.TempDir())
 	box, _ := secretbox.New("test-key")
 	e := &env{p: p, db: db, now: time.Date(2026, 10, 7, 12, 0, 0, 0, time.UTC)}
-	e.svc = &Service{DB: db, Box: box, PublicURL: "https://lumen.example.com", Secret: func() []byte { return []byte("session-secret-0123456789") }, Now: func() time.Time { return e.now }}
-	e.cfg = Config{Enabled: true, Issuer: p.srv.URL, ClientID: "lumen-client", Tenant: "acme"}
+	e.svc = &Service{DB: db, Box: box, PublicURL: "https://kluard.example.com", Secret: func() []byte { return []byte("session-secret-0123456789") }, Now: func() time.Time { return e.now }}
+	e.cfg = Config{Enabled: true, Issuer: p.srv.URL, ClientID: "kluard-client", Tenant: "acme"}
 	e.svc.Save(context.Background(), e.cfg, "the-client-secret")
 	e.cfg, _ = e.svc.Load(context.Background())
 	p.mint = func(nonce string) (string, int, string) {
@@ -187,7 +187,7 @@ func (e *env) ok(t *testing.T) (Identity, error) {
 func TestASignInThatIsInOrder(t *testing.T) {
 	e := newEnv(t)
 	ck, q := e.begin(t)
-	if q.Get("response_type") != "code" || q.Get("client_id") != "lumen-client" || q.Get("redirect_uri") != "https://lumen.example.com/auth/oidc/callback" || q.Get("scope") != "openid email profile" || q.Get("code_challenge_method") != "S256" || q.Get("state") == "" || q.Get("nonce") == "" || q.Get("code_challenge") == "" {
+	if q.Get("response_type") != "code" || q.Get("client_id") != "kluard-client" || q.Get("redirect_uri") != "https://kluard.example.com/auth/oidc/callback" || q.Get("scope") != "openid email profile" || q.Get("code_challenge_method") != "S256" || q.Get("state") == "" || q.Get("nonce") == "" || q.Get("code_challenge") == "" {
 		t.Fatalf("the address the browser is sent to: %v", q)
 	}
 	if !ck.HttpOnly || ck.SameSite != http.SameSiteLaxMode || !ck.Secure || ck.Path != "/auth/oidc" || ck.MaxAge != 600 {
@@ -202,7 +202,7 @@ func TestASignInThatIsInOrder(t *testing.T) {
 	if b64u(chal[:]) != q.Get("code_challenge") {
 		t.Fatal("the code_verifier must hash to the code_challenge that was sent at the start")
 	}
-	if e.p.gotBasicUser != "lumen-client" || e.p.gotBasicPass != "the-client-secret" || e.p.gotPostSecret != "" {
+	if e.p.gotBasicUser != "kluard-client" || e.p.gotBasicPass != "the-client-secret" || e.p.gotPostSecret != "" {
 		t.Fatalf("basic: %q %q post:%q", e.p.gotBasicUser, e.p.gotBasicPass, e.p.gotPostSecret)
 	}
 	// a provider that only takes the secret in the body gets it there
@@ -234,7 +234,7 @@ func TestASignInThatIsNotInOrderIsRefused(t *testing.T) {
 	}{
 		"another issuer":          {mintWith(func(c map[string]any) { c["iss"] = "https://evil.example.com" }), "comes from"},
 		"another application":     {mintWith(func(c map[string]any) { c["aud"] = "someone-else" }), "another application"},
-		"many audiences, no azp":  {mintWith(func(c map[string]any) { c["aud"] = []string{"lumen-client", "other"} }), "azp"},
+		"many audiences, no azp":  {mintWith(func(c map[string]any) { c["aud"] = []string{"kluard-client", "other"} }), "azp"},
 		"expired":                 {mintWith(func(c map[string]any) { c["exp"] = e.now.Add(-2 * time.Minute).Unix() }), "expired"},
 		"from the future":         {mintWith(func(c map[string]any) { c["iat"] = e.now.Add(10 * time.Minute).Unix() }), "future"},
 		"not valid yet":           {mintWith(func(c map[string]any) { c["nbf"] = e.now.Add(10 * time.Minute).Unix() }), "not valid yet"},
@@ -322,7 +322,7 @@ func TestKeysThatAreRotated(t *testing.T) {
 	if _, err := e.ok(t); err != nil || e.p.jwksFetches != 2 {
 		t.Fatalf("an unknown key makes the list be read again: %v %d", err, e.p.jwksFetches)
 	}
-	// and an unknown key does not make Lumen read the list over and over
+	// and an unknown key does not make Kluard read the list over and over
 	e.p.mint = func(n string) (string, int, string) { return e.p.tokenRS256("k9", k2, e.p.claims(n, e.now)), 200, "" }
 	e.now = e.now.Add(2 * time.Minute)
 	e.ok(t)
@@ -360,7 +360,7 @@ func TestWhatTheProviderSaysAboutItselfIsChecked(t *testing.T) {
 	if (&Service{PublicURL: ""}).RedirectURI() != "" || (&Service{PublicURL: "https://x.example.com/"}).RedirectURI() != "https://x.example.com/auth/oidc/callback" {
 		t.Fatal("redirect uri")
 	}
-	if _, err := (&Service{PublicURL: ""}).Begin(context.Background(), httptest.NewRecorder(), httptest.NewRequest("GET", "/", nil), e.cfg); err == nil || !strings.Contains(err.Error(), "LUMEN_PUBLIC_URL") {
+	if _, err := (&Service{PublicURL: ""}).Begin(context.Background(), httptest.NewRecorder(), httptest.NewRequest("GET", "/", nil), e.cfg); err == nil || !strings.Contains(err.Error(), "KLUARD_PUBLIC_URL") {
 		t.Fatalf("without a public address: %v", err)
 	}
 }
@@ -396,7 +396,7 @@ func TestTheSecretIsKeptSealed(t *testing.T) {
 	ctx := context.Background()
 	d, _ := e.db.Get(ctx, metaColl, metaID)
 	if strings.Contains(string(d.Data), "the-client-secret") || e.cfg.Secret == "" || e.svc.clientSecret(e.cfg) != "the-client-secret" {
-		t.Fatalf("sealed in the store, readable by Lumen: %s", d.Data)
+		t.Fatalf("sealed in the store, readable by Kluard: %s", d.Data)
 	}
 	c := e.cfg
 	c.Label = "Company login"

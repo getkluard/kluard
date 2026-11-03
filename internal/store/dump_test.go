@@ -6,15 +6,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/model"
+	"github.com/getkluard/kluard/internal/model"
 )
 
 // TestDumpForEngine writes the exact DDL and queries to a JSON file so they can be executed by a real
-// ClickHouse engine (see scripts/test-sql.py). Skipped unless LUMEN_DUMP_SQL is set.
+// ClickHouse engine (see scripts/test-sql.py). Skipped unless KLUARD_DUMP_SQL is set.
 func TestDumpForEngine(t *testing.T) {
-	out := os.Getenv("LUMEN_DUMP_SQL")
+	out := os.Getenv("KLUARD_DUMP_SQL")
 	if out == "" {
-		t.Skip("set LUMEN_DUMP_SQL=/path/out.json to dump")
+		t.Skip("set KLUARD_DUMP_SQL=/path/out.json to dump")
 	}
 	now := time.Now()
 	type qq struct {
@@ -125,7 +125,7 @@ func TestDumpForEngine(t *testing.T) {
 	add("billing usage", bq, bp)
 	tq, tp := buildContainerTrafficQuery("acme", now.Add(-48*time.Hour), now.Add(time.Hour))
 	add("billing traffic", tq, tp)
-	add("ttl check", ttlQuery, map[string]string{"db": "lumen", "t": "otel_logs"})
+	add("ttl check", ttlQuery, map[string]string{"db": "kluard", "t": "otel_logs"})
 	b, _ := json.Marshal(map[string]any{"ddl": schema(30), "archive_ddl": archiveSchema(), "ttl_alter": ttlAlter(tables[1], 14), "queries": qs})
 	os.WriteFile(out, b, 0o644)
 }

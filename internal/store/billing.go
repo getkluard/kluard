@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/inmagma/lumen/internal/billing"
+	"github.com/getkluard/kluard/internal/billing"
 )
 
 // instanceUsageSQL is the highest value of each day of what every Nextcloud instance reports about its size: the users (from

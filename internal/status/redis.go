@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/inmagma/lumen/internal/model"
-	"github.com/inmagma/lumen/internal/registry"
+	"github.com/getkluard/kluard/internal/model"
+	"github.com/getkluard/kluard/internal/registry"
 )
 
 // Redis is one Redis server as the UI shows it. State is up, down, auth (it wants a password that is missing or wrong) or

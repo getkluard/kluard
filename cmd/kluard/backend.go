@@ -6,13 +6,13 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/config"
-	"github.com/inmagma/lumen/internal/docstore"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/config"
+	"github.com/getkluard/kluard/internal/docstore"
 )
 
 // openBackend returns the document backend for users, keys and dashboards: Elasticsearch when
-// LUMEN_ELASTICSEARCH_URL is set (waiting up to 2 minutes for it to come up), otherwise a JSON file.
+// KLUARD_ELASTICSEARCH_URL is set (waiting up to 2 minutes for it to come up), otherwise a JSON file.
 func openBackend(cfg config.Config, log *slog.Logger) (docstore.Backend, time.Duration, error) {
 	if cfg.ESURL == "" {
 		f, err := docstore.OpenFile(cfg.DataDir)

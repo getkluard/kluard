@@ -1,4 +1,4 @@
-# Att driva Lumen för flera tenants (operatörsguide)
+# Att driva Kluard för flera tenants (operatörsguide)
 
 Svenska · [English](OPERATING.md)
 
@@ -6,8 +6,8 @@ För dig som driver en installation åt kunder eller team. Designen bakom finns 
 
 ## Ställ in
 
-1. Installera med `LUMEN_ADMIN_TENANT=operator` i `deploy/.env`. Den första administratören tillhör då den reserverade tenanten `operator`, som har **Tenants**-konsolen och äger licensen. (För fler operatörer: `lumen users add --tenant operator --group admin NAMN`.)
-2. Installera en **Operator-licens** under *Settings, Licence*. Utan den är konsolen stängd, Lumen räknar bara vad varje tenant skickar, och inget upprätthålls: en utgången licens stänger aldrig ute dina kunder.
+1. Installera med `KLUARD_ADMIN_TENANT=operator` i `deploy/.env`. Den första administratören tillhör då den reserverade tenanten `operator`, som har **Tenants**-konsolen och äger licensen. (För fler operatörer: `kluard users add --tenant operator --group admin NAMN`.)
+2. Installera en **Operator-licens** under *Settings, Licence*. Utan den är konsolen stängd, Kluard räknar bara vad varje tenant skickar, och inget upprätthålls: en utgången licens stänger aldrig ute dina kunder.
 3. Öppna **Tenants**. Tenants som redan fanns finns där, med standardinställningar (stödåtkomst: *när som helst*, eftersom de fanns före inställningen). Lägg till nya med **+ Add tenant**.
 
 ## Till vardags
@@ -20,7 +20,7 @@ För dig som driver en installation åt kunder eller team. Designen bakom finns 
 | Hjälpa en kund | Be dem tillåta supportåtkomst (Settings, Support access, Allow access). Öppna sedan tenanten och **Go into tenant**: skrivskyddat om du inte kryssar för ändringar, 30 minuter till 4 timmar. En banner visar att du är inne, och **Leave tenant** avslutar. |
 | Fakturera | Tenants, Usage: per tenant och dag, eller **Download CSV** (för vald period och tenant). |
 | Ge en kund deras data | Öppna tenanten, **Export** (en zip med inställningar och dokument utan hemligheter). Telemetrin finns i de dagliga backuperna. |
-| Ta bort en kund | Öppna tenanten, **Remove...**, skriv dess id. Allt som tillhör tenanten raderas, också arkiv och dagliga backuper, och Lumen kontrollerar att inget finns kvar. Användningsposter och åtkomstloggen behålls. |
+| Ta bort en kund | Öppna tenanten, **Remove...**, skriv dess id. Allt som tillhör tenanten raderas, också arkiv och dagliga backuper, och Kluard kontrollerar att inget finns kvar. Användningsposter och åtkomstloggen behålls. |
 
 ## Vad kunden ser
 

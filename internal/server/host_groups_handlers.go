@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/perm"
-	"github.com/inmagma/lumen/internal/registry"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/perm"
+	"github.com/getkluard/kluard/internal/registry"
 )
 
 // noHost is what a query is limited to when the group asked for has no hosts: a name that no host can have (it is not a valid

@@ -18,11 +18,11 @@ import (
 	"time"
 )
 
-// SelfUpdate lets the Lumen server ask this agent to update itself. How it is done depends on how the agent runs, and the
-// installer says so in LUMEN_AGENT_SELF_UPDATE:
+// SelfUpdate lets the Kluard server ask this agent to update itself. How it is done depends on how the agent runs, and the
+// installer says so in KLUARD_AGENT_SELF_UPDATE:
 //
 //	systemd:<dir>  the agent runs as an unprivileged user and cannot replace its own file. It writes <dir>/update-requested; a
-//	               systemd path unit starts a small root-owned helper that downloads the new version from the Lumen server
+//	               systemd path unit starts a small root-owned helper that downloads the new version from the Kluard server
 //	               (the address in the root-owned config), checks its checksum, replaces the file and restarts the agent, and
 //	               puts the old one back if the new one does not start. The agent decides nothing but "please update".
 //	exec:<dir>     for a container: the agent downloads the new version itself, checks the checksum, makes sure the file
@@ -33,7 +33,7 @@ import (
 type SelfUpdate struct {
 	Mode string
 	Dir  string
-	URL  string // the Lumen server, for the exec mode
+	URL  string // the Kluard server, for the exec mode
 	Now  func() time.Time
 	HTTP *http.Client
 }
@@ -50,7 +50,7 @@ const (
 
 var targetRe = regexp.MustCompile(`^[A-Za-z0-9._-]{1,64}$`)
 
-// NewSelfUpdate reads the setting ("systemd:/var/lib/lumen-agent", "exec:/tmp"). An empty or invalid value means no self-update.
+// NewSelfUpdate reads the setting ("systemd:/var/lib/kluard-agent", "exec:/tmp"). An empty or invalid value means no self-update.
 func NewSelfUpdate(setting, serverURL string) *SelfUpdate {
 	mode, dir, ok := strings.Cut(strings.TrimSpace(setting), ":")
 	if !ok || (mode != "systemd" && mode != "exec") || !filepath.IsAbs(dir) {
@@ -124,7 +124,7 @@ func (u *SelfUpdate) fetchBinary(ctx context.Context, target string) (string, er
 	if runtime.GOOS != "linux" && runtime.GOOS != "darwin" {
 		return "", errors.New("updating in place is not supported on " + runtime.GOOS)
 	}
-	name := "lumen-agent-" + runtime.GOOS + "-" + runtime.GOARCH
+	name := "kluard-agent-" + runtime.GOOS + "-" + runtime.GOARCH
 	get := func(path string, limit int64) ([]byte, error) {
 		req, err := http.NewRequestWithContext(ctx, "GET", u.URL+"/download/"+path, nil)
 		if err != nil {
@@ -165,7 +165,7 @@ func (u *SelfUpdate) fetchBinary(ctx context.Context, target string) (string, er
 	if hex.EncodeToString(sum[:]) != want {
 		return "", errors.New("checksum mismatch: the download is corrupt, refusing to update")
 	}
-	next := filepath.Join(u.Dir, "lumen-agent.next")
+	next := filepath.Join(u.Dir, "kluard-agent.next")
 	if err := os.WriteFile(next, bin, 0o755); err != nil {
 		return "", err
 	}

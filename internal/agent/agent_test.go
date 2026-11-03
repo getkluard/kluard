@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/otlp"
+	"github.com/getkluard/kluard/internal/otlp"
 )
 
 const promText = `# HELP http_requests_total Total requests
@@ -40,7 +40,7 @@ func TestParseProm(t *testing.T) {
 	}
 }
 
-func TestPayloadsRoundTripThroughLumenDecoder(t *testing.T) {
+func TestPayloadsRoundTripThroughKluardDecoder(t *testing.T) {
 	m, _ := MetricsPayload("svc", "h1", []Point{
 		{Service: "svc", Name: "cpu", Type: "gauge", Value: 0.5, Attrs: map[string]string{"core": "0"}, TimeNs: 1700000000000000000},
 		{Service: "svc", Name: "reqs_total", Type: "sum", Value: 9, TimeNs: 1700000000000000000},
@@ -164,19 +164,19 @@ func TestSelfMetrics(t *testing.T) {
 		}
 		return Point{}, false
 	}
-	if p, ok := get("lumen_agent_items_sent_total", "signal", "metrics"); !ok || p.Value != 15 || p.Type != "sum" {
+	if p, ok := get("kluard_agent_items_sent_total", "signal", "metrics"); !ok || p.Value != 15 || p.Type != "sum" {
 		t.Fatalf("sent metrics: %+v %v", p, ok)
 	}
-	if p, ok := get("lumen_agent_send_errors_total", "signal", "logs"); !ok || p.Value != 1 {
+	if p, ok := get("kluard_agent_send_errors_total", "signal", "logs"); !ok || p.Value != 1 {
 		t.Fatalf("send errors: %+v", p)
 	}
-	if p, ok := get("lumen_agent_scrape_errors_total", "target", "node:9100/metrics"); !ok || p.Value != 1 {
+	if p, ok := get("kluard_agent_scrape_errors_total", "target", "node:9100/metrics"); !ok || p.Value != 1 {
 		t.Fatalf("scrape errors (credentials must be stripped from target): %+v", p)
 	}
-	if p, ok := get("lumen_agent_scrapes_total", "target", "node:9100/metrics"); !ok || p.Value != 2 {
+	if p, ok := get("kluard_agent_scrapes_total", "target", "node:9100/metrics"); !ok || p.Value != 2 {
 		t.Fatalf("scrapes: %+v", p)
 	}
-	if _, ok := get("lumen_agent_uptime_seconds"); !ok {
+	if _, ok := get("kluard_agent_uptime_seconds"); !ok {
 		t.Fatal("uptime missing")
 	}
 }
@@ -193,7 +193,7 @@ func TestSelfEndpointIsScrapable(t *testing.T) {
 	}
 	found := false
 	for _, p := range pts {
-		if p.Name == "lumen_agent_items_sent_total" && p.Attrs["signal"] == "metrics" && p.Value == 7 && p.Type == "sum" {
+		if p.Name == "kluard_agent_items_sent_total" && p.Attrs["signal"] == "metrics" && p.Value == 7 && p.Type == "sum" {
 			found = true
 		}
 	}

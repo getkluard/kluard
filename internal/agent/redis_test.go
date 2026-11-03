@@ -187,3 +187,14 @@ func TestRedisAddressesFromContainers(t *testing.T) {
 		t.Fatalf("unexpected: %+v", got)
 	}
 }
+
+func TestOldAgentSettingsStillWork(t *testing.T) {
+	env := map[string]string{"LUMEN_AGENT_URL": "https://old.example.com", "LUMEN_AGENT_API_KEY": "lmn_old", "KLUARD_AGENT_API_KEY": "klu_new"}
+	c, err := LoadConfig("/nonexistent/config.json", func(k string) string { return env[k] })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.URL != "https://old.example.com" || c.APIKey != "klu_new" {
+		t.Fatalf("old names are read, new names win: %q %q", c.URL, c.APIKey)
+	}
+}

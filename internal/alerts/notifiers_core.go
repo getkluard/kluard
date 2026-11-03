@@ -37,8 +37,8 @@ func (webhookNotifier) Type() string  { return "webhook" }
 func (webhookNotifier) Label() string { return "Webhook" }
 func (webhookNotifier) Fields() []Field {
 	return []Field{
-		{Key: "url", Label: "URL", Kind: "text", Required: true, Help: "Lumen sends a JSON POST here."},
-		{Key: "secret", Label: "Signing secret", Kind: "secret", Help: "Optional. Each request carries X-Lumen-Timestamp and X-Lumen-Signature (sha256 HMAC of timestamp + \".\" + body) so the receiver can verify it."},
+		{Key: "url", Label: "URL", Kind: "text", Required: true, Help: "Kluard sends a JSON POST here."},
+		{Key: "secret", Label: "Signing secret", Kind: "secret", Help: "Optional. Each request carries X-Kluard-Timestamp and X-Kluard-Signature (sha256 HMAC of timestamp + \".\" + body) so the receiver can verify it."},
 	}
 }
 func (webhookNotifier) Validate(c Config) error { return CheckURL(c.Get("url"), false) }
@@ -53,10 +53,10 @@ func Sign(secret, timestamp string, body []byte) string {
 
 func (webhookNotifier) Send(ctx context.Context, d Deps, c Config, m Message) (Result, error) {
 	body, _ := json.Marshal(map[string]any{"version": "1", "status": m.Status, "title": m.Title, "group_key": m.GroupKey, "tenant": m.Tenant, "channel": m.Channel, "link": m.Link, "alerts": m.Alerts})
-	h := map[string]string{"Content-Type": "application/json", "User-Agent": "Lumen-Alerts"}
+	h := map[string]string{"Content-Type": "application/json", "User-Agent": "Kluard-Alerts"}
 	if s := c.Get("secret"); s != "" {
 		ts := strconv.FormatInt(d.Now().Unix(), 10)
-		h["X-Lumen-Timestamp"], h["X-Lumen-Signature"] = ts, Sign(s, ts, body)
+		h["X-Kluard-Timestamp"], h["X-Kluard-Signature"] = ts, Sign(s, ts, body)
 	}
 	code, _, err := do(ctx, d.HTTP, "POST", c.Get("url"), h, bytes.NewReader(body))
 	if err != nil {
@@ -125,7 +125,7 @@ func (heartbeatNotifier) Type() string  { return "heartbeat" }
 func (heartbeatNotifier) Label() string { return "Heartbeat (dead man's switch)" }
 func (heartbeatNotifier) Fields() []Field {
 	return []Field{
-		{Key: "url", Label: "URL to call", Kind: "secret", Required: true, Help: "Lumen calls this address regularly. An outside service (for example Healthchecks or Uptime Kuma) alerts you when the calls stop, which means Lumen itself is down. It is a secret."},
+		{Key: "url", Label: "URL to call", Kind: "secret", Required: true, Help: "Kluard calls this address regularly. An outside service (for example Healthchecks or Uptime Kuma) alerts you when the calls stop, which means Kluard itself is down. It is a secret."},
 		{Key: "interval_seconds", Label: "Every (seconds)", Kind: "number", Default: "60", Help: "30 to 3600."},
 	}
 }
@@ -151,7 +151,7 @@ func (heartbeatNotifier) Every(c Config) time.Duration {
 	return time.Duration(n) * time.Second
 }
 func (heartbeatNotifier) Tick(ctx context.Context, d Deps, c Config) error {
-	code, _, err := do(ctx, d.HTTP, "GET", c.Get("url"), map[string]string{"User-Agent": "Lumen-Heartbeat"}, nil)
+	code, _, err := do(ctx, d.HTTP, "GET", c.Get("url"), map[string]string{"User-Agent": "Kluard-Heartbeat"}, nil)
 	if err != nil {
 		return err
 	}
@@ -170,7 +170,7 @@ func (emailNotifier) Label() string { return "Email (SMTP)" }
 func (emailNotifier) Fields() []Field {
 	return []Field{
 		{Key: "to", Label: "Send to", Kind: "text", Required: true, Help: "One or more addresses, separated by commas (at most 10)."},
-		{Key: "from", Label: "From", Kind: "text", Required: true, Help: "For example Lumen <lumen@example.com>."},
+		{Key: "from", Label: "From", Kind: "text", Required: true, Help: "For example Kluard <kluard@example.com>."},
 		{Key: "host", Label: "SMTP server", Kind: "text", Required: true},
 		{Key: "port", Label: "Port", Kind: "number", Default: "587"},
 		{Key: "security", Label: "Encryption", Kind: "select", Options: []string{"starttls", "tls", "none"}, Default: "starttls", Help: "starttls: port 587. tls: port 465. none only for a trusted internal relay."},
@@ -306,7 +306,7 @@ func buildMail(from *mail.Address, to []*mail.Address, m Message, now time.Time)
 	}
 	id := make([]byte, 8)
 	_, _ = rand.Read(id)
-	dom := "lumen"
+	dom := "kluard"
 	if i := strings.LastIndex(from.Address, "@"); i >= 0 {
 		dom = from.Address[i+1:]
 	}
@@ -320,7 +320,7 @@ func buildMail(from *mail.Address, to []*mail.Address, m Message, now time.Time)
 	h("MIME-Version", "1.0")
 	h("Content-Type", "text/plain; charset=utf-8")
 	h("Content-Transfer-Encoding", "quoted-printable")
-	h("X-Lumen-Status", oneLine(m.Status))
+	h("X-Kluard-Status", oneLine(m.Status))
 	b.WriteString("\r\n")
 	q := quotedprintable.NewWriter(&b)
 	_, _ = q.Write([]byte(strings.ReplaceAll(m.Body, "\n", "\r\n")))

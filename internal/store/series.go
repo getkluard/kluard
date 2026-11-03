@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/inmagma/lumen/internal/model"
+	"github.com/getkluard/kluard/internal/model"
 )
 
 var keyRe = regexp.MustCompile(`^[A-Za-z0-9_.:/-]{1,64}$`)

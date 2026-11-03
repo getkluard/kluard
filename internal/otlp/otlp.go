@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/inmagma/lumen/internal/model"
+	"github.com/getkluard/kluard/internal/model"
 )
 
 // Int64 accepts both JSON numbers and quoted numbers (OTLP JSON uses strings for 64-bit ints).

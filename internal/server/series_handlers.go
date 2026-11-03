@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/model"
-	"github.com/inmagma/lumen/internal/perm"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/model"
+	"github.com/getkluard/kluard/internal/perm"
 )
 
 const maxRange = 90 * 24 * time.Hour

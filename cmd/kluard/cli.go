@@ -6,22 +6,22 @@ import (
 	"os"
 	"strings"
 
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/config"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/config"
 )
 
-const usage = `Manage Lumen users and API keys. They are stored in Elasticsearch when LUMEN_ELASTICSEARCH_URL is set, otherwise in $LUMEN_DATA_DIR (default /data).
+const usage = `Manage Kluard users and API keys. They are stored in Elasticsearch when KLUARD_ELASTICSEARCH_URL is set, otherwise in $KLUARD_DATA_DIR (default /data).
 
-  lumen users list
-  lumen users add NAME --tenant TENANT [--group admin|user|GROUP_ID] [--password-stdin]   (default group: user = read-only; no password given: a random one is generated and printed once)
-  lumen users set-group NAME GROUP
-  lumen users passwd NAME [--password-stdin]
-  lumen users delete NAME
-  lumen keys list --tenant TENANT
-  lumen keys create --tenant TENANT [--name NAME]           (the key is printed once and cannot be shown again)
-  lumen keys delete --tenant TENANT ID
+  kluard users list
+  kluard users add NAME --tenant TENANT [--group admin|user|GROUP_ID] [--password-stdin]   (default group: user = read-only; no password given: a random one is generated and printed once)
+  kluard users set-group NAME GROUP
+  kluard users passwd NAME [--password-stdin]
+  kluard users delete NAME
+  kluard keys list --tenant TENANT
+  kluard keys create --tenant TENANT [--name NAME]           (the key is printed once and cannot be shown again)
+  kluard keys delete --tenant TENANT ID
 
-In Docker:  docker compose -f deploy/docker-compose.yml exec lumen /lumen users add alice --tenant main
+In Docker:  docker compose -f deploy/docker-compose.yml exec kluard /kluard users add alice --tenant main
 `
 
 func flag(args []string, name string) (string, bool) {
@@ -150,7 +150,7 @@ func runCLI(args []string) int {
 	case "keys delete":
 		tenant, ok := flag(rest, "--tenant")
 		if !ok || len(rest) < 3 {
-			return fail(fmt.Errorf("usage: lumen keys delete --tenant TENANT ID"))
+			return fail(fmt.Errorf("usage: kluard keys delete --tenant TENANT ID"))
 		}
 		id := rest[len(rest)-1]
 		if err := store.DeleteKey(tenant, id); err != nil {

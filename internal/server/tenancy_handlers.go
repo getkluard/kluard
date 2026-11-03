@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/inmagma/lumen/internal/audit"
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/license"
-	"github.com/inmagma/lumen/internal/metering"
-	"github.com/inmagma/lumen/internal/perm"
-	"github.com/inmagma/lumen/internal/tenants"
+	"github.com/getkluard/kluard/internal/audit"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/license"
+	"github.com/getkluard/kluard/internal/metering"
+	"github.com/getkluard/kluard/internal/perm"
+	"github.com/getkluard/kluard/internal/tenants"
 )
 
 func (s *Server) tenancyRoutes(mux *http.ServeMux) {
@@ -261,7 +261,7 @@ func (s *Server) exportTenant(w http.ResponseWriter, r *http.Request, id edition
 	}
 	s.auditOp(id, tid, "tenant.export", tid, "")
 	w.Header().Set("Content-Type", "application/zip")
-	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="lumen-tenant-%s-%s.zip"`, safeFile(tid), time.Now().UTC().Format("20060102")))
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="kluard-tenant-%s-%s.zip"`, safeFile(tid), time.Now().UTC().Format("20060102")))
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 	if err := s.ten.Tenants.Export(w, tid); err != nil {
 		s.log.Error("export failed", "tenant", tid, "err", err)
@@ -349,7 +349,7 @@ func (s *Server) operatorUsage(w http.ResponseWriter, r *http.Request, id editio
 	days := s.ten.Meter.Range(r.URL.Query().Get("tenant"), from, to)
 	if r.URL.Query().Get("format") == "csv" {
 		w.Header().Set("Content-Type", "text/csv; charset=utf-8")
-		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="lumen-usage-%s-%s.csv"`, from, to))
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="kluard-usage-%s-%s.csv"`, from, to))
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Write([]byte(metering.CSV(days)))
 		return

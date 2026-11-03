@@ -144,7 +144,7 @@ func TestSize(t *testing.T) {
 }
 
 func TestAnErrorDoesNotCarryTheAddress(t *testing.T) {
-	e := &url.Error{Op: "Post", URL: "http://clickhouse:8123?database=lumen&output_format_json_quote_64bit_integers=1", Err: errors.New("dial tcp 172.18.0.3:8123: connect: connection refused")}
+	e := &url.Error{Op: "Post", URL: "http://clickhouse:8123?database=kluard&output_format_json_quote_64bit_integers=1", Err: errors.New("dial tcp 172.18.0.3:8123: connect: connection refused")}
 	if got := reason(e); got != "dial tcp 172.18.0.3:8123: connect: connection refused" {
 		t.Fatal(got)
 	}
@@ -159,7 +159,7 @@ func TestAnErrorDoesNotCarryTheAddress(t *testing.T) {
 }
 
 func TestTheSameDiskIsOneProblemHoweverManyPartsLiveOnIt(t *testing.T) {
-	// what a real installation showed: Lumen, Elasticsearch and ClickHouse all on one 70 GB disk with 11.1 GB left
+	// what a real installation showed: Kluard, Elasticsearch and ClickHouse all on one 70 GB disk with 11.1 GB left
 	total, free := uint64(70*gb), uint64(11.1*gbf)
 	r := Report{
 		Disks: []Disk{{Name: "data", Path: "/data", Total: total, Free: free}},
@@ -170,7 +170,7 @@ func TestTheSameDiskIsOneProblemHoweverManyPartsLiveOnIt(t *testing.T) {
 	if len(ps) != 1 {
 		t.Fatalf("one disk, one problem (it was three): %+v", ps)
 	}
-	for _, want := range []string{"Lumen's data (/data)", "Elasticsearch (node b19155e62260)", "ClickHouse (disk default)", "84% full (11.1 GB free of 70 GB)"} {
+	for _, want := range []string{"Kluard's data (/data)", "Elasticsearch (node b19155e62260)", "ClickHouse (disk default)", "84% full (11.1 GB free of 70 GB)"} {
 		if !strings.Contains(ps[0].Text, want) {
 			t.Errorf("%q is missing from %q", want, ps[0].Text)
 		}
@@ -186,12 +186,12 @@ func TestTheSameDiskIsOneProblemHoweverManyPartsLiveOnIt(t *testing.T) {
 }
 
 func TestYellowSaysWhichIndicesAndWhatItMeans(t *testing.T) {
-	e := &ES{Status: "yellow", Unassigned: 2, UnassignedIndices: []string{"lumen-agent_updates (replica)", "lumen-tenants (replica)"}, Nodes: []ESNode{{Name: "n1"}}}
+	e := &ES{Status: "yellow", Unassigned: 2, UnassignedIndices: []string{"kluard-agent_updates (replica)", "kluard-tenants (replica)"}, Nodes: []ESNode{{Name: "n1"}}}
 	ps := Evaluate(Report{ES: e}, 80, 90)
-	if len(ps) != 1 || !strings.Contains(ps[0].Text, "lumen-agent_updates (replica), lumen-tenants (replica)") || !strings.Contains(ps[0].Advice, "number_of_replicas") || !strings.Contains(ps[0].Advice, "Nothing is lost") {
+	if len(ps) != 1 || !strings.Contains(ps[0].Text, "kluard-agent_updates (replica), kluard-tenants (replica)") || !strings.Contains(ps[0].Advice, "number_of_replicas") || !strings.Contains(ps[0].Advice, "Nothing is lost") {
 		t.Fatalf("copies on a single node: harmless, and how to make it green: %+v", ps)
 	}
-	e.UnassignedIndices = []string{"lumen-logs (primary)"}
+	e.UnassignedIndices = []string{"kluard-logs (primary)"}
 	if ps = Evaluate(Report{ES: e}, 80, 90); !strings.Contains(ps[0].Advice, "allocation/explain") || strings.Contains(ps[0].Advice, "Nothing is lost") {
 		t.Fatalf("a primary without a place is not harmless: %+v", ps)
 	}
@@ -203,16 +203,16 @@ func TestYellowSaysWhichIndicesAndWhatItMeans(t *testing.T) {
 }
 
 func TestClickHousesOwnLogsAreWarnedAboutWhenTheyOutgrowTheTelemetry(t *testing.T) {
-	big := &CH{Tables: []Table{{"system.text_log", 18 * gb}, {"system.trace_log", 10 * gb}, {"system.metric_log", 200 << 20}, {"lumen.otel_metrics", 30 << 20}}}
+	big := &CH{Tables: []Table{{"system.text_log", 18 * gb}, {"system.trace_log", 10 * gb}, {"system.metric_log", 200 << 20}, {"kluard.otel_metrics", 30 << 20}}}
 	ps := Evaluate(Report{CH: big}, 80, 90)
-	if len(ps) != 1 || ps[0].Level != "warning" || ps[0].Component != "clickhouse" || !strings.Contains(ps[0].Text, "system.text_log") || !strings.Contains(ps[0].Text, "more than the telemetry") || !strings.Contains(ps[0].Advice, "lumen.xml") {
+	if len(ps) != 1 || ps[0].Level != "warning" || ps[0].Component != "clickhouse" || !strings.Contains(ps[0].Text, "system.text_log") || !strings.Contains(ps[0].Text, "more than the telemetry") || !strings.Contains(ps[0].Advice, "kluard.xml") {
 		t.Fatalf("%+v", ps)
 	}
 	// small logs, or big telemetry, are nothing to warn about
 	for _, ok := range []*CH{
-		{Tables: []Table{{"system.text_log", 300 << 20}, {"lumen.otel_metrics", 30 << 20}}},
-		{Tables: []Table{{"system.text_log", 3 * gb}, {"lumen.otel_metrics", 20 * gb}}},
-		{Tables: []Table{{"lumen.otel_metrics", 20 * gb}}},
+		{Tables: []Table{{"system.text_log", 300 << 20}, {"kluard.otel_metrics", 30 << 20}}},
+		{Tables: []Table{{"system.text_log", 3 * gb}, {"kluard.otel_metrics", 20 * gb}}},
+		{Tables: []Table{{"kluard.otel_metrics", 20 * gb}}},
 	} {
 		if ps := Evaluate(Report{CH: ok}, 80, 90); len(ps) != 0 {
 			t.Errorf("%+v", ps)

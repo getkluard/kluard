@@ -44,7 +44,7 @@ type Config struct {
 	Logs            []LogSource       `json:"logs"`
 	Nextcloud       []NextcloudTarget `json:"nextcloud"`
 	Systemd         *bool             `json:"systemd"`                  // report systemd services (default true)
-	Redis           []RedisTarget     `json:"redis,omitempty"`          // passwords and addresses for Redis (from the Lumen UI); Redis in Docker is found by itself
+	Redis           []RedisTarget     `json:"redis,omitempty"`          // passwords and addresses for Redis (from the Kluard UI); Redis in Docker is found by itself
 	RedisPassword   string            `json:"redis_password,omitempty"` // one password to try on every Redis that has none of its own
 	Containers      *bool             `json:"containers"`               // report Docker containers (default true)
 	WatchServices   []string          `json:"watch_services"`           // services that must be running
@@ -83,9 +83,10 @@ func truthy(s string) bool {
 	return false
 }
 
-// LoadConfig reads an optional JSON file, then applies LUMEN_AGENT_* environment variables
+// LoadConfig reads an optional JSON file, then applies KLUARD_AGENT_* environment variables
 // (used by the Docker agent, which has no config file), then defaults.
 func LoadConfig(path string, getenv func(string) string) (Config, error) {
+	getenv = LegacyEnv(getenv)
 	var c Config
 	if b, err := os.ReadFile(path); err == nil {
 		if err := json.Unmarshal(b, &c); err != nil {
@@ -94,45 +95,45 @@ func LoadConfig(path string, getenv func(string) string) (Config, error) {
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return c, err
 	}
-	if v := getenv("LUMEN_AGENT_URL"); v != "" {
+	if v := getenv("KLUARD_AGENT_URL"); v != "" {
 		c.URL = v
 	}
-	if v := getenv("LUMEN_AGENT_API_KEY"); v != "" {
+	if v := getenv("KLUARD_AGENT_API_KEY"); v != "" {
 		c.APIKey = v
 	}
-	if truthy(getenv("LUMEN_AGENT_NO_REMOTE")) {
+	if truthy(getenv("KLUARD_AGENT_NO_REMOTE")) {
 		c.NoRemote = true
 	}
-	if v := getenv("LUMEN_AGENT_SYSTEMD"); v != "" {
+	if v := getenv("KLUARD_AGENT_SYSTEMD"); v != "" {
 		b := truthy(v)
 		c.Systemd = &b
 	}
-	if v := getenv("LUMEN_AGENT_CONTAINERS"); v != "" {
+	if v := getenv("KLUARD_AGENT_CONTAINERS"); v != "" {
 		b := truthy(v)
 		c.Containers = &b
 	}
-	if v := getenv("LUMEN_AGENT_REDIS_PASSWORD"); v != "" {
+	if v := getenv("KLUARD_AGENT_REDIS_PASSWORD"); v != "" {
 		c.RedisPassword = v
 	}
-	if v := getenv("LUMEN_AGENT_INTERVAL"); v != "" {
+	if v := getenv("KLUARD_AGENT_INTERVAL"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
 			c.IntervalSeconds = n
 		}
 	}
-	if v := getenv("LUMEN_AGENT_METRICS_LISTEN"); v != "" {
+	if v := getenv("KLUARD_AGENT_METRICS_LISTEN"); v != "" {
 		c.MetricsListen = v
 	}
-	if v := getenv("LUMEN_AGENT_ROLE"); v == "host" || v == "checker" {
+	if v := getenv("KLUARD_AGENT_ROLE"); v == "host" || v == "checker" {
 		c.RoleSetting = v
 	}
-	if v := strings.TrimSpace(getenv("LUMEN_AGENT_HOSTNAME")); v != "" && len(v) <= 128 {
+	if v := strings.TrimSpace(getenv("KLUARD_AGENT_HOSTNAME")); v != "" && len(v) <= 128 {
 		c.Hostname = v
 	}
-	if v := getenv("LUMEN_AGENT_HOST_METRICS"); v != "" {
+	if v := getenv("KLUARD_AGENT_HOST_METRICS"); v != "" {
 		b := truthy(v)
 		c.HostMetrics = &b
 	}
-	if v := getenv("LUMEN_AGENT_LOG_PATHS"); v != "" {
+	if v := getenv("KLUARD_AGENT_LOG_PATHS"); v != "" {
 		var paths []string
 		for _, p := range strings.Split(v, ",") {
 			if p = strings.TrimSpace(p); p != "" {
@@ -141,14 +142,14 @@ func LoadConfig(path string, getenv func(string) string) (Config, error) {
 		}
 		c.Logs = append(c.Logs, LogSource{Paths: paths, Service: "system-logs", Format: "text"})
 	}
-	if truthy(getenv("LUMEN_AGENT_DOCKER_LOGS")) {
+	if truthy(getenv("KLUARD_AGENT_DOCKER_LOGS")) {
 		c.Logs = append(c.Logs, LogSource{Paths: []string{"/var/lib/docker/containers/*/*-json.log"}, Service: "docker", Format: "docker"})
 	}
-	if u := getenv("LUMEN_AGENT_NEXTCLOUD_URL"); u != "" {
+	if u := getenv("KLUARD_AGENT_NEXTCLOUD_URL"); u != "" {
 		c.Nextcloud = append(c.Nextcloud, NextcloudTarget{
-			URL: u, Service: getenv("LUMEN_AGENT_NEXTCLOUD_SERVICE"), Token: getenv("LUMEN_AGENT_NEXTCLOUD_TOKEN"),
-			Username: getenv("LUMEN_AGENT_NEXTCLOUD_USER"), Password: getenv("LUMEN_AGENT_NEXTCLOUD_PASSWORD"),
-			LogPath: getenv("LUMEN_AGENT_NEXTCLOUD_LOG"),
+			URL: u, Service: getenv("KLUARD_AGENT_NEXTCLOUD_SERVICE"), Token: getenv("KLUARD_AGENT_NEXTCLOUD_TOKEN"),
+			Username: getenv("KLUARD_AGENT_NEXTCLOUD_USER"), Password: getenv("KLUARD_AGENT_NEXTCLOUD_PASSWORD"),
+			LogPath: getenv("KLUARD_AGENT_NEXTCLOUD_LOG"),
 		})
 	}
 	if c.URL == "" {
@@ -166,4 +167,19 @@ func LoadConfig(path string, getenv func(string) string) (Config, error) {
 		}
 	}
 	return c, nil
+}
+
+// LegacyEnv makes the old LUMEN_AGENT_* settings keep working next to the KLUARD_AGENT_* ones (the product used to be
+// called Lumen): an agent installed before the rename, or a Docker agent started with the old command, is not broken
+// by an update. The new name wins when both are set.
+func LegacyEnv(get func(string) string) func(string) string {
+	return func(k string) string {
+		if v := get(k); v != "" {
+			return v
+		}
+		if rest, ok := strings.CutPrefix(k, "KLUARD_"); ok {
+			return get("LUMEN_" + rest)
+		}
+		return ""
+	}
 }

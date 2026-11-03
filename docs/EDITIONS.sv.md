@@ -1,4 +1,4 @@
-# Lumens utgåvor: stadgan
+# Kluards utgåvor: stadgan
 
 Svenska · [English](EDITIONS.md)
 
@@ -6,14 +6,14 @@ Svenska · [English](EDITIONS.md)
 
 ## 1. Varför det här dokumentet finns
 
-Lumen utvecklas öppet, och en del av det kommer att säljas. Den som bygger på Lumen behöver veta vad som förblir gratis, vad som kostar pengar och varför, och att gränsen inte flyttas till deras nackdel senare. Den här stadgan fastställer gränsen offentligt.
+Kluard utvecklas öppet, och en del av det kommer att säljas. Den som bygger på Kluard behöver veta vad som förblir gratis, vad som kostar pengar och varför, och att gränsen inte flyttas till deras nackdel senare. Den här stadgan fastställer gränsen offentligt.
 
 ## 2. Våra löften
 
 1. **Community är en riktig produkt.** Allt som en ensam administratör eller ett litet team behöver för att övervaka sin egen infrastruktur finns i Community-utgåvan: insamling, sökning, dashboards, agenter, larm och backup. Det finns inga konstgjorda gränser för antal hostar, användare, dashboards, datamängd eller lagringstid.
 2. **Inga tillbakadragningar.** En funktion som har släppts i en Community-version flyttas aldrig till en betald utgåva. En funktion får flyttas åt andra hållet, från en betald utgåva till Community, när som helst.
 3. **Säkerhet är aldrig en betald funktion.** Isolering mellan tenants, autentisering, behörighetskontroller, kryptering av lagrade hemligheter och säkerhetsrättningar finns i alla utgåvor. Säkerhetsrättningar släpps till alla utgåvor samtidigt.
-4. **Din data är din.** Data kan alltid exporteras via API:t och backupfilerna, i enkla dokumenterade format som går att läsa utan Lumen.
+4. **Din data är din.** Data kan alltid exporteras via API:t och backupfilerna, i enkla dokumenterade format som går att läsa utan Kluard.
 5. **Ingen telefon hem.** Ingen av utgåvorna skickar användningsdata någonstans. Licenskontroll sker offline.
 6. **Ingen utelåsning.** Om en Enterprise-licens går ut raderas ingenting och ingen låses ute från sin data (se avsnitt 6).
 7. **Agenter är gratis.** Agenterna för Linux, Windows och Docker, och allt de samlar in, är Community-funktioner.
@@ -51,7 +51,7 @@ Lumen utvecklas öppet, och en del av det kommer att säljas. Den som bygger på
 | Kundvända rapporter, dedikerad lagring per tenant | | | Ja (planerad) |
 | Support med SLA, versioner med långtidsstöd, signerade byggen | Community-support via ärenden | Ja | Ja |
 
-**Operator-tillägget** är till för att driva Lumen *åt andra*: en hostingleverantör med kunder, eller ett företag med interna verksamheter som var och en behöver isolerad data, gränser och rapporter. Det kan kombineras med Enterprise.
+**Operator-tillägget** är till för att driva Kluard *åt andra*: en hostingleverantör med kunder, eller ett företag med interna verksamheter som var och en behöver isolerad data, gränser och rapporter. Det kan kombineras med Enterprise.
 
 ## 4. Hur vi bestämmer var en funktion hamnar
 
@@ -59,7 +59,7 @@ Vi ställer de här frågorna i ordning och stannar vid första svaret:
 
 1. Behövs den för datans säkerhet, eller för att produkten alls ska fungera? **Community.**
 2. Skulle en administratör eller ett litet team på en server använda den? **Community.**
-3. Är den viktig främst för styrning och regelefterlevnad, för skala över team och platser, för integration med företagets system, eller för att driva Lumen som tjänst åt kunder? **Enterprise** eller **Operator.**
+3. Är den viktig främst för styrning och regelefterlevnad, för skala över team och platser, för integration med företagets system, eller för att driva Kluard som tjänst åt kunder? **Enterprise** eller **Operator.**
 4. Är det ett gränsfall? **Community.**
 
 ## 5. Det som aldrig kräver licens
@@ -71,7 +71,7 @@ Agenter; API:t och dataexport; isolering mellan tenants och varje behörighetsko
 *Status: det här avsnittet är genomfört (se [LICENSING.sv.md](LICENSING.sv.md)); varningen vid 90 procent och fristen fungerar som beskrivet.*
 
 - En Enterprise- eller Operator-licens är en **signerad fil som verifieras offline**. Den anger organisationen, utgåvorna, utgångsdatum och, för Operator-tillägget, eventuella gränser.
-- Gränser i en licens är **mjuka**: Lumen visar varningar vid 90 procent och när en gräns överskrids. Lumen vägrar inte ta emot data på grund av en licens. (Kvoter som en operatör sätter för sina egna kunder är något annat; de är operatörens egen konfiguration.)
+- Gränser i en licens är **mjuka**: Kluard visar varningar vid 90 procent och när en gräns överskrids. Kluard vägrar inte ta emot data på grund av en licens. (Kvoter som en operatör sätter för sina egna kunder är något annat; de är operatörens egen konfiguration.)
 - **När en licens går ut** gäller en frist på 30 dagar med en banner. Därefter slutar Enterprise-funktionerna att fungera. Community-funktionerna och all data påverkas inte, och ingenting raderas. Ett lokalt administratörskonto fungerar alltid, även om single sign-on inte längre är tillgängligt.
 
 ## 7. Bidrag och licenser

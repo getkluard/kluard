@@ -1,6 +1,6 @@
-// lumen-agent collects host metrics, systemd services and Docker containers, scrapes Prometheus endpoints,
-// monitors Nextcloud instances and tails log files, then pushes everything to Lumen over OTLP/HTTP JSON.
-// What it collects can be changed from the Lumen web UI (Hosts and Instances): the agent fetches its
+// kluard-agent collects host metrics, systemd services and Docker containers, scrapes Prometheus endpoints,
+// monitors Nextcloud instances and tails log files, then pushes everything to Kluard over OTLP/HTTP JSON.
+// What it collects can be changed from the Kluard web UI (Hosts and Instances): the agent fetches its
 // configuration from the server every minute and restarts its collectors when it changed.
 package main
 
@@ -17,13 +17,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/inmagma/lumen/internal/agent"
+	"github.com/getkluard/kluard/internal/agent"
 )
 
 const pollRemote = 60 * time.Second
 
 func main() {
-	path := flag.String("config", "lumen-agent.json", "path to JSON config (optional; LUMEN_AGENT_* env vars also work)")
+	path := flag.String("config", "kluard-agent.json", "path to JSON config (optional; KLUARD_AGENT_* env vars also work)")
 	version := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
 	if *version {
@@ -38,15 +38,15 @@ func main() {
 		os.Exit(1)
 	}
 	if cfg.APIKey == "" {
-		log.Warn("no API key configured; this only works against a Lumen running in dev mode")
+		log.Warn("no API key configured; this only works against a Kluard running in dev mode")
 	}
 	hostname, _ := os.Hostname()
 	if cfg.Hostname != "" {
-		hostname = cfg.Hostname // LUMEN_AGENT_HOSTNAME: for example a name for an agent that only checks instances
+		hostname = cfg.Hostname // KLUARD_AGENT_HOSTNAME: for example a name for an agent that only checks instances
 	}
 	snd := &agent.Sender{URL: cfg.URL, APIKey: cfg.APIKey}
 	self := agent.NewSelf(hostname)
-	self.SetLumenURL(cfg.URL)
+	self.SetKluardURL(cfg.URL)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -61,7 +61,7 @@ func main() {
 		go func() { <-ctx.Done(); srv.Close() }()
 	}
 
-	su := agent.NewSelfUpdate(os.Getenv("LUMEN_AGENT_SELF_UPDATE"), cfg.URL)
+	su := agent.NewSelfUpdate(agent.LegacyEnv(os.Getenv)("KLUARD_AGENT_SELF_UPDATE"), cfg.URL)
 	self.SetSelfUpdate(su.Capability())
 
 	warned := false
@@ -94,7 +94,7 @@ func main() {
 		runCtx, cancel := context.WithCancel(ctx)
 		var wg sync.WaitGroup
 		n := start(runCtx, &wg, eff, snd, self, hostname, log)
-		log.Info("lumen-agent running", "version", agent.Version, "host", hostname, "url", cfg.URL, "config_revision", rev,
+		log.Info("kluard-agent running", "version", agent.Version, "host", hostname, "url", cfg.URL, "config_revision", rev,
 			"host_metrics", eff.HostOn(), "systemd", eff.SystemdOn(), "containers", eff.ContainersOn(),
 			"nextcloud_targets", len(eff.Nextcloud), "log_sources", n)
 
@@ -138,7 +138,7 @@ func main() {
 			continue
 		}
 		if changed {
-			log.Info("configuration changed in the Lumen UI, restarting collectors")
+			log.Info("configuration changed in the Kluard UI, restarting collectors")
 		}
 	}
 }
@@ -338,7 +338,7 @@ func start(ctx context.Context, wg *sync.WaitGroup, cfg agent.Config, snd *agent
 	return len(tailers)
 }
 
-// updateIfAsked acts on an update that someone asked for in the Lumen UI. It returns the path of a new binary when the
+// updateIfAsked acts on an update that someone asked for in the Kluard UI. It returns the path of a new binary when the
 // caller should replace this process with it; for the systemd way it only writes the request and returns "".
 func updateIfAsked(ctx context.Context, su *agent.SelfUpdate, rc agent.RemoteConfig, log *slog.Logger) string {
 	if rc.UpdateTo == "" || rc.UpdateTo == agent.Version {

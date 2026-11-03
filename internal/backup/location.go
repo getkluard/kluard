@@ -12,10 +12,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/inmagma/lumen/internal/docstore"
+	"github.com/getkluard/kluard/internal/docstore"
 )
 
-// Where is the folder backups are written to. It can be changed from Settings while Lumen runs, so everything that reads it
+// Where is the folder backups are written to. It can be changed from Settings while Kluard runs, so everything that reads it
 // asks here.
 type Where struct {
 	mu     sync.RWMutex
@@ -126,7 +126,7 @@ func Check(dir string, roots []string, dataDir string, write bool, statfs func(s
 		return "", false
 	}
 	if _, ok := inRoots(dir); !ok {
-		return fail("the folder must be inside one of: %s (for example /mnt/backup). This limit is set with LUMEN_BACKUP_ROOTS", strings.Join(roots, ", "))
+		return fail("the folder must be inside one of: %s (for example /mnt/backup). This limit is set with KLUARD_BACKUP_ROOTS", strings.Join(roots, ", "))
 	}
 	st, err := os.Stat(dir)
 	if err != nil {
@@ -147,9 +147,9 @@ func Check(dir string, roots []string, dataDir string, write bool, statfs func(s
 	if write {
 		b := make([]byte, 4)
 		_, _ = rand.Read(b)
-		probe := filepath.Join(dir, ".lumen-write-test-"+hex.EncodeToString(b))
+		probe := filepath.Join(dir, ".kluard-write-test-"+hex.EncodeToString(b))
 		if err := os.WriteFile(probe, []byte("x"), 0o600); err != nil {
-			return fail("Lumen cannot write to %s (%v). The folder or the mount may be read-only, or owned by another user", dir, strings.TrimPrefix(err.Error(), "open "+probe+": "))
+			return fail("Kluard cannot write to %s (%v). The folder or the mount may be read-only, or owned by another user", dir, strings.TrimPrefix(err.Error(), "open "+probe+": "))
 		}
 		_ = os.Remove(probe)
 		in.Writable = true
@@ -165,9 +165,9 @@ func Check(dir string, roots []string, dataDir string, write bool, statfs func(s
 	}
 	switch {
 	case in.OnRootDisk && in.SameDiskAsData:
-		in.Warning = "This folder is on the same disk as Lumen's data and the system. A disk that fails takes the backups with it, and in a container this may be the container's own storage, which is lost when the container is recreated. Mount a separate disk for backups."
+		in.Warning = "This folder is on the same disk as Kluard's data and the system. A disk that fails takes the backups with it, and in a container this may be the container's own storage, which is lost when the container is recreated. Mount a separate disk for backups."
 	case in.SameDiskAsData:
-		in.Warning = "This folder is on the same disk as Lumen's data: a disk that fails takes the backups with it."
+		in.Warning = "This folder is on the same disk as Kluard's data: a disk that fails takes the backups with it."
 	}
 	return in
 }

@@ -8,7 +8,7 @@ Svenska · [English](alerting.md)
 
 ## 1. Sammanfattning
 
-Lumen visar vad som är fel men kan ännu inte **säga till någon**. Det här förslaget lägger till en larmmotor i den öppna kärnan, med e-post, webhook, Slack och Teams, och definierar den förlängningspunkt där Enterprise lägger till Jira, ServiceNow, PagerDuty, Opsgenie, eskalering och jour.
+Kluard visar vad som är fel men kan ännu inte **säga till någon**. Det här förslaget lägger till en larmmotor i den öppna kärnan, med e-post, webhook, Slack och Teams, och definierar den förlängningspunkt där Enterprise lägger till Jira, ServiceNow, PagerDuty, Opsgenie, eskalering och jour.
 
 Principen: **kärnan utvärderar och levererar. Enterprise lägger till vem som väcks och vilket system som får ett ärende.**
 
@@ -23,7 +23,7 @@ Principen: **kärnan utvärderar och levererar. Enterprise lägger till vem som 
 
 **Icke-mål (tills vidare)**
 - Avvikelsedetektering och prognoser (Enterprise, senare).
-- En produkt för incidenthantering. Lumen lämnar över larm till verktygen som gör det.
+- En produkt för incidenthantering. Kluard lämnar över larm till verktygen som gör det.
 - Notiser direkt till mobilappar.
 
 ## 3. Vad som finns i dag och kan återanvändas
@@ -96,7 +96,7 @@ Kärnan definierar vad en **notifierare** är: ett namn, ett sätt att validera 
 | **E-post** (SMTP med TLS och autentisering) | Community |
 | **Webhook** (JSON, signerad med en hemlighet, egna rubriker) | Community |
 | **Slack**, **Microsoft Teams** (inkommande webhooks) | Community |
-| **Heartbeat** (ett regelbundet utgående ping till en extern tjänst, så att du märker när Lumen själv ligger nere) | Community |
+| **Heartbeat** (ett regelbundet utgående ping till en extern tjänst, så att du märker när Kluard själv ligger nere) | Community |
 | **PagerDuty**, **Opsgenie** | Enterprise |
 | **Jira**, **ServiceNow** (skapa ett ärende, lägg till kommentarer vid upprepning, stäng det vid återhämtning, minns vilket larm som hör till vilket ärende) | Enterprise |
 | **Eskaleringspolicyer och jourscheman** (notifiera A nu, B efter 15 minuter om ingen kvitterat, rotationer, överstyrningar) | Enterprise |
@@ -104,7 +104,7 @@ Kärnan definierar vad en **notifierare** är: ett namn, ett sätt att validera 
 
 ### 7.4 Meddelanden
 
-Meddelandetexter är mallar över en liten uppsättning fält (regel, etiketter, värde, tillstånd, länk till Lumen). Mallar kan inte anropa funktioner eller läsa något annat, så en mall kan aldrig läcka data eller köra kod. Enterprise lägger till mallar per kanal och ett mallgalleri.
+Meddelandetexter är mallar över en liten uppsättning fält (regel, etiketter, värde, tillstånd, länk till Kluard). Mallar kan inte anropa funktioner eller läsa något annat, så en mall kan aldrig läcka data eller köra kod. Enterprise lägger till mallar per kanal och ett mallgalleri.
 
 ## 8. Kvittera och tysta
 
@@ -140,7 +140,7 @@ Levereras som mallar som administratören kan aktivera med ett klick (några akt
 | Hög CPU | över 90 procent i 10 minuter |
 | Backup saknas | ingen lyckad backup på 36 timmar |
 | Loggsökvägar nekade | en agent nekade loggsökvägar från servern |
-| Lumen mår dåligt | databasen svarar inte, fel vid insamling, larmleverans misslyckas |
+| Kluard mår dåligt | databasen svarar inte, fel vid insamling, larmleverans misslyckas |
 | Disken full om 24 timmar (prognos) | Enterprise |
 
 ## 12. Gränssnitt och API
@@ -155,7 +155,7 @@ Nya dokumentsamlingar: regler, dirigeringar, kanaler (med förseglade hemlighete
 
 ## 14. Att bevaka bevakaren
 
-Lumen rapporterar sin egen larmfunktion som mätvärden: utvärderingar, utvärderingstid, fel, larm per tillstånd, skickade och misslyckade notiser samt kölängd. **Heartbeat**-kanalen och de inbyggda reglerna "Lumen mår dåligt" täcker fallet där Lumen inte kan berätta det själv.
+Kluard rapporterar sin egen larmfunktion som mätvärden: utvärderingar, utvärderingstid, fel, larm per tillstånd, skickade och misslyckade notiser samt kölängd. **Heartbeat**-kanalen och de inbyggda reglerna "Kluard mår dåligt" täcker fallet där Kluard inte kan berätta det själv.
 
 ## 15. Felsituationer
 

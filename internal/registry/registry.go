@@ -16,8 +16,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/secretbox"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/secretbox"
 )
 
 const (

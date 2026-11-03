@@ -3,9 +3,9 @@ package server
 import (
 	"net/http"
 
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/perm"
-	"github.com/inmagma/lumen/internal/store"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/perm"
+	"github.com/getkluard/kluard/internal/store"
 )
 
 type handler = func(http.ResponseWriter, *http.Request, edition.Identity)

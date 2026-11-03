@@ -52,7 +52,7 @@ EOF
 fi
 systemctl enable --now docker
 # Elasticsearch needs a larger memory-map limit on the host
-echo 'vm.max_map_count=262144' > /etc/sysctl.d/99-lumen.conf
+echo 'vm.max_map_count=262144' > /etc/sysctl.d/99-kluard.conf
 sysctl -w vm.max_map_count=262144 >/dev/null
 apt-get install -y chrony && systemctl enable --now chrony
 

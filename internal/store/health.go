@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/inmagma/lumen/internal/health"
+	"github.com/getkluard/kluard/internal/health"
 )
 
 // Health asks ClickHouse how much room its disks have and what takes the space. The system tables (query log, trace log and the

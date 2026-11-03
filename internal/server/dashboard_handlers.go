@@ -5,9 +5,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/inmagma/lumen/internal/dashboards"
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/perm"
+	"github.com/getkluard/kluard/internal/dashboards"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/perm"
 )
 
 // WithDashboards enables the dashboard CRUD API.

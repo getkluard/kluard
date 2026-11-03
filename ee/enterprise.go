@@ -1,4 +1,4 @@
-// Package ee holds Lumen Enterprise features: ticket and on-call notifiers today (notifiers.go); SSO, audit export and
+// Package ee holds Kluard Enterprise features: ticket and on-call notifiers today (notifiers.go); SSO, audit export and
 // long-term retention tiers are planned (see docs/EDITIONS.md).
 // This directory is under a separate commercial license, see ee/LICENSE.
 //

@@ -8,12 +8,12 @@ import (
 	"time"
 )
 
-// Redis is what Lumen knows about one Redis server beyond what its agent finds by itself: the password (encrypted), an
+// Redis is what Kluard knows about one Redis server beyond what its agent finds by itself: the password (encrypted), an
 // ACL user, and, for a Redis that is not in Docker, its address. A Redis in Docker is matched by Container on Host.
 type Redis struct {
 	ID          string    `json:"id"`
 	Tenant      string    `json:"tenant,omitempty"`
-	Name        string    `json:"name"`      // what it is called in Lumen
+	Name        string    `json:"name"`      // what it is called in Kluard
 	Host        string    `json:"host"`      // the machine whose agent connects to it
 	Container   string    `json:"container"` // Docker container name (empty for one given by address)
 	Addr        string    `json:"addr"`      // host:port, optional for a container

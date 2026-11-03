@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/license"
-	"github.com/inmagma/lumen/internal/perm"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/license"
+	"github.com/getkluard/kluard/internal/perm"
 )
 
 // WithLicense enables the licence settings and tells the interface what the licence allows.
@@ -14,7 +14,7 @@ func (s *Server) WithLicense(m *license.Manager) *Server { s.lic = m; return s }
 
 // WithOwnerTenant says which tenant owns the installation. The licence belongs to the installation, not to one customer,
 // so in a multi-tenant installation only users of this tenant may see or change it. (Until the Operator add-on gives
-// an operator role of its own, this is the tenant that was created when Lumen was installed.)
+// an operator role of its own, this is the tenant that was created when Kluard was installed.)
 func (s *Server) WithOwnerTenant(t string) *Server { s.owner = t; return s }
 
 func (s *Server) isOwner(id edition.Identity) bool { return s.owner == "" || id.Tenant == s.owner }

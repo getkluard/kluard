@@ -26,7 +26,7 @@ services:
     volumes:
       - chdata:/var/lib/clickhouse
       # ClickHouse's own diagnostic logs off: they filled a disk with tens of GB (see the file). ,z lets SELinux (RHEL) read it
-      - ./clickhouse/lumen.xml:/etc/clickhouse-server/config.d/lumen.xml:ro,z
+      - ./clickhouse/kluard.xml:/etc/clickhouse-server/config.d/kluard.xml:ro,z
     ulimits: { nofile: { soft: 262144, hard: 262144 } }
     restart: unless-stopped
     healthcheck:
@@ -34,33 +34,34 @@ services:
       interval: 3s
       retries: 20
 
-  lumen:
+  kluard:
     build:
       context: ..
     depends_on:
       clickhouse: { condition: service_healthy }
       elasticsearch: { condition: service_healthy }
     environment:
-      LUMEN_CLICKHOUSE_URL: http://clickhouse:8123
-      LUMEN_CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?run deploy/gen-env.sh first}
-      LUMEN_API_KEYS: ${LUMEN_API_KEYS:?run deploy/gen-env.sh first}
-      LUMEN_DATA_DIR: /data
-      LUMEN_ELASTICSEARCH_URL: http://elasticsearch:9200
-      LUMEN_ELASTICSEARCH_USER: elastic
-      LUMEN_ELASTICSEARCH_PASSWORD: ${ELASTIC_PASSWORD:?run deploy/gen-env.sh first}
-      LUMEN_ADMIN_USER: ${LUMEN_ADMIN_USER:-}
-      LUMEN_ADMIN_PASSWORD: ${LUMEN_ADMIN_PASSWORD:-}
-      LUMEN_ADMIN_TENANT: ${LUMEN_ADMIN_TENANT:-main}
-      LUMEN_RETENTION_DAYS: ${LUMEN_RETENTION_DAYS:-30}   # days of live data in ClickHouse
-      LUMEN_BACKUP_DIR: /backup                          # daily export of data before it expires
-      LUMEN_BACKUP_RETENTION_DAYS: ${LUMEN_BACKUP_RETENTION_DAYS:-365}   # 0 = keep forever
-      LUMEN_SECRET_KEY: ${LUMEN_SECRET_KEY:?run deploy/gen-env.sh first}
-      LUMEN_PUBLIC_URL: ${LUMEN_PUBLIC_URL:-}
+      KLUARD_CLICKHOUSE_URL: http://clickhouse:8123
+      KLUARD_CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:?run deploy/gen-env.sh first}
+      KLUARD_API_KEYS: ${KLUARD_API_KEYS:-${LUMEN_API_KEYS:?run deploy/gen-env.sh first}}
+      KLUARD_DATA_DIR: /data
+      KLUARD_ELASTICSEARCH_URL: http://elasticsearch:9200
+      KLUARD_ELASTICSEARCH_USER: elastic
+      KLUARD_ELASTICSEARCH_PASSWORD: ${ELASTIC_PASSWORD:?run deploy/gen-env.sh first}
+      KLUARD_ADMIN_USER: ${KLUARD_ADMIN_USER:-${LUMEN_ADMIN_USER:-}}
+      KLUARD_ADMIN_PASSWORD: ${KLUARD_ADMIN_PASSWORD:-${LUMEN_ADMIN_PASSWORD:-}}
+      KLUARD_ADMIN_TENANT: ${KLUARD_ADMIN_TENANT:-${LUMEN_ADMIN_TENANT:-main}}
+      KLUARD_RETENTION_DAYS: ${KLUARD_RETENTION_DAYS:-${LUMEN_RETENTION_DAYS:-30}}   # days of live data in ClickHouse
+      KLUARD_BACKUP_DIR: /backup                          # daily export of data before it expires
+      KLUARD_BACKUP_RETENTION_DAYS: ${KLUARD_BACKUP_RETENTION_DAYS:-${LUMEN_BACKUP_RETENTION_DAYS:-365}}   # 0 = keep forever
+      KLUARD_SECRET_KEY: ${KLUARD_SECRET_KEY:-${LUMEN_SECRET_KEY:?run deploy/gen-env.sh first}}
+      KLUARD_PUBLIC_URL: ${KLUARD_PUBLIC_URL:-${LUMEN_PUBLIC_URL:-}}
     # To keep backups on another disk: mount the disk on the machine (for example at /mnt/backup), add the line
     #   - /mnt/backup:/mnt/backup
     # under volumes, start again, and choose /mnt/backup under Settings, Where backups are kept.
+    # (the volume names keep their old spelling: renaming a volume would start with an empty one and hide the old data)
     volumes: [lumendata:/data, lumenbackup:/backup]   # only used for the optional JSON-file fallback / old auth.json import
-    ports: ["${LUMEN_BIND:-0.0.0.0}:4318:4318"]
+    ports: ["${KLUARD_BIND:-${LUMEN_BIND:-0.0.0.0}}:4318:4318"]
     restart: unless-stopped
 
 volumes:

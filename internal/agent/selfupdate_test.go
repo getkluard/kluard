@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func artifactName() string { return "lumen-agent-" + runtime.GOOS + "-" + runtime.GOARCH }
+func artifactName() string { return "kluard-agent-" + runtime.GOOS + "-" + runtime.GOARCH }
 
 // a pretend agent: a shell script that prints the version it claims to be
 func fakeAgent(version string) []byte { return []byte("#!/bin/sh\necho " + version + "\n") }
@@ -41,8 +41,8 @@ func TestSelfUpdateSettingIsParsedStrictly(t *testing.T) {
 			t.Errorf("%q must not enable self-update", bad)
 		}
 	}
-	u := NewSelfUpdate("systemd:/var/lib/lumen-agent/", "http://lumen.example.com/")
-	if u == nil || u.Mode != "systemd" || u.Dir != "/var/lib/lumen-agent" || u.URL != "http://lumen.example.com" || u.Capability() != "systemd" {
+	u := NewSelfUpdate("systemd:/var/lib/kluard-agent/", "http://kluard.example.com/")
+	if u == nil || u.Mode != "systemd" || u.Dir != "/var/lib/kluard-agent" || u.URL != "http://kluard.example.com" || u.Capability() != "systemd" {
 		t.Fatalf("%+v", u)
 	}
 	var none *SelfUpdate
@@ -113,7 +113,7 @@ func TestExecModeDownloadsVerifiesAndChecksTheVersion(t *testing.T) {
 	dir := t.TempDir()
 	u := NewSelfUpdate("exec:"+dir, ts.URL)
 	o, p, err := u.Request(context.Background(), "src-new")
-	if err != nil || o != OutcomeExec || p != filepath.Join(dir, "lumen-agent.next") {
+	if err != nil || o != OutcomeExec || p != filepath.Join(dir, "kluard-agent.next") {
 		t.Fatalf("%v %q %v", o, p, err)
 	}
 	if st, _ := os.Stat(p); st.Mode().Perm()&0o100 == 0 {
@@ -125,7 +125,7 @@ func TestExecModeDownloadsVerifiesAndChecksTheVersion(t *testing.T) {
 	if _, _, err := NewSelfUpdate("exec:"+dir2, ts2.URL).Request(context.Background(), "src-new"); err == nil || !strings.Contains(err.Error(), "checksum mismatch") {
 		t.Fatalf("%v", err)
 	}
-	if _, err := os.Stat(filepath.Join(dir2, "lumen-agent.next")); err == nil {
+	if _, err := os.Stat(filepath.Join(dir2, "kluard-agent.next")); err == nil {
 		t.Fatal("a file that failed its checksum is never written")
 	}
 	// the file is genuine but says it is another version than the one asked for (a stale download folder): refused, deleted
@@ -135,7 +135,7 @@ func TestExecModeDownloadsVerifiesAndChecksTheVersion(t *testing.T) {
 	if _, _, err := NewSelfUpdate("exec:"+dir3, ts3.URL).Request(context.Background(), "src-new"); err == nil || !strings.Contains(err.Error(), `says it is version "src-stale", not "src-new"`) {
 		t.Fatalf("%v", err)
 	}
-	if _, err := os.Stat(filepath.Join(dir3, "lumen-agent.next")); err == nil {
+	if _, err := os.Stat(filepath.Join(dir3, "kluard-agent.next")); err == nil {
 		t.Fatal("a file that is the wrong version is removed")
 	}
 	// ... and the attempt is remembered, so that it is not tried every minute
@@ -171,7 +171,7 @@ func TestAgentReportsHowItCanUpdate(t *testing.T) {
 	s := NewSelf("web1")
 	has := func() (string, bool) {
 		for _, p := range s.Collect("host", time.Now().UnixNano()) {
-			if p.Name == "lumen_agent_info" {
+			if p.Name == "kluard_agent_info" {
 				v, ok := p.Attrs["self_update"]
 				return v, ok
 			}

@@ -24,7 +24,7 @@ body:
     id: logs
     attributes:
       label: Logs
-      description: "`docker compose -f deploy/docker-compose.yml logs --tail=100 lumen` or `journalctl -u lumen-agent`. Remove API keys, tokens and passwords first."
+      description: "`docker compose -f deploy/docker-compose.yml logs --tail=100 kluard` or `journalctl -u kluard-agent`. Remove API keys, tokens and passwords first."
       render: text
   - type: textarea
     id: env

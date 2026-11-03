@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/perm"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/perm"
 )
 
 func (s *Server) userRoutes(mux *http.ServeMux) {

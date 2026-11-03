@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/inmagma/lumen/internal/config"
+	"github.com/getkluard/kluard/internal/config"
 )
 
 func TestClickHouseHealth(t *testing.T) {
@@ -26,7 +26,7 @@ func TestClickHouseHealth(t *testing.T) {
 		}
 	}))
 	defer srv.Close()
-	c := NewClickHouse(config.Config{ClickHouseURL: srv.URL, ClickHouseDB: "lumen", ClickHouseUser: "default"})
+	c := NewClickHouse(config.Config{ClickHouseURL: srv.URL, ClickHouseDB: "kluard", ClickHouseUser: "default"})
 	h, err := c.Health(context.Background())
 	if err != nil || len(h.Disks) != 1 || h.Disks[0].Name != "default" || h.Disks[0].Free != 5368709120 || h.Disks[0].Total != 75161927680 {
 		t.Fatalf("%+v %v", h, err)
@@ -40,7 +40,7 @@ func TestClickHouseHealth(t *testing.T) {
 	// a failing ClickHouse is an error the page can show
 	bad := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.Error(w, "Code: 999", 500) }))
 	defer bad.Close()
-	if _, err := NewClickHouse(config.Config{ClickHouseURL: bad.URL, ClickHouseDB: "lumen"}).Health(context.Background()); err == nil {
+	if _, err := NewClickHouse(config.Config{ClickHouseURL: bad.URL, ClickHouseDB: "kluard"}).Health(context.Background()); err == nil {
 		t.Fatal("an error")
 	}
 }

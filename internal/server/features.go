@@ -3,9 +3,9 @@ package server
 import (
 	"net/http"
 
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/license"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/license"
 )
 
 // Features that need an Enterprise licence. They are the things an organisation buys because it is bigger: groups with

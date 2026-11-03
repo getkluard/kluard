@@ -59,9 +59,9 @@ func (s *Sender) Post(ctx context.Context, path string, body []byte) error {
 		case resp.StatusCode < 300:
 			return nil
 		case resp.StatusCode < 500:
-			return fmt.Errorf("lumen rejected %s: %s", path, resp.Status)
+			return fmt.Errorf("kluard rejected %s: %s", path, resp.Status)
 		}
-		last = fmt.Errorf("lumen %s: %s", path, resp.Status)
+		last = fmt.Errorf("kluard %s: %s", path, resp.Status)
 	}
 	return last
 }

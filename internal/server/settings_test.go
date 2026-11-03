@@ -11,13 +11,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/branding"
-	"github.com/inmagma/lumen/internal/dashboards"
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/model"
-	"github.com/inmagma/lumen/internal/registry"
-	"github.com/inmagma/lumen/internal/secretbox"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/branding"
+	"github.com/getkluard/kluard/internal/dashboards"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/model"
+	"github.com/getkluard/kluard/internal/registry"
+	"github.com/getkluard/kluard/internal/secretbox"
 )
 
 func settingsServer(t *testing.T) (*httptest.Server, *fakeStore) {
@@ -87,8 +87,8 @@ func TestRenameAndRemoveHostAPI(t *testing.T) {
 	login(t, rd, ts, "reader", "readers-long-password")
 	now := time.Now().Unix()
 	fs.latest = []model.Latest{
-		{Name: "lumen_agent_info", Attrs: map[string]string{"host": "b4d226bb6dfe", "version": "0.4"}, Value: 1, T: now - 3},
-		{Name: "lumen_agent_info", Attrs: map[string]string{"host": "oldbox", "version": "0.4"}, Value: 1, T: now - 7200},
+		{Name: "kluard_agent_info", Attrs: map[string]string{"host": "b4d226bb6dfe", "version": "0.4"}, Value: 1, T: now - 3},
+		{Name: "kluard_agent_info", Attrs: map[string]string{"host": "oldbox", "version": "0.4"}, Value: 1, T: now - 7200},
 	}
 	if code(ad, "PUT", ts.URL+"/api/v1/hosts/b4d226bb6dfe", `{"display_name":"Nextcloud KS","systemd":true,"containers":true}`) != 200 {
 		t.Fatal("rename")

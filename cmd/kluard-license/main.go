@@ -1,4 +1,4 @@
-// Command lumen-license is the publisher's tool: it makes the signing key pair and issues licence files.
+// Command kluard-license is the publisher's tool: it makes the signing key pair and issues licence files.
 //
 // Keep the private key (*.key) secret and off any server that customers can reach. It is the only thing that can make
 // a licence. The public key (*.pub) is not secret: it goes into internal/license/keys/ and is built into the program.
@@ -17,21 +17,21 @@ import (
 	"strings"
 	"time"
 
-	"github.com/inmagma/lumen/internal/license"
+	"github.com/getkluard/kluard/internal/license"
 )
 
 func main() { os.Exit(run(os.Args[1:], os.Stdout, os.Stderr)) }
 
-const usage = `lumen-license: make signing keys and issue licences
+const usage = `kluard-license: make signing keys and issue licences
 
-  lumen-license keygen  --id main [--dir keys]
-  lumen-license issue   --key keys/main.key --key-id main --customer "ACME AB"
+  kluard-license keygen  --id main [--dir keys]
+  kluard-license issue   --key keys/main.key --key-id main --customer "ACME AB"
                         --editions enterprise[,operator] (--days 365 | --expires 2027-12-31) [--issued 2026-01-31]
                         [--hosts 50] [--tenants 10] [--id L-2026-001] [--out acme.license] [--ledger issued.jsonl]
-  lumen-license trial   --key keys/main.key --customer "ACME AB" [--days 30] [--editions enterprise,operator]
+  kluard-license trial   --key keys/main.key --customer "ACME AB" [--days 30] [--editions enterprise,operator]
                         [--hosts 50] [--tenants 10] [--out acme-trial.license] [--ledger issued.jsonl]
                         a try-out licence: all features, 30 days, no grace period afterwards
-  lumen-license inspect FILE [--pub keys/main.pub]
+  kluard-license inspect FILE [--pub keys/main.pub]
 `
 
 func run(args []string, out, errw io.Writer) int {
@@ -102,7 +102,7 @@ func keygen(args []string, out io.Writer) error {
 Next:
   1. Copy the public key into the program:  cp %s internal/license/keys/%s.pub   and commit it.
   2. Build the program (the key is built in).
-  3. Issue a licence:  lumen-license issue --key %s --key-id %s --customer "..." --editions enterprise --days 365
+  3. Issue a licence:  kluard-license issue --key %s --key-id %s --customer "..." --editions enterprise --days 365
 `, *id, priv, pub, pub, *id, priv, *id)
 	return nil
 }
@@ -233,7 +233,7 @@ func inspect(args []string, out io.Writer) error {
 		return err
 	}
 	if fs.NArg() != 1 {
-		return fmt.Errorf("give the licence file: lumen-license inspect FILE")
+		return fmt.Errorf("give the licence file: kluard-license inspect FILE")
 	}
 	raw, err := os.ReadFile(fs.Arg(0))
 	if err != nil {

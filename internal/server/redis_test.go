@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/model"
+	"github.com/getkluard/kluard/internal/model"
 )
 
 func TestRedisPasswordsStayOnTheServerAndReachOnlyTheRightAgent(t *testing.T) {
@@ -27,7 +27,7 @@ func TestRedisPasswordsStayOnTheServerAndReachOnlyTheRightAgent(t *testing.T) {
 	}
 	fs.latestFor = "acme"
 	fs.latest = []model.Latest{
-		{Name: "lumen_agent_info", Attrs: map[string]string{"host": "web1", "version": "0.3", "os": "linux/amd64"}, Value: 1, T: now - 3},
+		{Name: "kluard_agent_info", Attrs: map[string]string{"host": "web1", "version": "0.3", "os": "linux/amd64"}, Value: 1, T: now - 3},
 		{Name: "redis_up", Attrs: at("cache", nil), Value: 1, T: now - 3},
 		{Name: "redis_info", Attrs: at("cache", map[string]string{"container": "cache", "version": "7.2.4", "role": "master"}), Value: 1, T: now - 3},
 		{Name: "redis_memory_used_bytes", Attrs: at("cache", nil), Value: 1000, T: now - 3},

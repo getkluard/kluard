@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/model"
-	"github.com/inmagma/lumen/internal/registry"
-	"github.com/inmagma/lumen/internal/status"
+	"github.com/getkluard/kluard/internal/model"
+	"github.com/getkluard/kluard/internal/registry"
+	"github.com/getkluard/kluard/internal/status"
 )
 
 var t0 = time.Date(2026, 10, 5, 12, 0, 0, 0, time.UTC)

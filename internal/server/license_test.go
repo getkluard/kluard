@@ -12,12 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/alerts"
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/dashboards"
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/license"
-	"github.com/inmagma/lumen/internal/secretbox"
+	"github.com/getkluard/kluard/internal/alerts"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/dashboards"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/license"
+	"github.com/getkluard/kluard/internal/secretbox"
 )
 
 // a stand-in for an Enterprise channel type, so the gate can be tested without the enterprise build
@@ -109,7 +109,7 @@ func TestLicenceSettings(t *testing.T) {
 	}
 	// refused files, each with a reason
 	for name, data := range map[string]struct{ body, want string }{
-		"not a licence": {`{"license":"hello"}`, "not a Lumen licence file"}, "empty": {`{"license":""}`, "not a Lumen licence file"},
+		"not a licence": {`{"license":"hello"}`, "not a Kluard licence file"}, "empty": {`{"license":""}`, "not a Kluard licence file"},
 		"unknown key": {mustJSON(v.issueWith(t, "other")), "does not trust"},
 	} {
 		r, b := do(ad.c, "PUT", v.ts.URL+"/api/v1/settings/license", data.body)
@@ -148,7 +148,7 @@ func TestLicenceSettings(t *testing.T) {
 	if !typeLocked() {
 		t.Fatal("locked without a licence")
 	}
-	if r, b := do(ad.c, "POST", v.ts.URL+"/api/v1/notifications/channels", ch); r.StatusCode != 400 || !strings.Contains(string(b), "needs a Lumen Enterprise licence") {
+	if r, b := do(ad.c, "POST", v.ts.URL+"/api/v1/notifications/channels", ch); r.StatusCode != 400 || !strings.Contains(string(b), "needs a Kluard Enterprise licence") {
 		t.Fatalf("%d %s", r.StatusCode, b)
 	}
 	// install a licence

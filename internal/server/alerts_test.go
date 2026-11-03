@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/inmagma/lumen/internal/registry"
+	"github.com/getkluard/kluard/internal/registry"
 	"io"
 	"log/slog"
 	"net/http"
@@ -14,13 +14,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/alerts"
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/dashboards"
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/model"
-	"github.com/inmagma/lumen/internal/secretbox"
-	"github.com/inmagma/lumen/internal/status"
+	"github.com/getkluard/kluard/internal/alerts"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/dashboards"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/model"
+	"github.com/getkluard/kluard/internal/secretbox"
+	"github.com/getkluard/kluard/internal/status"
 )
 
 type alertQ struct {
@@ -67,7 +67,7 @@ func alertServer(t *testing.T) *alertEnv {
 	q := &alertQ{vals: map[string]float64{}}
 	clk := &struct{ t time.Time }{t: time.Now()}
 	eng := &alerts.Engine{DB: f, Box: box, Eval: &alerts.Evaluator{Q: q, St: noStatus{}}, Guard: alerts.Guard{AllowPrivate: true}, GroupWait: time.Second,
-		Now: func() time.Time { return clk.t }, PublicURL: "https://lumen.example.com"}
+		Now: func() time.Time { return clk.t }, PublicURL: "https://kluard.example.com"}
 	ts := httptest.NewServer(New(&fakeStore{}, a, slog.New(slog.NewTextHandler(io.Discard, nil))).WithAuth(a).WithDashboards(dashboards.New(f)).WithAlerts(eng).Handler())
 	t.Cleanup(ts.Close)
 	return &alertEnv{ts, eng, q, clk}
@@ -170,7 +170,7 @@ func TestChannelsNeverRevealSecretsAndTestWorks(t *testing.T) {
 	}
 	dest := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		got.body, _ = io.ReadAll(r.Body)
-		got.sig, got.ts = r.Header.Get("X-Lumen-Signature"), r.Header.Get("X-Lumen-Timestamp")
+		got.sig, got.ts = r.Header.Get("X-Kluard-Signature"), r.Header.Get("X-Kluard-Timestamp")
 	}))
 	defer dest.Close()
 	_, b := do(ad, "GET", v.ts.URL+"/api/v1/notifications/types", "")

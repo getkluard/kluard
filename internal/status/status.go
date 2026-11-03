@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/inmagma/lumen/internal/model"
-	"github.com/inmagma/lumen/internal/registry"
+	"github.com/getkluard/kluard/internal/model"
+	"github.com/getkluard/kluard/internal/registry"
 )
 
 // Metric names the status view needs.
-var Names = []string{"lumen_agent_info", "lumen_agent_log_paths_rejected", "nextcloud_up", "nextcloud_info", "nextcloud_users", "system_service_up", "container_up",
+var Names = []string{"kluard_agent_info", "kluard_agent_log_paths_rejected", "lumen_agent_info", "lumen_agent_log_paths_rejected", "nextcloud_up", "nextcloud_info", "nextcloud_users", "system_service_up", "container_up",
 	"redis_up", "redis_auth_required", "redis_info", "redis_memory_used_bytes", "redis_memory_max_bytes", "redis_clients", "redis_evicted_keys_total", "redis_keyspace_hits_total", "redis_keyspace_misses_total", "redis_uptime_seconds", "redis_keys", "redis_master", "redis_save_ok",
 	"nextcloud_cron_age_seconds", "nextcloud_update_available", "nextcloud_webdav_ok", "nextcloud_tls_cert_expiry_seconds", "nextcloud_tls_cert_valid"}
 
@@ -45,7 +45,7 @@ type Host struct {
 	Version          string   `json:"version"`
 	SelfUpdate       string   `json:"self_update,omitempty"` // how the agent can update itself ("systemd", "exec"), empty if it cannot
 	OS               string   `json:"os"`
-	IP               string   `json:"ip"`  // the address the machine uses to reach Lumen
+	IP               string   `json:"ip"`  // the address the machine uses to reach Kluard
 	IPs              []string `json:"ips"` // its other usable addresses (the agent reports them)
 	LastSeen         int64    `json:"last_seen"`
 	Services         Counts   `json:"services"`
@@ -132,7 +132,7 @@ func ComputeWith(now time.Time, rows []model.Latest, configured map[string]regis
 		return hosts[n]
 	}
 	for _, r := range rows {
-		if r.Name == "lumen_agent_info" && r.Attrs["host"] != "" {
+		if r.Name == "kluard_agent_info" && r.Attrs["host"] != "" {
 			h := host(r.Attrs["host"])
 			if r.T >= h.LastSeen {
 				h.LastSeen, h.Version, h.OS, h.SelfUpdate, h.Role = r.T, r.Attrs["version"], r.Attrs["os"], r.Attrs["self_update"], r.Attrs["role"]
@@ -146,7 +146,7 @@ func ComputeWith(now time.Time, rows []model.Latest, configured map[string]regis
 		}
 	}
 	for _, r := range rows {
-		if r.Name == "lumen_agent_log_paths_rejected" && r.Attrs["host"] != "" && now.Sub(time.Unix(r.T, 0)) <= Fresh {
+		if r.Name == "kluard_agent_log_paths_rejected" && r.Attrs["host"] != "" && now.Sub(time.Unix(r.T, 0)) <= Fresh {
 			if h := hosts[r.Attrs["host"]]; h != nil {
 				h.RejectedLogPaths = int(r.Value)
 			}
@@ -376,4 +376,15 @@ func Items(now time.Time, rows []model.Latest, host string) (services, container
 	order(services)
 	order(containers)
 	return
+}
+
+// CanonRows gives the agent metrics of agents from the time the product was called Lumen (lumen_agent_info and so on)
+// their current names, so that an agent that has not been updated yet is still seen.
+func CanonRows(rows []model.Latest) []model.Latest {
+	for i := range rows {
+		if rest, ok := strings.CutPrefix(rows[i].Name, "lumen_agent_"); ok {
+			rows[i].Name = "kluard_agent_" + rest
+		}
+	}
+	return rows
 }

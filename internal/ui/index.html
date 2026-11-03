@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lumen</title>
+<title>Kluard</title>
 <style>
 :root{--bg:#f6f7fb;--panel:#fff;--fg:#1b1f2a;--mut:#6b7280;--line:#e4e7ee;--acc:#5b5bd6;--acc2:#eef0ff;--err:#dc2626;--ok:#16a34a;--warn:#d97706;--shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.08);--side:#161a26;--sidefg:#c9cfe0}
 [data-theme=dark]{--bg:#0e1118;--panel:#171b26;--fg:#e7e9ef;--mut:#98a0b3;--line:#262c3a;--acc:#8b8bff;--acc2:#222642;--err:#f87171;--ok:#4ade80;--warn:#fbbf24;--shadow:none;--side:#0a0d13;--sidefg:#aab1c5}
@@ -97,8 +97,8 @@ const svg=(tag,attrs,...kids)=>{const e=document.createElementNS(NS,tag);for(con
 const store={get(k,d){try{return localStorage.getItem(k)??d}catch{return d}},set(k,v){try{localStorage.setItem(k,v)}catch{}}};
 const uid=()=>Math.random().toString(36).slice(2,9);
 const RANGES={'15m':9e5,'1h':36e5,'6h':216e5,'24h':864e5,'7d':6048e5,'30d':2592e6};
-const S={me:null,range:store.get('lumen.range','1h'),refresh:+store.get('lumen.refresh','0'),timers:[],archive:store.get('lumen.archive','0')==='1',custom:null};
-try{S.custom=JSON.parse(store.get('lumen.custom','null'))}catch{}
+const S={me:null,range:store.get('kluard.range','1h'),refresh:+store.get('kluard.refresh','0'),timers:[],archive:store.get('kluard.archive','0')==='1',custom:null};
+try{S.custom=JSON.parse(store.get('kluard.custom','null'))}catch{}
 if(!RANGES[S.range]&&!(S.range==='custom'&&S.custom))S.range='1h';
 // what the signed-in user may do: area -> none|read|write (from /api/v1/me)
 S.brand={name:'',has_logo:false,version:''};S.hn={};
@@ -116,12 +116,12 @@ function updateChip(h,after){
     // goes away by itself when the agent reports the new version. The page redraws; this ends when the chip is gone.
     S.timers.push(setTimeout(()=>{if(after)after()},Math.max(3,S.refresh||10)*1000));
     return el('span',{class:'pill info',title:'The update was asked for '+(mins<1?'a moment':mins+' min')+' ago. The agent picks it up within a minute, installs it and restarts.'},'updating…')}
-  if(asked)return el('span',{class:'pill err',style:w?'cursor:pointer':'',title:'Asked '+mins+' minutes ago, and the agent still has '+h.version+'. On the machine, look at: journalctl -u lumen-agent-update (an agent installed with the script), or docker logs (a container). '+(w?'Click to try again.':''),onclick:w?ev=>{ev.stopPropagation();updateFailedDialog(h,after,mins)}:null},'update failed?');
+  if(asked)return el('span',{class:'pill err',style:w?'cursor:pointer':'',title:'Asked '+mins+' minutes ago, and the agent still has '+h.version+'. On the machine, look at: journalctl -u kluard-agent-update (an agent installed with the script), or docker logs (a container). '+(w?'Click to try again.':''),onclick:w?ev=>{ev.stopPropagation();updateFailedDialog(h,after,mins)}:null},'update failed?');
   return el('span',{class:'pill err',style:w?'cursor:pointer':'',title:plain+(w?(h.self_update?' Click to update it now.':' Click to see how to update it.'):' Ask someone who can change hosts to update it.'),onclick:w?ev=>{ev.stopPropagation();doUpdate(h,after)}:null},'update')}
 // the by-hand commands, the same for an agent that cannot update itself and for one whose update did not go through
 const manualBoxes=o=>[
   cmdBox('Linux, installed with the install command',`curl -fsSL ${o}/install/agent.sh | sudo sh -s -- --update`,'Keeps its settings and needs no key.'),
-  cmdBox('Docker container (see the name with: docker ps --format "{{.Names}}" | grep lumen-agent)','docker restart lumen-agent','The container downloads the new version when it starts. Use the name of your container if it is not lumen-agent.'),
+  cmdBox('Docker container (see the name with: docker ps --format "{{.Names}}" | grep kluard-agent)','docker restart kluard-agent','The container downloads the new version when it starts. Use the name of your container if it is not kluard-agent.'),
   el('p',{class:'help'},'Windows: run the install command again (Add a machine, Windows).')];
 function updateFailedDialog(h,after,mins){
   const name=h.display_name||h.name,o=location.origin;
@@ -129,8 +129,8 @@ function updateFailedDialog(h,after,mins){
     el('p',{},'It was asked for '+mins+' minutes ago and the agent still reports '+h.version+', not '+S.me.version+'. Do it by hand on the machine:'),
     manualBoxes(o),
     el('h3',{style:'margin:14px 0 4px'},'To see why it failed'),
-    cmdBox('Linux','sudo journalctl -u lumen-agent-update -u lumen-agent -n 60 --no-pager','The update helper logs there: a failed download, a checksum that did not match, or a new version that did not stay up (it then rolls back).'),
-    cmdBox('Docker','docker logs lumen-agent --tail 60','Look for a download error or a version mismatch.'),
+    cmdBox('Linux','sudo journalctl -u kluard-agent-update -u kluard-agent -n 60 --no-pager','The update helper logs there: a failed download, a checksum that did not match, or a new version that did not stay up (it then rolls back).'),
+    cmdBox('Docker','docker logs kluard-agent --tail 60','Look for a download error or a version mismatch.'),
     el('p',{class:'help'},'An update is tried at most once an hour, so that a failing one does not restart the agent in a loop. After the command above, the label goes away when the agent reports the new version.')),
     [['Try again from here',async()=>{try{await api('/api/v1/hosts/'+encodeURIComponent(h.name)+'/update',{},{method:'POST',body:{}});after()}catch(e){throw new Error(e.message)}}],['Close',()=>{},'ghost']])}
 async function doUpdate(h,after){
@@ -159,7 +159,7 @@ async function api(path,params,opt){
   const r=await fetch(u,o);
   if(r.status===401&&!o.quiet){onUnauth();throw new Error('Please sign in.')}
   if(!r.ok){let m='';try{m=(await r.json()).error}catch{}
-    const e=new Error(m||(r.status>=500?'Server error ('+r.status+'). Check the server log: docker compose -f deploy/docker-compose.yml logs lumen':'Request failed ('+r.status+')'));e.status=r.status;throw e}
+    const e=new Error(m||(r.status>=500?'Server error ('+r.status+'). Check the server log: docker compose -f deploy/docker-compose.yml logs kluard':'Request failed ('+r.status+')'));e.status=r.status;throw e}
   return r.json();
 }
 const rows=async(p,q)=>(await api(p,q)).data||[];
@@ -320,8 +320,8 @@ const TEMPLATES=[
   newPanel('Load average (1 min)','line',4,2,M('system.load.1m','avg',{groupBy:'host'})),
   newPanel('Disk used','line',4,2,M('system.filesystem.used','avg',{groupBy:'host'}),'bytes'),
   newPanel('Disk total','stat',4,2,M('system.filesystem.total','last',{groupBy:'host'}),'bytes'),
-  newPanel('Agent items sent','line',6,2,M('lumen_agent_items_sent_total','rate',{service:'lumen-agent',groupBy:'signal'}),'rate'),
-  newPanel('Agent send errors','bar',6,2,M('lumen_agent_send_errors_total','rate',{service:'lumen-agent',groupBy:'signal'}),'rate')]},
+  newPanel('Agent items sent','line',6,2,M('kluard_agent_items_sent_total','rate',{service:'kluard-agent',groupBy:'signal'}),'rate'),
+  newPanel('Agent send errors','bar',6,2,M('kluard_agent_send_errors_total','rate',{service:'kluard-agent',groupBy:'signal'}),'rate')]},
  {name:'Nextcloud',desc:'Availability, users, files, shares, database and PHP cache for monitored Nextcloud instances.',panels:()=>[
   newPanel('Instances up','stat',3,1,{src:'status',status:'nc_up'}),
   newPanel('Instances DOWN','stat',3,1,{src:'status',status:'nc_down'}),
@@ -461,12 +461,12 @@ const NAV=[['#/','Home','home',()=>true],['#/dashboards','Dashboards','dash',()=
  ['#/hosts','Hosts','host',()=>can('hosts')],['#/instances','Instances','cloud',()=>can('hosts')],['#/redis','Redis','db',()=>can('hosts')],['#/alerts','Alerts','bell',()=>can('alerts')],['#/billing','Billing','billing',()=>can('billing')],['#/tenants','Tenants','building',()=>can('operator')],['#/machines','Add a machine','machine',()=>can('keys')||can('hosts',true)],
  ['#/users','Users & groups','users',()=>can('users')],['#/backups','Backups & archive','archive',()=>can('backups')],['#/audit','Audit log','audit',()=>can('settings')],['#/settings','Settings','cog',()=>can('settings')],['#/account','Account','user',()=>true]];
 const iconEl=k=>{const s=svg('svg',{viewBox:'0 0 24 24'});s.innerHTML=ICON[k];return s};
-function setTitle(t){const h=$('#top h1');if(h)h.textContent=t;document.title=t+' · '+((S.brand&&S.brand.name)?S.brand.name+' · ':'')+'Lumen'}
+function setTitle(t){const h=$('#top h1');if(h)h.textContent=t;document.title=t+' · '+((S.brand&&S.brand.name)?S.brand.name+' · ':'')+'Kluard'}
 // site name and logo (public: the login page needs them before anyone is signed in)
 async function loadBrand(){try{const r=await fetch('/api/v1/branding',{cache:'no-store'});if(r.ok)S.brand=await r.json()}catch{}applyFavicon()}
-// The tab icon is always Lumen's own; the company logo is shown in the page, never in the tab.
+// The tab icon is always Kluard's own; the company logo is shown in the page, never in the tab.
 function applyFavicon(){}
-// Lumen is always on top. The company name and logo (Settings) are shown beneath it.
+// Kluard is always on top. The company name and logo (Settings) are shown beneath it.
 const brandEl=big=>{const b=S.brand||{};
   const co=(b.has_logo||b.name)?el('span',{class:'co'},b.has_logo?el('img',{src:'/branding/logo?v='+encodeURIComponent(b.version||''),alt:b.name||'Company logo'}):null,b.name?el('span',{class:'cn'},b.name):null):null;
   return el('span',{class:'brand'},el('span',{class:'lm'},'Lum',el('span',{class:'en'},'en')),co)};
@@ -477,8 +477,8 @@ const facetRange=()=>{if(S.archive||S.range==='custom'){const w=win();return{fro
 async function getFacets(source,service){try{return await api('/api/v1/facets',Object.assign({source,service:service||''},facetRange()))}catch{return{services:[],hosts:[],operations:[]}}}
 const opt=(v,t)=>el('option',{value:v},t);
 function fillSel(sel,first,list,fmt){const cur=sel.value;sel.replaceChildren(opt('',first),(list||[]).map(x=>opt(x.name,(fmt?fmt(x.name):x.name)+' ('+x.count+')')));if([...sel.options].some(o=>o.value===cur))sel.value=cur}
-const setTheme=t=>{document.documentElement.setAttribute('data-theme',t);store.set('lumen.theme',t)};
-setTheme(store.get('lumen.theme',(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'));
+const setTheme=t=>{document.documentElement.setAttribute('data-theme',t);store.set('kluard.theme',t)};
+setTheme(store.get('kluard.theme',(window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light'));
 
 function showLogin(msg){
   clearTimers();S.me=null;let mode='pw';
@@ -490,12 +490,12 @@ function showLogin(msg){
     try{await api('/api/v1/login',{},{method:'POST',quiet:true,body:mode==='pw'?{username:$('#lu').value,password:$('#lp').value}:{api_key:$('#lk').value}});boot()}catch(e){err.textContent=e.message}};
   const draw=()=>{form.replaceChildren(
     ...(mode==='pw'?[el('input',{id:'lu',placeholder:'Username',autocomplete:'username',onkeydown:e=>{if(e.key==='Enter'){if($('#lp').value)go();else $('#lp').focus()}}}),el('input',{id:'lp',type:'password',placeholder:'Password',autocomplete:'current-password',onkeydown:e=>{if(e.key==='Enter')go()}})]
-      :[el('input',{id:'lk',type:'password',placeholder:'API key (lmn_…)',autocomplete:'off',onkeydown:e=>{if(e.key==='Enter')go()}}),el('p',{class:'mut',style:'font-size:12px;margin:-4px 0 10px'},'An API key gives read access and dashboards for its tenant. Managing keys and passwords needs a username login.')]),
+      :[el('input',{id:'lk',type:'password',placeholder:'API key (klu_…)',autocomplete:'off',onkeydown:e=>{if(e.key==='Enter')go()}}),el('p',{class:'mut',style:'font-size:12px;margin:-4px 0 10px'},'An API key gives read access and dashboards for its tenant. Managing keys and passwords needs a username login.')]),
     err,el('button',{class:'btn',style:'width:100%',onclick:go},'Sign in'));
     $('#tabpw').className=mode==='pw'?'on':'';$('#tabkey').className=mode==='key'?'on':'';setTimeout(()=>{const f=$(mode==='pw'?'#lu':'#lk');if(f)f.focus()},0)};
   $('#root').replaceChildren(el('div',{class:'login'},el('div',{class:'card'},el('h2',{style:'font-size:22px;margin:0 0 4px'},brandEl(true)),el('p',{class:'mut',style:'margin:0 0 16px'},'Sign in to continue'),
     el('div',{class:'tabs'},el('button',{id:'tabpw',onclick:()=>{mode='pw';draw()}},'Username & password'),el('button',{id:'tabkey',onclick:()=>{mode='key';draw()}},'API key')),form,
-    el('p',{class:'mut',style:'font-size:12px;margin:14px 0 0'},'No account yet? An administrator creates one with ',el('code',{},'lumen users add NAME --tenant TENANT')))));
+    el('p',{class:'mut',style:'font-size:12px;margin:14px 0 0'},'No account yet? An administrator creates one with ',el('code',{},'kluard users add NAME --tenant TENANT')))));
   draw();
   // sign in with the provider that is set up, if one is
   api('/api/v1/auth/providers',{},{quiet:true}).then(p=>{const tabs=$('.login .tabs');if(!(p&&p.oidc)||!tabs)return;
@@ -509,22 +509,22 @@ function syncTop(){
   const c=$('#cust');if(c){c.style.display=S.range==='custom'?'inline-flex':'none';const w=win();$('#cfrom').value=toLocal(w.fromMs);$('#cto').value=toLocal(w.toMs)}
   const a=$('#arc');if(a)a.value=S.archive?'1':'0';
   const bar=$('#arcbar');if(bar)bar.style.display=S.archive?'flex':'none'}
-function setArchive(on){S.archive=!!on;store.set('lumen.archive',on?'1':'0');syncTop();route(true)}
+function setArchive(on){S.archive=!!on;store.set('kluard.archive',on?'1':'0');syncTop();route(true)}
 // show one whole day (loaded from a backup) in the archive
-function openDay(day){const f=new Date(day+'T00:00:00Z').getTime();S.range='custom';S.custom={from:f,to:f+864e5};store.set('lumen.range','custom');store.set('lumen.custom',JSON.stringify(S.custom));S.archive=true;store.set('lumen.archive','1');syncTop()}
+function openDay(day){const f=new Date(day+'T00:00:00Z').getTime();S.range='custom';S.custom={from:f,to:f+864e5};store.set('kluard.range','custom');store.set('kluard.custom',JSON.stringify(S.custom));S.archive=true;store.set('kluard.archive','1');syncTop()}
 function shell(){
   const sel=(id,opts,val,on)=>el('select',{id,onchange:e=>on(e.target.value)},opts.map(([v,t])=>el('option',{value:v,selected:String(v)===String(val)?'':null},t)));
-  const applyCustom=()=>{const f=Date.parse($('#cfrom').value),t=Date.parse($('#cto').value);if(isNaN(f)||isNaN(t))return;S.custom={from:f,to:Math.max(t,f+6e4)};store.set('lumen.custom',JSON.stringify(S.custom));route(true)};
+  const applyCustom=()=>{const f=Date.parse($('#cfrom').value),t=Date.parse($('#cto').value);if(isNaN(f)||isNaN(t))return;S.custom={from:f,to:Math.max(t,f+6e4)};store.set('kluard.custom',JSON.stringify(S.custom));route(true)};
   if(!can('backups'))S.archive=false;
   $('#root').replaceChildren(el('div',{id:'app'},
     el('aside',{id:'side'},el('div',{class:'logo'},brandEl(false)),el('nav',{},NAV.filter(n=>n[3]()).map(([h,t,i])=>el('a',{href:h,'data-h':h},iconEl(i),t))),
-      el('div',{class:'foot'},el('div',{},S.me.user?S.me.user:'API key',' · ',el('b',{},S.me.tenant)),el('div',{class:'mut',style:'font-size:11px'},S.me.group_name||'',S.me.version?el('span',{title:'Version of this Lumen server. Servers and agents built from the same source show the same value.'},' · '+(S.me.version.startsWith('src-')?'build '+S.me.version.slice(4):S.me.version)):null),
+      el('div',{class:'foot'},el('div',{},S.me.user?S.me.user:'API key',' · ',el('b',{},S.me.tenant)),el('div',{class:'mut',style:'font-size:11px'},S.me.group_name||'',S.me.version?el('span',{title:'Version of this Kluard server. Servers and agents built from the same source show the same value.'},' · '+(S.me.version.startsWith('src-')?'build '+S.me.version.slice(4):S.me.version)):null),
         el('div',{class:'row'},el('button',{onclick:()=>setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')},'Theme'),el('button',{onclick:async()=>{try{await api('/api/v1/logout',{},{method:'POST',body:{}})}catch{}showLogin()}},'Sign out')))),
-    el('div',{id:'main'},el('div',{id:'top'},el('h1',{},'Lumen'),
+    el('div',{id:'main'},el('div',{id:'top'},el('h1',{},'Kluard'),
       can('backups')?sel('arc',[['0','Live data'],['1','Archive']],S.archive?'1':'0',v=>setArchive(v==='1')):null,
-      sel('rng',[...Object.keys(RANGES).map(k=>[k,'Last '+k]),['custom','Custom…']],S.range,v=>{S.range=v;if(v==='custom'&&!S.custom){const t=Date.now();S.custom={from:t-864e5,to:t}}store.set('lumen.range',v);syncTop();route(true)}),
+      sel('rng',[...Object.keys(RANGES).map(k=>[k,'Last '+k]),['custom','Custom…']],S.range,v=>{S.range=v;if(v==='custom'&&!S.custom){const t=Date.now();S.custom={from:t-864e5,to:t}}store.set('kluard.range',v);syncTop();route(true)}),
       el('span',{id:'cust',style:'display:none;gap:6px;align-items:center'},el('input',{id:'cfrom',type:'datetime-local',onchange:applyCustom}),'→',el('input',{id:'cto',type:'datetime-local',onchange:applyCustom})),
-      sel('rfr',[[0,'Refresh: off'],[10,'10 s'],[30,'30 s'],[60,'1 min']],S.refresh,v=>{S.refresh=+v;store.set('lumen.refresh',v);startBadgeTimer();route(true)}),
+      sel('rfr',[[0,'Refresh: off'],[10,'10 s'],[30,'30 s'],[60,'1 min']],S.refresh,v=>{S.refresh=+v;store.set('kluard.refresh',v);startBadgeTimer();route(true)}),
       el('button',{class:'btn ghost',onclick:()=>route(true)},'↻')),
       el('div',{id:'arcbar',style:'display:none'},el('b',{},'Archive'),' – showing data restored from backups, not live data. Only days you have loaded contain anything. ',el('a',{href:'#/backups'},'Choose days'),el('span',{class:'sp'}),el('button',{class:'btn ghost sm',onclick:()=>setArchive(false)},'Back to live data')),
       el('div',{id:'abanner'}),el('div',{id:'lbanner'}),el('div',{id:'view'}))));
@@ -553,7 +553,7 @@ async function boot(){
 }
 
 // ---- pages ----
-// ---- Lumen's own health: its disk, Elasticsearch and ClickHouse ----
+// ---- Kluard's own health: its disk, Elasticsearch and ClickHouse ----
 const diskBar=d=>{const u=Math.round(d.total?100*(1-d.free/d.total):0),c=u>=90?'var(--err,#c62828)':u>=80?'#d9822b':'#2e9d5b';
   return el('div',{style:'display:flex;align-items:center;gap:8px'},el('div',{style:'flex:0 0 140px;height:8px;border-radius:4px;background:var(--line)'},el('div',{style:'width:'+u+'%;height:8px;border-radius:4px;background:'+c})),el('span',{class:u>=80?'err':'mut'},u+'% full'),el('span',{class:'mut'},fmtBytes(d.free)+' free of '+fmtBytes(d.total)))};
 function healthProblems(r){return (r.problems||[]).map(p=>el('div',{class:p.level==='critical'?'errbox':'warnbox',style:'margin:8px 0'},el('b',{},p.text),el('div',{style:'margin-top:4px;font-size:13px'},p.advice)))}
@@ -573,7 +573,7 @@ async function oidcCard(view){
     const save=async()=>{try{const r=await api('/api/v1/settings/oidc',{},{method:'PUT',body:body()});draw(r);card.append(el('p',{style:'color:#2e9d5b'},'✔ Saved.'))}catch(er){res.replaceChildren(el('div',{class:'errbox'},er.message))}};
     const row=(l,x,help)=>[el('label',{},l),x,help?el('div',{class:'help'},help):null];
     card.replaceChildren(el('h2',{style:'margin-top:0'},'Single sign-on (OpenID Connect)'),
-      el('p',{class:'help'},'Let people sign in with your own provider (Keycloak, Authentik, Microsoft Entra ID, Google, …) instead of a password for Lumen. One provider. Passwords keep working, so a provider that is down never locks you out.'),
+      el('p',{class:'help'},'Let people sign in with your own provider (Keycloak, Authentik, Microsoft Entra ID, Google, …) instead of a password for Kluard. One provider. Passwords keep working, so a provider that is down never locks you out.'),
       el('div',{style:'margin:8px 0'},el('label',{style:'color:var(--fg)'},f.on,' Turned on')),
       row('Issuer address',f.issuer,'The address of the provider, exactly as it names itself (the part before /.well-known/openid-configuration).'),
       row('Client id',f.id),row('Client secret',f.secret,'Kept sealed. Leave it empty to keep the one that is saved.'),
@@ -582,7 +582,7 @@ async function oidcCard(view){
       el('div',{style:'margin:10px 0'},el('label',{style:'color:var(--fg)'},f.auto,' Make an account at the first sign-in, in the group '),f.grp),
       el('div',{style:'margin:10px 0'},el('label',{style:'color:var(--fg)'},f.link,' An account that already has the same email address as the user name is linked to the person who signs in, if the provider says the address is verified')),
       el('p',{class:'help'},'Register this address at the provider as the redirect address (callback):'),
-      c.redirect_uri?cmdBox('Redirect address',c.redirect_uri,''):el('div',{class:'warnbox'},'LUMEN_PUBLIC_URL is not set. Set it to the address people use to reach Lumen, start Lumen again, and the address to register shows here.'),
+      c.redirect_uri?cmdBox('Redirect address',c.redirect_uri,''):el('div',{class:'warnbox'},'KLUARD_PUBLIC_URL is not set. Set it to the address people use to reach Kluard, start Kluard again, and the address to register shows here.'),
       el('div',{class:'bar',style:'margin-top:10px'},el('button',{class:'btn ghost',onclick:test},'Test the provider'),el('button',{class:'btn',onclick:save},'Save')),res)};
   draw(cur)}
 // ---- where backups are kept ----
@@ -593,10 +593,10 @@ async function backupLocationCard(view){
   const draw=async(c)=>{
     const inp=el('input',{value:c.source==='chosen'?c.dir:'',placeholder:'/mnt/backup',size:40,maxlength:300,style:'font-family:monospace'}),res=el('div',{style:'margin-top:8px'}),mount=el('div',{});
     const show=(r,note)=>{const i=r.info||{};res.replaceChildren(
-      i.problem?el('div',{class:'errbox'},i.problem):el('div',{},el('div',{style:'color:#2e9d5b'},'✔ The folder is there'+(i.writable?' and Lumen can write to it.':'.')),i.total?el('div',{style:'margin-top:6px'},diskBar({total:i.total,free:i.free})):null,i.warning?el('div',{class:'warnbox',style:'margin-top:8px'},i.warning):null,r.days?el('p',{class:'help'},'It has backups for '+r.days+' day'+(r.days===1?'':'s')+' already.'):null),note?el('p',{class:'help'},note):null)};
-    const showMount=()=>{const d=inp.value.trim()||'/mnt/backup';mount.replaceChildren(el('details',{style:'margin-top:12px'},el('summary',{style:'cursor:pointer'},'Running in Docker? The disk has to be mounted into the Lumen container'),
-      el('p',{class:'help'},'Lumen can only see what Docker gives it. Mount the disk on the machine first (for example at '+d+'), then add one line under lumen → volumes in deploy/docker-compose.yml, and start it again:'),
-      cmdBox('deploy/docker-compose.yml (under lumen → volumes)','- '+d+':'+d,''),cmdBox('Then','sudo docker compose -f deploy/docker-compose.yml up -d','Lumen does not make the folder for you: a backup into a folder that is not on the disk would only look saved.')))};
+      i.problem?el('div',{class:'errbox'},i.problem):el('div',{},el('div',{style:'color:#2e9d5b'},'✔ The folder is there'+(i.writable?' and Kluard can write to it.':'.')),i.total?el('div',{style:'margin-top:6px'},diskBar({total:i.total,free:i.free})):null,i.warning?el('div',{class:'warnbox',style:'margin-top:8px'},i.warning):null,r.days?el('p',{class:'help'},'It has backups for '+r.days+' day'+(r.days===1?'':'s')+' already.'):null),note?el('p',{class:'help'},note):null)};
+    const showMount=()=>{const d=inp.value.trim()||'/mnt/backup';mount.replaceChildren(el('details',{style:'margin-top:12px'},el('summary',{style:'cursor:pointer'},'Running in Docker? The disk has to be mounted into the Kluard container'),
+      el('p',{class:'help'},'Kluard can only see what Docker gives it. Mount the disk on the machine first (for example at '+d+'), then add one line under kluard → volumes in deploy/docker-compose.yml, and start it again:'),
+      cmdBox('deploy/docker-compose.yml (under kluard → volumes)','- '+d+':'+d,''),cmdBox('Then','sudo docker compose -f deploy/docker-compose.yml up -d','Kluard does not make the folder for you: a backup into a folder that is not on the disk would only look saved.')))};
     inp.oninput=showMount;
     const check=async()=>{try{show(await api('/api/v1/backup-location/check',{},{method:'POST',body:{dir:inp.value.trim()}}))}catch(er){res.replaceChildren(el('div',{class:'errbox'},er.message))}};
     const save=async()=>{const d=inp.value.trim();
@@ -614,17 +614,17 @@ async function homeHealth(){
   if(!(S.me&&S.me.health))return null;
   let h;try{h=await api('/api/v1/health')}catch{return null}
   const r=h.report;if(!r||!(r.problems||[]).length)return null;
-  return el('div',{style:'margin-bottom:14px'},el('h2',{style:'margin-bottom:4px'},'Lumen itself needs attention'),healthProblems(r),el('a',{href:'#/settings',class:'btn ghost sm'},'See the details'))}
+  return el('div',{style:'margin-bottom:14px'},el('h2',{style:'margin-bottom:4px'},'Kluard itself needs attention'),healthProblems(r),el('a',{href:'#/settings',class:'btn ghost sm'},'See the details'))}
 async function healthCard(view){
   if(!(S.me&&S.me.health))return;
   const card=el('div',{class:'card',style:'max-width:760px;margin-top:14px'});view.append(card);
-  const draw=async(refresh)=>{let h;try{h=await api('/api/v1/health'+(refresh?'?refresh=1':''))}catch(e){card.replaceChildren(el('h2',{style:'margin-top:0'},'Lumen\'s own health'),el('p',{class:'err'},e.message));return}
+  const draw=async(refresh)=>{let h;try{h=await api('/api/v1/health'+(refresh?'?refresh=1':''))}catch(e){card.replaceChildren(el('h2',{style:'margin-top:0'},'Kluard\'s own health'),el('p',{class:'err'},e.message));return}
     const r=h.report,badge={ok:['HEALTHY','up'],warning:['NEEDS ATTENTION','pending'],critical:['ACT NOW','down']}[r.overall]||['',''];
     const sec=(t,body)=>el('div',{style:'margin-top:14px'},el('b',{},t),body);
-    card.replaceChildren(el('div',{class:'bar'},el('h2',{style:'margin:0'},'Lumen\'s own health ',el('span',{class:'badge '+badge[1],style:'vertical-align:middle'},badge[0])),el('span',{class:'sp'}),el('span',{class:'mut'},'checked '+ago(r.at)),el('button',{class:'btn ghost sm',onclick:()=>draw(true)},'Check now')),
+    card.replaceChildren(el('div',{class:'bar'},el('h2',{style:'margin:0'},'Kluard\'s own health ',el('span',{class:'badge '+badge[1],style:'vertical-align:middle'},badge[0])),el('span',{class:'sp'}),el('span',{class:'mut'},'checked '+ago(r.at)),el('button',{class:'btn ghost sm',onclick:()=>draw(true)},'Check now')),
       healthProblems(r),
-      el('p',{class:'help'},'Lumen warns at '+h.warn+'% and treats '+h.crit+'% as urgent. Set an alert rule for it under Alerts, Rules, Starter rules (“Lumen: …”), so that you are told by message and not only when you look here.'),
-      sec('Where Lumen keeps its files',(r.disks||[]).length?el('table',{},(r.disks||[]).map(d=>el('tr',{},el('td',{},d.name),el('td',{class:'mono mut'},d.path),el('td',{},diskBar(d))))):el('p',{class:'mut'},'Not measured here.')),
+      el('p',{class:'help'},'Kluard warns at '+h.warn+'% and treats '+h.crit+'% as urgent. Set an alert rule for it under Alerts, Rules, Starter rules (“Kluard: …”), so that you are told by message and not only when you look here.'),
+      sec('Where Kluard keeps its files',(r.disks||[]).length?el('table',{},(r.disks||[]).map(d=>el('tr',{},el('td',{},d.name),el('td',{class:'mono mut'},d.path),el('td',{},diskBar(d))))):el('p',{class:'mut'},'Not measured here.')),
       r.elasticsearch?sec('Elasticsearch (users, dashboards, settings)',el('div',{},el('p',{style:'margin:4px 0'},r.elasticsearch.error?el('span',{class:'err'},'Cannot be reached: '+r.elasticsearch.error):[el('span',{class:'badge '+({green:'up',yellow:'pending',red:'down'}[r.elasticsearch.status]||'info')},(r.elasticsearch.status||'?').toUpperCase()),r.elasticsearch.unassigned_shards?el('span',{class:'mut'},'  '+r.elasticsearch.unassigned_shards+' shard(s) without a place'):null]),
         (r.elasticsearch.nodes||[]).length?el('table',{},(r.elasticsearch.nodes||[]).map(n=>el('tr',{},el('td',{},'node '+n.name),el('td',{},diskBar({total:n.total,free:n.avail}))))):null)):null,
       r.clickhouse?sec('ClickHouse (traces, logs, metrics)',el('div',{},r.clickhouse.error?el('p',{class:'err'},'Cannot be reached: '+r.clickhouse.error):null,
@@ -778,7 +778,7 @@ function ncGuide(o){o=o||{};
     el('li',{},'The serverinfo token. Generate one, set it, and copy it (type nothing by hand: a line break in the middle of a pasted token makes it fail):'),
     el('pre',{class:'code'},'TOKEN=$(openssl rand -hex 24)\n'+occ+'app:enable serverinfo\n'+occ+'config:app:set serverinfo token --value "$TOKEN"\necho "$TOKEN"'),
     el('li',{},'The administrator login. Create an app password for the admin user (it prints the password once, copy it at once; it can be revoked later and the real password is never used):'),
-    el('pre',{class:'code'},occ+'user:auth-tokens:add --name=lumen admin'),
+    el('pre',{class:'code'},occ+'user:auth-tokens:add --name=kluard admin'),
     el('li',{},'Check that both work before you save them anywhere. The first answer should be JSON, the second 207:'),
     el('pre',{class:'code'},'curl -s -H "NC-Token: $TOKEN" '+shq(U+'/ocs/v2.php/apps/serverinfo/api/v1/info?format=json')+' | head -c 200; echo\ncurl -s -o /dev/null -w \'%{http_code}\\n\' -u \'admin:APP_PASSWORD\' -X PROPFIND -H \'Depth: 0\' '+shq(U+'/remote.php/dav/files/admin/')),
     el('li',{},'Enter the token, the admin user and the app password in the fields above. Keep the token as well as the login.'),
@@ -787,7 +787,7 @@ function ncGuide(o){o=o||{};
     el('li',{},'Cron: the background job time comes from the admin login. Make sure Nextcloud uses cron (Administration settings → Basic settings → Background jobs → Cron) so the value is meaningful.'),
     el('li',{},'Certificate days left are shown for https:// URLs only. Use the public https address of the instance.')),
   el('p',{class:'help'},'Allow a minute or two after saving: the agent asks for apps and updates every 10 minutes. After a refused login the agent waits 5 minutes or more before it tries again; saving a new token or password makes it try at once.'))}
-// Copy to the clipboard. navigator.clipboard only exists on https or localhost; Lumen is often reached over plain http
+// Copy to the clipboard. navigator.clipboard only exists on https or localhost; Kluard is often reached over plain http
 // on a private address, so fall back to a hidden textarea and execCommand, which works there too.
 async function copyText(text,pre){
   try{if(window.isSecureContext&&navigator.clipboard){await navigator.clipboard.writeText(text);return true}}catch{}
@@ -821,13 +821,13 @@ async function machinesPage(){
       const d=()=>{const l=wl.value.trim();res.replaceChildren(cmdBox('PowerShell (run as Administrator)',`& ([scriptblock]::Create((irm ${o}/install/agent.ps1))) -Key ${psq(K())}${l?' -LogPath '+psq(l):''}`,'Open PowerShell with “Run as administrator” and paste this line.'),el('p',{class:'mut'},'Remove later by adding -Uninstall. Windows services are not collected yet; log files and Nextcloud instances can be managed on the Hosts and Instances pages.'))};
       wl.oninput=d;box.append(el('label',{},'Log files (optional) ',wl),res);d()}
     else if(kind==='docker'){const dl=el('input',{type:'checkbox',checked:true}),dk=el('input',{type:'checkbox',onchange:()=>d()}),se=el('input',{type:'checkbox',onchange:()=>d()}),ck=el('input',{type:'checkbox',onchange:()=>d()}),res=el('div',{});
-      const d=()=>{const lg=dl.checked;res.replaceChildren(cmdBox('Docker',`docker run -d --name lumen-agent --restart unless-stopped --hostname "${ck.checked?'check-':''}$(hostname)"${dk.checked?' \\\n  -v /var/run/docker.sock:/var/run/docker.sock --network host':''}${dk.checked&&se.checked?' \\\n  --security-opt label=disable':''} \\\n  -e LUMEN_AGENT_URL=${shq(o)} -e LUMEN_AGENT_API_KEY=${shq(K())}${ck.checked?' -e LUMEN_AGENT_HOST_METRICS=false -e LUMEN_AGENT_ROLE=checker':''}${lg?' \\\n  -e LUMEN_AGENT_DOCKER_LOGS=1 -v /var/lib/docker/containers:/var/lib/docker/containers:ro':''} \\\n  alpine:3.20 sh -c ${shq('wget -qO- '+o+'/install/agent-docker.sh | sh')}`,'Downloads and verifies the agent when the container starts. Nothing to build.'),el('p',{class:'help'},'This container agent reports the host metrics and logs. Tick the Docker socket option above to also report containers and their network traffic (billing). For systemd services, use the Linux install (with --docker).'),el('p',{class:'mut'},'Remove with: docker rm -f lumen-agent. CPU, memory and load are host-wide values.'),el('div',{class:'msg info'},'Nextcloud on this machine? Install the agent first, then add the instance on the ',el('a',{href:'#/instances'},'Instances'),' page and choose this machine there. One agent can check several instances.'))};
+      const d=()=>{const lg=dl.checked;res.replaceChildren(cmdBox('Docker',`docker run -d --name kluard-agent --restart unless-stopped --hostname "${ck.checked?'check-':''}$(hostname)"${dk.checked?' \\\n  -v /var/run/docker.sock:/var/run/docker.sock --network host':''}${dk.checked&&se.checked?' \\\n  --security-opt label=disable':''} \\\n  -e KLUARD_AGENT_URL=${shq(o)} -e KLUARD_AGENT_API_KEY=${shq(K())}${ck.checked?' -e KLUARD_AGENT_HOST_METRICS=false -e KLUARD_AGENT_ROLE=checker':''}${lg?' \\\n  -e KLUARD_AGENT_DOCKER_LOGS=1 -v /var/lib/docker/containers:/var/lib/docker/containers:ro':''} \\\n  alpine:3.20 sh -c ${shq('wget -qO- '+o+'/install/agent-docker.sh | sh')}`,'Downloads and verifies the agent when the container starts. Nothing to build.'),el('p',{class:'help'},'This container agent reports the host metrics and logs. Tick the Docker socket option above to also report containers and their network traffic (billing). For systemd services, use the Linux install (with --docker).'),el('p',{class:'mut'},'Remove with: docker rm -f kluard-agent. CPU, memory and load are host-wide values.'),el('div',{class:'msg info'},'Nextcloud on this machine? Install the agent first, then add the instance on the ',el('a',{href:'#/instances'},'Instances'),' page and choose this machine there. One agent can check several instances.'))};
       dl.onchange=d;box.append(el('label',{},dl,' also ship Docker container logs  '),el('label',{title:'For checking a Nextcloud that runs where no agent can be installed'},ck,' only check Nextcloud instances (not a machine)'),el('label',{title:'Without the Docker socket a container cannot see the other containers on the machine'},dk,' report this machine\'s Docker containers (network traffic for billing): mounts the Docker socket'),el('label',{title:'SELinux blocks containers from using docker.sock'},se,' SELinux (AlmaLinux, RHEL): add --security-opt label=disable'),res);d()}
     else{box.append(el('p',{class:'mut'},'Loading…'));
       fetch('/download/SHA256SUMS').then(r=>r.ok?r.text():Promise.reject()).then(t=>{const rs=t.trim().split('\n').map(l=>l.trim().split(/\s+/)).filter(x=>x.length===2);
         box.replaceChildren(el('table',{},el('tr',{},['File','SHA-256',''].map(x=>el('th',{},x))),rs.map(([h,f])=>el('tr',{},el('td',{},f),el('td',{class:'mono mut'},h.slice(0,16)+'…'),el('td',{},el('a',{href:'/download/'+encodeURIComponent(f)},'Download'))))),
-          cmdBox('Download on Linux',`wget ${o}/download/lumen-agent-linux-amd64 && chmod +x lumen-agent-linux-amd64`),cmdBox('Download on Windows (PowerShell)',`Invoke-WebRequest ${o}/download/lumen-agent-windows-amd64.exe -OutFile lumen-agent.exe`),
-          cmdBox('Run it by hand',`LUMEN_AGENT_URL=${shq(o)} LUMEN_AGENT_API_KEY=${shq(K())} ./lumen-agent-linux-amd64`,'No config file needed. Verify the download against the SHA-256 above first.'))}).catch(()=>box.replaceChildren(el('p',{class:'err'},'Downloads are not available on this server.')))}
+          cmdBox('Download on Linux',`wget ${o}/download/kluard-agent-linux-amd64 && chmod +x kluard-agent-linux-amd64`),cmdBox('Download on Windows (PowerShell)',`Invoke-WebRequest ${o}/download/kluard-agent-windows-amd64.exe -OutFile kluard-agent.exe`),
+          cmdBox('Run it by hand',`KLUARD_AGENT_URL=${shq(o)} KLUARD_AGENT_API_KEY=${shq(K())} ./kluard-agent-linux-amd64`,'No config file needed. Verify the download against the SHA-256 above first.'))}).catch(()=>box.replaceChildren(el('p',{class:'err'},'Downloads are not available on this server.')))}
   }
   view.replaceChildren(el('div',{class:'msg info'},'Machines that already run an older agent: run the same install command on them once to upgrade. They then report services and containers, and you manage their log files on the Hosts page. Nextcloud instances are added on the Instances page, after the machine is installed.'),keyPanel,out);await drawKeys();drawKind();
 }
@@ -904,7 +904,7 @@ async function hostsPage(){
 }
 
 async function removeHost(name,label,after){
-  if(!confirm('Remove '+label+' from Lumen?\n\nIts history stays searchable, but the machine is no longer listed. If its agent is still running it will appear again by itself.'))return;
+  if(!confirm('Remove '+label+' from Kluard?\n\nIts history stays searchable, but the machine is no longer listed. If its agent is still running it will appear again by itself.'))return;
   try{await api('/api/v1/hosts/'+encodeURIComponent(name)+'/remove',{},{method:'POST',body:{}});after()}catch(e){alert(e.message)}}
 
 // Everything the agent reports about one machine, as charts that follow the time range of the top bar.
@@ -961,16 +961,16 @@ async function hostPage(raw){
     return el('div',{class:'card',style:'padding:12px 0 0'},el('div',{class:'bar',style:'padding:0 14px'},el('b',{},kind+' ('+items.length+(items.some(i=>!i.up)?', '+items.filter(i=>!i.up).length+' down':'')+')'),el('span',{class:'sp'}),q,el('label',{style:'color:var(--fg)'},only,' only down')),body)};
   view.replaceChildren(
     el('div',{class:'bar'},el('a',{href:'#/hosts'},'← Hosts'),el('span',{class:'badge '+h.status},h.status.toUpperCase()),el('span',{class:'mut'},'agent '+(h.version||'?')+' · '+(h.os||'?')+' · last seen '+ago2(h.last_seen)),updateChip(h,()=>hostPage(raw)),
-      h.ips&&h.ips.length?el('span',{class:'mono',title:'The first address is the one this machine uses to reach Lumen'},h.ips.join('  ·  ')):el('span',{class:'mut'},'IP address not reported (update the agent on this machine)')),
-    h.rejected_log_paths?el('div',{class:'warnbox'},'This machine refused '+h.rejected_log_paths+' of the log paths below. For safety an agent only reads files under /var/log, /var/lib/docker, /var/www, /srv, /mnt and /opt when the server asks it to. Change allowed_log_dirs in /etc/lumen-agent/config.json on the machine to allow more.'):null,
+      h.ips&&h.ips.length?el('span',{class:'mono',title:'The first address is the one this machine uses to reach Kluard'},h.ips.join('  ·  ')):el('span',{class:'mut'},'IP address not reported (update the agent on this machine)')),
+    h.rejected_log_paths?el('div',{class:'warnbox'},'This machine refused '+h.rejected_log_paths+' of the log paths below. For safety an agent only reads files under /var/log, /var/lib/docker, /var/www, /srv, /mnt and /opt when the server asks it to. Change allowed_log_dirs in /etc/kluard-agent/config.json on the machine to allow more.'):null,
     hostPerformance(name),
     el('h2',{},'Settings and services'),
     el('div',{class:'two'},
-      el('div',{class:'card'},el('h2',{},'This machine'),el('label',{},'Groups'),grpIn,grpList,el('div',{class:'help',style:'margin-bottom:12px'},'A host can be in several groups, separated by commas. Groups limit Logs, Traces, Metrics and alert rules to some of your hosts.'),el('label',{},'Name shown in Lumen'),nick,el('p',{class:'help'},'Only changes what Lumen shows. The machine keeps its real name ('+name+'), which agents and Nextcloud instances still use.'),el('h2',{style:'margin-top:18px'},'What this machine reports'),
+      el('div',{class:'card'},el('h2',{},'This machine'),el('label',{},'Groups'),grpIn,grpList,el('div',{class:'help',style:'margin-bottom:12px'},'A host can be in several groups, separated by commas. Groups limit Logs, Traces, Metrics and alert rules to some of your hosts.'),el('label',{},'Name shown in Kluard'),nick,el('p',{class:'help'},'Only changes what Kluard shows. The machine keeps its real name ('+name+'), which agents and Nextcloud instances still use.'),el('h2',{style:'margin-top:18px'},'What this machine reports'),
         el('label',{},'Log files to ship (one path or pattern per line)'),logs,el('p',{class:'help'},'Example: /var/log/nginx/*.log. Only files under /var/log, /var/lib/docker, /var/www, /srv, /mnt and /opt are allowed. Changes apply within a minute, nothing to do on the machine.'),
         dlL,syL,coL,el('p',{class:'help'},'Docker containers need the agent installed with --docker (or the Docker socket mounted into the agent container).'),
         el('label',{style:'margin-top:8px;display:block'},'Services that must be running (one per line)'),watch,el('p',{class:'help'},'These show as DOWN when stopped or missing. All other running or failed services are shown anyway.'),
-        w?el('div',{class:'bar',style:'margin:12px 0 0'},el('button',{class:'btn',onclick:save},'Save'),el('button',{class:'btn ghost',onclick:reset},'Reset to defaults'),el('span',{class:'sp'}),el('button',{class:'btn danger',disabled:h.status==='up',title:h.status==='up'?'This machine is reporting right now. Stop its agent first, otherwise it comes straight back.':'Remove this host from Lumen',onclick:()=>removeHost(name,c.display_name||name,()=>{location.hash='#/hosts'})},'Remove host')):el('p',{class:'help'},'You have read-only access.'),msg),
+        w?el('div',{class:'bar',style:'margin:12px 0 0'},el('button',{class:'btn',onclick:save},'Save'),el('button',{class:'btn ghost',onclick:reset},'Reset to defaults'),el('span',{class:'sp'}),el('button',{class:'btn danger',disabled:h.status==='up',title:h.status==='up'?'This machine is reporting right now. Stop its agent first, otherwise it comes straight back.':'Remove this host from Kluard',onclick:()=>removeHost(name,c.display_name||name,()=>{location.hash='#/hosts'})},'Remove host')):el('p',{class:'help'},'You have read-only access.'),msg),
       el('div',{},table(r.services||[],'No services reported. The agent needs systemd, and machines installed before this version must run the install command once more (see Add a machine). Windows services are not collected yet.','Services'),
         el('div',{style:'height:14px'}),table(r.containers||[],'No Docker containers reported. Either Docker is not installed here, or the agent may not use the Docker socket: re-run the installer with --docker.','Docker containers'))));
 }
@@ -1005,7 +1005,7 @@ function instanceForm(i,hosts,done){
     row('Token',f.token,edit&&i.has_token?el('label',{style:'color:var(--fg)'},ct,' remove'):null),row('or login',f.user,f.pw,edit&&i.has_password?el('label',{style:'color:var(--fg)'},cp,' remove'):null),row('Log file',f.log));
   const body=el('div',{},hl.length?null:el('div',{class:'msg info'},'No machine has reported yet. Install an agent first under ',el('a',{href:'#/machines'},'Add a machine'),', then come back here.'),form,
     el('p',{class:'help'},'“Checked by” is the machine whose agent runs the checks, normally the one Nextcloud runs on: availability every 15 seconds, and with a token also users, files, shares, apps, database and PHP cache. One agent can check several instances. “Nextcloud runs in” is not saved: it only fills in the commands below.'),
-    gd,el('p',{class:'help'},'The token is stored encrypted, but it is sent to that agent so it can log in: use an https:// address for Lumen. The log file is read by the agent on that machine and must be under /var/log, /var/www, /srv, /mnt, /opt or /var/lib/docker.'));
+    gd,el('p',{class:'help'},'The token is stored encrypted, but it is sent to that agent so it can log in: use an https:// address for Kluard. The log file is read by the agent on that machine and must be under /var/log, /var/www, /srv, /mnt, /opt or /var/lib/docker.'));
   drawGuide();loadHost();
   dialog(edit?'Edit instance':'Add Nextcloud instance',body,[['Cancel',()=>{},'ghost'],['Save',async()=>{
     const b={name:f.name.value.trim(),url:f.url.value.trim(),host:f.host.value.trim(),token:f.token.value,username:f.user.value.trim(),password:f.pw.value,log_path:f.log.value.trim(),clear_token:ct.checked,clear_password:cp.checked};
@@ -1053,7 +1053,7 @@ function redisForm(x,hosts,done){
   f.host.value=x.host||'';
   const cp=el('input',{type:'checkbox'}),row=(l,...c)=>[el('label',{},l),el('div',{style:'display:flex;gap:8px;flex-wrap:wrap;align-items:center'},c)];
   const body=el('div',{},el('div',{class:'form'},row('Checked by',f.host),row('Container',f.cont),row('or address',f.addr),row('Name',f.name),row('User',f.user),row('Password',f.pw,edit&&x.has_password?el('label',{style:'color:var(--fg)'},cp,' remove'):null)),
-    el('p',{class:'help'},'A Redis without a password needs nothing here: the agent finds it and checks it. Add a password only for a Redis that has one (“requirepass”, or a Redis 6+ user: fill in User too). The password is stored encrypted and is sent only to the agent on the chosen machine. Several Redis can share a machine: give each its own container. Use an https:// address for Lumen.'));
+    el('p',{class:'help'},'A Redis without a password needs nothing here: the agent finds it and checks it. Add a password only for a Redis that has one (“requirepass”, or a Redis 6+ user: fill in User too). The password is stored encrypted and is sent only to the agent on the chosen machine. Several Redis can share a machine: give each its own container. Use an https:// address for Kluard.'));
   dialog(edit?'Edit Redis':(x.container?'Password for '+x.name:'Add Redis'),body,[['Cancel',()=>{},'ghost'],['Save',async()=>{
     const b={name:f.name.value.trim(),host:f.host.value.trim(),container:f.cont.value.trim(),addr:f.addr.value.trim(),username:f.user.value.trim(),password:f.pw.value,clear_password:cp.checked};
     await api(edit?'/api/v1/redis/'+x.record_id:'/api/v1/redis',{},{method:edit?'PUT':'POST',body:b});done()}]])}
@@ -1064,7 +1064,7 @@ async function redisPage(){
   const mem=x=>x.memory_used==null?'–':fmtBytes(x.memory_used)+(x.memory_max?' / '+fmtBytes(x.memory_max):'');
   const num=v=>v==null?'–':fmtNum(v);
   const hit=x=>x.hits==null||x.misses==null||x.hits+x.misses===0?'–':Math.round(100*x.hits/(x.hits+x.misses))+' %';
-  const del=async x=>{if(!confirm('Remove the settings for '+x.name+'? Lumen forgets its password. The Redis itself is not touched, and is still found if it runs in Docker.'))return;try{await api('/api/v1/redis/'+x.record_id,{},{method:'DELETE'});redisPage()}catch(e){alert(e.message)}};
+  const del=async x=>{if(!confirm('Remove the settings for '+x.name+'? Kluard forgets its password. The Redis itself is not touched, and is still found if it runs in Docker.'))return;try{await api('/api/v1/redis/'+x.record_id,{},{method:'DELETE'});redisPage()}catch(e){alert(e.message)}};
   const act=x=>{if(!w)return null;const b=[];
     if(x.record_id)b.push(el('button',{class:'btn ghost sm',onclick:()=>redisForm({...x,record_id:x.record_id},hosts,redisPage)},'Edit'),' ',el('button',{class:'btn danger sm',onclick:()=>del(x)},'Remove'));
     else b.push(el('button',{class:'btn '+(x.state==='auth'?'':'ghost')+' sm',onclick:()=>redisForm({name:x.name,host:x.host,container:x.container,addr:x.addr},hosts,redisPage)},x.state==='auth'?'Set password':'Settings'));
@@ -1072,7 +1072,7 @@ async function redisPage(){
   const needs=list.filter(x=>x.state==='auth');
   view.replaceChildren(
     el('div',{class:'bar'},el('span',{class:'mut'},'Redis servers (also Valkey and KeyDB). The agents find the ones that run in Docker by themselves, with or without a password.'),el('span',{class:'sp'}),w?el('button',{class:'btn',onclick:()=>redisForm({},hosts,redisPage)},'+ Add Redis'):null),
-    needs.length?el('div',{class:'msg info'},needs.length+(needs.length===1?' Redis wants':' Redis want')+' a password that Lumen does not have (or has wrong). Use “Set password” on the row.'):null,
+    needs.length?el('div',{class:'msg info'},needs.length+(needs.length===1?' Redis wants':' Redis want')+' a password that Kluard does not have (or has wrong). Use “Set password” on the row.'):null,
     list.length?el('div',{class:'card',style:'padding:0;overflow-x:auto'},el('table',{},el('tr',{},['Status','Name','Machine','Version','Memory','Clients','Keys','Hit rate','Evicted','Last report','Problem',''].map(h=>el('th',{},h))),list.map(x=>el('tr',{},
       el('td',{},badge(x)),el('td',{},x.name,x.container&&x.container!==x.name?el('span',{class:'pill'},x.container):null,x.role==='slave'||x.role==='replica'?el('span',{class:'pill'},'replica'):null),el('td',{},hostLabel(x.host)),
       el('td',{class:'mut'},x.version||'–'),el('td',{class:'mono'},mem(x)),el('td',{class:'mono'},num(x.clients)),el('td',{class:'mono'},num(x.keys)),el('td',{class:'mono'},hit(x)),el('td',{class:'mono'},num(x.evicted)),
@@ -1111,7 +1111,7 @@ async function instancePage(raw){
   // an agent from before the deeper checks reports none of them: say so, instead of leaving empty boxes
   if(i.host){const isChk=(r.checkers||[]).some(c=>c.name===i.host);let ag=(r.checkers||[]).find(c=>c.name===i.host);
     if(!ag){try{ag=((await api('/api/v1/hosts')).data||[]).find(h=>h.name===i.host)}catch(e){}}
-    if(ag&&agentOld(ag.version))notes.push(el('div',{class:'warnbox'},el('b',{},'The agent that checks this instance is older than Lumen ('+ag.version+'; Lumen is '+S.me.version+'). '),
+    if(ag&&agentOld(ag.version))notes.push(el('div',{class:'warnbox'},el('b',{},'The agent that checks this instance is older than Kluard ('+ag.version+'; Kluard is '+S.me.version+'). '),
       'Several boxes (apps installed, app updates, whether a Nextcloud update exists, the last background job, the certificate and the login check) are filled in by newer agents only, so they can stay empty until it is updated. Use its “update” label under ',
       el('a',{href:isChk?'#/instances':'#/hosts'},isChk?'Instances':'Hosts'),'.'))}
   // the deeper checks: background jobs, updates, the login check and the certificate
@@ -1212,7 +1212,7 @@ async function auditPage(){
   setTitle('Audit log');const view=$('#view');
   const f={actor:el('input',{placeholder:'Who',size:14,title:'Only this person'}),q:el('input',{placeholder:'Search the text',size:26}),from:el('input',{type:'date',title:'From'}),to:el('input',{type:'date',title:'To'})};
   let limit=200;
-  const csv=el('a',{class:'btn ghost sm',download:'lumen-audit-log.csv'},'Export CSV'),out=el('div'),more=el('button',{class:'btn ghost',onclick:()=>{limit=Math.min(5000,limit+200);load()}},'Show more');
+  const csv=el('a',{class:'btn ghost sm',download:'kluard-audit-log.csv'},'Export CSV'),out=el('div'),more=el('button',{class:'btn ghost',onclick:()=>{limit=Math.min(5000,limit+200);load()}},'Show more');
   const query=()=>({actor:f.actor.value.trim(),q:f.q.value.trim(),from:f.from.value,to:f.to.value,limit});
   const load=async()=>{const q=query();
     csv.href='/api/v1/audit-log?'+new URLSearchParams(Object.assign({},Object.fromEntries(Object.entries(q).filter(([,v])=>v!==''&&v!==0)),{format:'csv'})).toString();
@@ -1248,7 +1248,7 @@ async function billingPage(tab){
 async function billingReport(body,info){
   const today=info.today,def=defaultBillRange(today);
   const fromI=el('input',{type:'date',value:S.billFrom||def[0],max:'9999-12-31'}),toI=el('input',{type:'date',value:S.billTo||def[1],max:'9999-12-31'});
-  const sv=el('input',{type:'checkbox',checked:store.get('lumen.billsv','0')==='1',onchange:()=>{store.set('lumen.billsv',sv.checked?'1':'0');links()}});
+  const sv=el('input',{type:'checkbox',checked:store.get('kluard.billsv','0')==='1',onchange:()=>{store.set('kluard.billsv',sv.checked?'1':'0');links()}});
   const out=el('div'),dl=el('span'),printAll=el('button',{class:'btn ghost sm'},'Print all');
   const set=(f,t)=>{fromI.value=f;toI.value=t;draw()};
   const quick=el('span',{style:'display:inline-flex;gap:6px;flex-wrap:wrap'},
@@ -1313,7 +1313,7 @@ function printBasis(rep,list){
     area.append(el('div',{class:'inv'},el('h2',{},'Invoice basis'),el('div',{style:'font-size:15px;font-weight:bold'},inv.customer),
       el('div',{style:'margin-bottom:12px'},rep.from+' – '+rep.to+' · '+inv.currency),
       el('table',{},el('tr',{},['Description','Quantity','Unit price','Amount'].map((x,i)=>el('th',{style:i?r:''},x))),lines,sum('Net',inv.net),inv.vat_lines.map(v=>sum('VAT '+v.percent+'% of '+m(v.base),v.vat)),sum('Total',inv.total,true)),
-      el('p',{style:'font-size:11px;margin-top:16px'},'Basis for an invoice, made by Lumen on '+new Date(rep.generated).toLocaleDateString()+(rep.complete?'':'. The period is not over: the numbers are the ones so far.'))));
+      el('p',{style:'font-size:11px;margin-top:16px'},'Basis for an invoice, made by Kluard on '+new Date(rep.generated).toLocaleDateString()+(rep.complete?'':'. The period is not over: the numbers are the ones so far.'))));
   });
   document.body.append(area);document.body.classList.add('printing');
   const done=()=>{document.body.classList.remove('printing');area.remove();window.removeEventListener('afterprint',done)};
@@ -1381,14 +1381,14 @@ async function billingPrices(body,info){
 async function backupsPage(){
   setTitle('Backups & archive');const view=$('#view'),w=can('backups',true);
   const r=await api('/api/v1/backups');
-  if(!r.enabled){view.replaceChildren(el('div',{class:'card'},'Backups are switched off on this server (LUMEN_BACKUP_DIR is empty). Data older than the retention period is deleted for good.'));return}
+  if(!r.enabled){view.replaceChildren(el('div',{class:'card'},'Backups are switched off on this server (KLUARD_BACKUP_DIR is empty). Data older than the retention period is deleted for good.'));return}
   const days=r.days||[],st=r.state||{},info=r.info||{},again=()=>backupsPage();
   const act=async(label,fn)=>{try{await fn()}catch(e){alert(label+': '+e.message)}again()};
   const load=d=>act('Load',()=>api('/api/v1/backups/'+d+'/load',{},{method:'POST',body:{}})),unload=d=>act('Unload',()=>api('/api/v1/backups/'+d+'/load',{},{method:'DELETE'}));
   const view_=async d=>{try{if(!d.loaded){if(!w){alert('This day is not loaded into the archive yet. Ask an administrator to load it.');return}await api('/api/v1/backups/'+d.day+'/load',{},{method:'POST',body:{}})}openDay(d.day);location.hash='#/logs';route(true)}catch(e){alert(e.message)}};
   view.replaceChildren(
     el('div',{class:'card',style:'margin-bottom:16px'},el('b',{},'How it works'),
-      el('p',{},'Live data is kept for ',el('b',{},info.data_retention_days+' days'),'. Every completed day is also copied, compressed, to the backup folder on the Lumen server and kept for ',el('b',{},info.backup_retention_days?info.backup_retention_days+' days':'ever'),'. To look at an old day, ',el('b',{},'load'),' it into the archive and switch the top bar to ',el('b',{},'Archive'),': traces, logs, metrics and dashboards then show that day.'),
+      el('p',{},'Live data is kept for ',el('b',{},info.data_retention_days+' days'),'. Every completed day is also copied, compressed, to the backup folder on the Kluard server and kept for ',el('b',{},info.backup_retention_days?info.backup_retention_days+' days':'ever'),'. To look at an old day, ',el('b',{},'load'),' it into the archive and switch the top bar to ',el('b',{},'Archive'),': traces, logs, metrics and dashboards then show that day.'),
       el('p',{class:'mut'},st.running?'A backup is running now…':st.last_run&&!st.last_run.startsWith('0001')?'Last run '+ago(st.last_run)+(st.last_days_exported?' · '+st.last_days_exported+' day(s) exported':''):'No backup has run yet; the first one starts about a minute after the server started.'),
       st.last_error?el('p',{class:'err'},'Last error: '+st.last_error):null,
       w?el('button',{class:'btn ghost',onclick:()=>act('Backup',()=>api('/api/v1/backups/run',{},{method:'POST',body:{}}))},'Run backup now'):null),
@@ -1397,7 +1397,7 @@ async function backupsPage(){
       el('td',{style:'white-space:nowrap'},el('button',{class:'btn sm',onclick:()=>view_(d)},'View in archive'),' ',w?(d.loaded?el('button',{class:'btn ghost sm',onclick:()=>unload(d.day)},'Unload'):el('button',{class:'btn ghost sm',onclick:()=>load(d.day)},'Load')):null,' ',
         ['spans','logs','metrics'].filter(t=>d.rows[t]).map(t=>el('a',{class:'btn ghost sm',href:'/api/v1/backups/'+d.day+'/'+t,title:'Download '+t+' (gzip, JSON lines)'},t+' ⬇'))))))):
     el('div',{class:'card empty'},'No days backed up yet.'),
-    cmdBox('Copy the backups to another machine','docker compose -f deploy/docker-compose.yml cp lumen:/backup ./lumen-backup','Backups live on the same server as the live data, so they do not protect against losing the server. Copy this folder somewhere else regularly (cron + rsync/rclone). The files are plain gzip: zcat lumen-backup/telemetry/2026-09-30/main/otel_logs.jsonl.gz | less'));
+    cmdBox('Copy the backups to another machine','docker compose -f deploy/docker-compose.yml cp kluard:/backup ./kluard-backup','Backups live on the same server as the live data, so they do not protect against losing the server. Copy this folder somewhere else regularly (cron + rsync/rclone). The files are plain gzip: zcat kluard-backup/telemetry/2026-09-30/main/otel_logs.jsonl.gz | less'));
 }
 
 // ---- alerts: active alerts, rules, channels, silences, history ----
@@ -1407,11 +1407,11 @@ const chips=l=>Object.entries(l||{}).map(([k,v])=>el('span',{class:'chip',style:
 const kvText=m=>Object.entries(m||{}).map(([k,v])=>k+'='+v).join('\n');
 function parseKV(t,what){const o={};for(const ln of lines(t)){const i=ln.indexOf('=');if(i<1||i===ln.length-1)throw new Error('Each line in '+what+' must look like label=value ("'+ln+'" does not).');o[ln.slice(0,i).trim()]=ln.slice(i+1).trim()}return o}
 const STATUS_TEXT={host_down:'a host is down (its agent stopped reporting)',instance_down:'a Nextcloud instance is down',service_down:'a service is failed or not running',container_down:'a Docker container is not running'};
-const LUMEN_STATUS_TEXT={lumen_disk:'a disk that Lumen lives on is too full',lumen_elasticsearch:'Elasticsearch is not healthy',lumen_clickhouse:'ClickHouse cannot be reached or its disk is too full'};
-const statusText=r=>r.status==='lumen_disk'?'a disk that Lumen lives on is more than '+(r.threshold||80)+'% full':r.status==='lumen_clickhouse'?'ClickHouse cannot be reached or its disk is more than '+(r.threshold||90)+'% full':r.status==='lumen_elasticsearch'?(r.threshold===2?'Elasticsearch is red or cannot be reached':'Elasticsearch is not green'):(STATUS_TEXT[r.status]||r.status);
+const KLUARD_STATUS_TEXT={kluard_disk:'a disk that Kluard lives on is too full',kluard_elasticsearch:'Elasticsearch is not healthy',kluard_clickhouse:'ClickHouse cannot be reached or its disk is too full'};
+const statusText=r=>r.status==='kluard_disk'?'a disk that Kluard lives on is more than '+(r.threshold||80)+'% full':r.status==='kluard_clickhouse'?'ClickHouse cannot be reached or its disk is more than '+(r.threshold||90)+'% full':r.status==='kluard_elasticsearch'?(r.threshold===2?'Elasticsearch is red or cannot be reached':'Elasticsearch is not green'):(STATUS_TEXT[r.status]||r.status);
 function ruleText(r){
   const win=r.window_sec?Math.round(r.window_sec/60)+' min':'',inG=r.group?' (hosts in “'+r.group+'”)':'';
-  if(r.kind==='status')return statusText(r)+(String(r.status).startsWith('lumen_')?'':inG);
+  if(r.kind==='status')return statusText(r)+(String(r.status).startsWith('kluard_')?'':inG);
   if(r.kind==='log')return 'log lines'+(r.service?' from '+r.service:'')+(r.log_severity?' ('+r.log_severity+')':'')+(r.contains?' containing "'+r.contains+'"':'')+' '+r.op+' '+r.threshold+' in '+win+(r.group_by?' per '+r.group_by:'');
   return (r.reduce||'avg')+'('+r.metric+') '+r.op+' '+r.threshold+' over '+win+(r.group_by?' per '+r.group_by:'')+((r.filters||[]).length?' where '+r.filters.map(f=>f.k+'='+f.v).join(', '):'')+inG;
 }
@@ -1448,10 +1448,10 @@ function ruleDialog(rule,again){
     nodata:sel([['ok','Treat as fine'],['alert','Raise an alert'],['keep','Keep the last state']],R.no_data),ann:el('textarea',{style:'min-height:54px'},R.annotation||''),labels:el('textarea',{style:'min-height:48px',placeholder:'team=ops'},kvText(R.labels)),en:el('input',{type:'checkbox',checked:R.enabled})};
   const k=el('div',{class:'form',style:'margin-top:8px'});let mf={};
   const drawKind=async()=>{const kind=f.kind.value;mf={};
-    if(kind==='status'){const all=Object.assign({},STATUS_TEXT,S.me&&S.me.health?LUMEN_STATUS_TEXT:{});mf.status=sel(Object.entries(all),R.status||'host_down',()=>drawLimit());
+    if(kind==='status'){const all=Object.assign({},STATUS_TEXT,S.me&&S.me.health?KLUARD_STATUS_TEXT:{});mf.status=sel(Object.entries(all),R.status||'host_down',()=>drawLimit());
       mf.limit=el('input',{type:'number',step:'any',min:1,max:100,style:'width:90px',value:R.threshold||80});mf.esl=sel([['1','not green (yellow or red)'],['2','red or unreachable']],String(R.threshold||1));
       const lim=el('div',{}),limLabel=el('label',{},'Limit');
-      const drawLimit=()=>{const st=mf.status.value,disk=st==='lumen_disk'||st==='lumen_clickhouse';lim.replaceChildren(...(disk?['Disk ',mf.limit,' % full or more']:st==='lumen_elasticsearch'?['When it is ',mf.esl]:[]));limLabel.style.display=lim.style.display=(disk||st==='lumen_elasticsearch')?'':'none';if(disk&&!R.threshold)mf.limit.value=st==='lumen_disk'?80:90};
+      const drawLimit=()=>{const st=mf.status.value,disk=st==='kluard_disk'||st==='kluard_clickhouse';lim.replaceChildren(...(disk?['Disk ',mf.limit,' % full or more']:st==='kluard_elasticsearch'?['When it is ',mf.esl]:[]));limLabel.style.display=lim.style.display=(disk||st==='kluard_elasticsearch')?'':'none';if(disk&&!R.threshold)mf.limit.value=st==='kluard_disk'?80:90};
       k.replaceChildren(el('label',{},'Alert when'),mf.status,limLabel,lim);drawLimit();return}
     mf.op=sel(['>','>=','<','<=','==','!='],R.op);mf.th=el('input',{type:'number',step:'any',value:R.threshold,style:'width:110px'});mf.win=sel([[1,'1 min'],[5,'5 min'],[10,'10 min'],[30,'30 min'],[60,'1 hour']],Math.round(R.window_sec/60));
     if(kind==='metric'){
@@ -1465,7 +1465,7 @@ function ruleDialog(rule,again){
     else{mf.service=el('input',{value:R.service||'',placeholder:'any'});mf.host=el('input',{value:R.host||'',placeholder:'any'});mf.sev=sel([['','any severity'],'ERROR','WARN','INFO','DEBUG'],R.log_severity||'');mf.contains=el('input',{value:R.contains||'',placeholder:'contains text'});mf.group=sel([['','one alert'],['service','one per source'],['severity','one per severity']],R.group_by||'');
       k.replaceChildren(el('label',{},'Log lines from'),el('div',{style:'display:flex;gap:8px;flex-wrap:wrap'},mf.service,mf.host,mf.sev,mf.contains),el('label',{},'Alert when the number of lines'),el('div',{style:'display:flex;gap:8px;align-items:center;flex-wrap:wrap'},'in',mf.win,'is',mf.op,mf.th),el('label',{},'Split'),mf.group)}};
   const build=()=>{const kind=f.kind.value,b={name:f.name.value.trim(),kind,group:f.hostgroup.value,severity:f.sev.value,for_sec:Math.max(0,Math.round(+f.forMin.value*60)),interval_sec:+f.interval.value,no_data:f.nodata.value,annotation:f.ann.value.trim(),labels:parseKV(f.labels.value,'Labels'),enabled:f.en.checked};
-    if(kind==='status'){b.status=mf.status.value;if(b.status==='lumen_disk'||b.status==='lumen_clickhouse')b.threshold=+mf.limit.value;if(b.status==='lumen_elasticsearch')b.threshold=+mf.esl.value}
+    if(kind==='status'){b.status=mf.status.value;if(b.status==='kluard_disk'||b.status==='kluard_clickhouse')b.threshold=+mf.limit.value;if(b.status==='kluard_elasticsearch')b.threshold=+mf.esl.value}
     else{b.op=mf.op.value;b.threshold=+mf.th.value;b.window_sec=+mf.win.value*60;
       if(kind==='metric'){b.metric=mf.metric.value.trim();b.reduce=mf.reduce.value;b.group_by=mf.group.value.trim();b.filters=Object.entries(parseKV(mf.filters.value,'Only where')).map(([k_,v])=>({k:k_,v}))}
       else{b.service=mf.service.value.trim();b.host=mf.host.value.trim();b.log_severity=mf.sev.value;b.contains=mf.contains.value.trim();b.group_by=mf.group.value}}
@@ -1488,7 +1488,7 @@ async function alertsRules(box,again){
     dialog('Starter rules',el('div',{},el('p',{class:'help'},'Ready-made rules. Adding one creates it as it is; you can edit it afterwards.'),el('table',{},t.map(x=>el('tr',{},el('td',{},sevBadge(x.severity)),el('td',{},el('b',{},x.name),el('div',{class:'mut',style:'font-size:12px'},ruleText(x))),
       el('td',{style:'text-align:right'},have.has(x.name)?el('span',{class:'mut'},'added'):el('button',{class:'btn sm',onclick:async e=>{e.target.disabled=true;try{await api('/api/v1/alerts/rules',{},{method:'POST',body:x});e.target.replaceWith(el('span',{class:'ok'},'added'))}catch(er){e.target.disabled=false;alert(er.message)}}},'Add')))))),
       [['Done',()=>{again()}]])};
-  box.replaceChildren(el('div',{class:'bar'},el('span',{class:'mut'},'A rule is a condition Lumen checks regularly. When it holds for long enough, an alert fires and the channels you set up are told.'),el('span',{class:'sp'}),
+  box.replaceChildren(el('div',{class:'bar'},el('span',{class:'mut'},'A rule is a condition Kluard checks regularly. When it holds for long enough, an alert fires and the channels you set up are told.'),el('span',{class:'sp'}),
     w?[el('button',{class:'btn ghost',onclick:templates},'Starter rules'),el('button',{class:'btn',onclick:()=>ruleDialog({},again)},'+ Add rule')]:null),
     list.length?el('div',{class:'card',style:'padding:0'},el('table',{},el('tr',{},['','Rule','Condition','Importance','Must last',''].map(x=>el('th',{},x))),list.map(x=>el('tr',{},
       el('td',{},w?el('input',{type:'checkbox',checked:x.enabled,title:x.enabled?'Enabled':'Disabled',onchange:e=>act(()=>api('/api/v1/alerts/rules/'+x.id,{},{method:'PUT',body:Object.assign({},x,{enabled:e.target.checked})}))}):dot(x.enabled?'up':'pending')),
@@ -1668,11 +1668,11 @@ function drawLicenseBanner(){
   const box=$('#lbanner');if(!box)return;box.replaceChildren();
   const l=S.me&&S.me.license;if(!l||!['expiring','grace','expired','invalid'].includes(l.state))return;
   const tr=!!l.trial;
-  const t=tr?{expiring:'Your Lumen trial ends in '+l.days_left+' day'+(l.days_left===1?'':'s')+' ('+fmtDate(l.expires)+'). Install a licence to keep the Enterprise features.',
-    expired:'Your Lumen trial has ended, so the Enterprise features (for example Jira and PagerDuty notifications) are switched off. Everything else keeps working and no data is lost. Install a licence to switch them on again.',
-    grace:'',invalid:'The licence on this server cannot be used: '+(l.problem||'it does not verify')+'.'}[l.state]:{expiring:'Your Lumen licence ends in '+l.days_left+' day'+(l.days_left===1?'':'s')+' ('+fmtDate(l.expires)+'). Renew it to keep the Enterprise features.',
-    grace:'Your Lumen licence ended on '+fmtDate(l.expires)+'. The Enterprise features keep working until '+fmtDate(l.grace_ends)+'; renew the licence before then.',
-    expired:'Your Lumen licence has ended, so the Enterprise features (for example Jira and PagerDuty notifications) are switched off. Everything else keeps working and no data is lost.',
+  const t=tr?{expiring:'Your Kluard trial ends in '+l.days_left+' day'+(l.days_left===1?'':'s')+' ('+fmtDate(l.expires)+'). Install a licence to keep the Enterprise features.',
+    expired:'Your Kluard trial has ended, so the Enterprise features (for example Jira and PagerDuty notifications) are switched off. Everything else keeps working and no data is lost. Install a licence to switch them on again.',
+    grace:'',invalid:'The licence on this server cannot be used: '+(l.problem||'it does not verify')+'.'}[l.state]:{expiring:'Your Kluard licence ends in '+l.days_left+' day'+(l.days_left===1?'':'s')+' ('+fmtDate(l.expires)+'). Renew it to keep the Enterprise features.',
+    grace:'Your Kluard licence ended on '+fmtDate(l.expires)+'. The Enterprise features keep working until '+fmtDate(l.grace_ends)+'; renew the licence before then.',
+    expired:'Your Kluard licence has ended, so the Enterprise features (for example Jira and PagerDuty notifications) are switched off. Everything else keeps working and no data is lost.',
     invalid:'The licence on this server cannot be used: '+(l.problem||'it does not verify')+'.'}[l.state];
   box.append(el('div',{class:l.state==='expiring'?'warnbox':'errbox',style:'margin:0 0 12px'},t+' ',el('a',{href:'#/settings'},'Open the licence')))}
 async function licenseCard(view,w){
@@ -1685,7 +1685,7 @@ async function licenseCard(view,w){
     const install=async()=>{msg.className='mut';msg.textContent='';try{const x=await api('/api/v1/settings/license',{},{method:'PUT',body:{license:ta.value}});msg.className='ok';msg.textContent='Licence installed.';draw(x)}catch(er){msg.className='err';msg.textContent=er.message}};
     const rows=[];const row=(k,v)=>v?rows.push(el('tr',{},el('td',{class:'mut',style:'padding:2px 14px 2px 0'},k),el('td',{},v))):0;
     if(l.state!=='none'&&l.state!=='invalid'){row('Customer',l.customer);row('Editions',(l.editions||[]).join(', '));row('Valid until',fmtDate(l.expires)+(l.days_left>=0?' ('+l.days_left+' days left)':''));if(l.state==='grace')row('Enterprise works until',fmtDate(l.grace_ends));row('Licence id',l.id);
-      row('Hosts',(l.limits&&l.limits.hosts)?r.usage.hosts+' of '+l.limits.hosts+' (in your tenant)':'');row('Tenants',(l.limits&&l.limits.tenants)?'up to '+l.limits.tenants:'');row('Read from',l.source==='file'?'a file on the server (LUMEN_LICENSE_FILE)':'saved in Lumen')}
+      row('Hosts',(l.limits&&l.limits.hosts)?r.usage.hosts+' of '+l.limits.hosts+' (in your tenant)':'');row('Tenants',(l.limits&&l.limits.tenants)?'up to '+l.limits.tenants:'');row('Read from',l.source==='file'?'a file on the server (KLUARD_LICENSE_FILE)':'saved in Kluard')}
     card.replaceChildren(el('h2',{style:'margin-top:0'},'Licence ',el('span',{class:'badge '+badge[1],style:'vertical-align:middle'},badge[0])),
       l.state==='none'?el('p',{},'No licence: you are using the Community edition, which is free and complete for monitoring. A licence unlocks Enterprise features such as Jira, ServiceNow, PagerDuty and Opsgenie notifications.'):null,
       l.state==='invalid'?el('div',{class:'errbox'},l.problem):null,
@@ -1693,7 +1693,7 @@ async function licenseCard(view,w){
       w?el('div',{style:'margin-top:12px'},el('div',{class:'help'},l.state==='none'?'Install a licence':'Install a renewal or a new licence'),el('div',{style:'margin:6px 0'},file),ta,
         el('div',{class:'bar',style:'margin:8px 0 0'},el('button',{class:'btn',onclick:install},'Install licence'),
           l.state!=='none'&&l.source!=='file'?el('button',{class:'btn ghost',onclick:async()=>{if(!confirm('Remove the licence? Enterprise features stop; Community features and all data stay.'))return;try{draw(await api('/api/v1/settings/license',{},{method:'DELETE'}))}catch(er){msg.className='err';msg.textContent=er.message}}},'Remove licence'):null)):null,msg,
-      el('p',{class:'help'},'The licence is checked inside Lumen against keys that are built in. Nothing is sent anywhere, and nothing is ever deleted when a licence ends. '+(r.license.trial?' A trial stops on its end date.':' Enterprise features keep working for 30 days after the end date.')))};
+      el('p',{class:'help'},'The licence is checked inside Kluard against keys that are built in. Nothing is sent anywhere, and nothing is ever deleted when a licence ends. '+(r.license.trial?' A trial stops on its end date.':' Enterprise features keep working for 30 days after the end date.')))};
   draw(r)}
 async function settingsPage(){
   setTitle('Settings');const view=$('#view'),w=can('settings',true);
@@ -1719,7 +1719,7 @@ async function settingsPage(){
     msg.className='ok';msg.textContent='Saved. Everyone sees the company name and logo, including on the login page.'}catch(e){msg.className='err';msg.textContent=e.message}};
   view.replaceChildren(el('div',{class:'card',style:'max-width:620px'},el('h2',{style:'margin-top:0'},'Branding'),
     el('div',{class:'form'},el('label',{},'Company name'),nameIn,el('label',{},'Logo'),el('div',{},prev,el('div',{style:'margin-top:8px'},file),
-      el('p',{class:'help'},'PNG, JPEG, GIF, WebP or SVG, at most '+MAXKB+' KB. Lumen is always shown at the top. Your company name and logo appear beneath it in the menu and on the login page (on a white background, so dark logos work too). The browser tab keeps the Lumen icon.'))),
+      el('p',{class:'help'},'PNG, JPEG, GIF, WebP or SVG, at most '+MAXKB+' KB. Kluard is always shown at the top. Your company name and logo appear beneath it in the menu and on the login page (on a white background, so dark logos work too). The browser tab keeps the Kluard icon.'))),
     w?el('div',{class:'bar',style:'margin:14px 0 0'},el('button',{class:'btn',onclick:save},'Save'),
       rmBtn):el('p',{class:'help'},'You have read-only access.'),msg,
     el('p',{class:'help'},'The name and logo are the same for everyone who uses this server, and are visible before signing in. In a multi-tenant installation only give the Settings permission to the operator.')));

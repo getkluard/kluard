@@ -11,11 +11,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/perm"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/perm"
 )
 
-const CookieName = "lumen_session"
+const CookieName = "kluard_session"
 
 // SessionTTL is how long a browser login stays valid.
 const SessionTTL = 12 * time.Hour
@@ -45,8 +45,8 @@ func sign(secret []byte, msg string) string {
 // Auth authenticates requests from API keys (environment or stored) or browser sessions.
 type Auth struct {
 	Store   *Store
-	EnvKeys map[string]string // bootstrap keys from LUMEN_API_KEYS: key -> tenant
-	DevMode bool              // explicit LUMEN_DEV_MODE=true: allow unauthenticated access as tenant "default"
+	EnvKeys map[string]string // bootstrap keys from KLUARD_API_KEYS: key -> tenant
+	DevMode bool              // explicit KLUARD_DEV_MODE=true: allow unauthenticated access as tenant "default"
 	Limiter *Limiter
 }
 

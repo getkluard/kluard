@@ -8,7 +8,7 @@ Svenska · [English](tenancy.md)
 
 ## 1. Sammanfattning
 
-Lumen skiljer redan kunder åt med *tenants*. Det här förslaget lägger till det som båda våra köpare behöver ovanpå: en **operatörsnivå ovanför tenants** (de som driver Lumen), **tenant-poster** med gränser och livscykel, **användningsmätning**, **lagringstid och branding per tenant** och, senare, **dedikerad lagring** för tenants som kräver hård isolering.
+Kluard skiljer redan kunder åt med *tenants*. Det här förslaget lägger till det som båda våra köpare behöver ovanpå: en **operatörsnivå ovanför tenants** (de som driver Kluard), **tenant-poster** med gränser och livscykel, **användningsmätning**, **lagringstid och branding per tenant** och, senare, **dedikerad lagring** för tenants som kräver hård isolering.
 
 Rekommendationen i en mening: **behåll en platt lista med tenants och lägg ett operatörslager ovanför**, och lämna plats för en förälder/barn-relation mellan tenants utan att bygga den ännu.
 
@@ -39,7 +39,7 @@ Samma byggstenar räcker för båda: tenant, operatör, kvot, användning, grans
 
 | # | Krav | Båda köparna? |
 |---|---|---|
-| R1 | Den som driver Lumen kan se och hantera alla tenants, utan att av misstag kunna läsa deras data | Ja |
+| R1 | Den som driver Kluard kan se och hantera alla tenants, utan att av misstag kunna läsa deras data | Ja |
 | R2 | Skapa, stänga av, återuppta och avsluta en tenant, inklusive fullständig rensning av dess data | Ja |
 | R3 | Gränser per tenant (hostar, användare, insamlingstakt, lagrad volym) med tydliga fel och varningar | Ja |
 | R4 | Användning per tenant och dag, exporterbar, lämplig för fakturering eller kostnadsfördelning | Ja |
@@ -103,7 +103,7 @@ Gränser är som standard *mjuka* (varningar) och *hårda* när operatören väl
 ### 6.5 Användningsmätning
 
 - Servern räknar accepterade poster och byte per tenant och signal i minnet och skriver dem en gång i minuten till en ClickHouse-tabell `usage_events`, som summeras dagligen till `usage_daily`: tenant, dag, signal, poster, byte, olika hostar, instanser, frågor.
-- Export som CSV eller JSON via API:t, för operatörens egen fakturering. Lumen gör **inte** fakturering.
+- Export som CSV eller JSON via API:t, för operatörens egen fakturering. Kluard gör **inte** fakturering.
 - Mätningen är tillräckligt exakt som *vägledning* för fakturering. Definitionen ("accepterade OTLP-nyttolastbyte") är dokumenterad, så att kunder kan kontrollera den.
 
 ### 6.6 Lagringstid per tenant
@@ -122,7 +122,7 @@ Backuper följer också tenantens egen inställning: backuplagringstid per tenan
 
 - Namn och logga blir per tenant. Inloggningssidan känner inte till tenanten före inloggning, så tenanten väljs via **värdnamn**: `kund.example.com` pekar på en tenant, och inloggningssidan visar den tenantens branding. Det nakna värdnamnet tillhör en standardtenant.
 - På en tenants värdnamn är inloggning **begränsad till den tenantens användare** (och operatörer). Det hindrar också att någon kan ta reda på vilka tenants som finns.
-- TLS för egna domäner ligger kvar hos reverse proxyn, som i dag. Lumen mappar bara värdnamnet.
+- TLS för egna domäner ligger kvar hos reverse proxyn, som i dag. Kluard mappar bara värdnamnet.
 - En tenants logga serveras med samma begränsningar som i dag (verifierad på innehåll, inga skript).
 
 ### 6.8 Isolering

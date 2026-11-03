@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/alerts"
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/model"
-	"github.com/inmagma/lumen/internal/secretbox"
-	"github.com/inmagma/lumen/internal/status"
+	"github.com/getkluard/kluard/internal/alerts"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/model"
+	"github.com/getkluard/kluard/internal/secretbox"
+	"github.com/getkluard/kluard/internal/status"
 )
 
 var t0 = time.Date(2026, 10, 5, 12, 0, 0, 0, time.UTC)
@@ -31,8 +31,8 @@ func view(host, ref string) alerts.AlertView {
 }
 
 func message(status string, vs ...alerts.AlertView) alerts.Message {
-	title, body := alerts.Compose(status, vs, "https://lumen.example.com/#/alerts")
-	return alerts.Message{Tenant: "acme", Channel: "x", Status: status, Title: title, Body: body, Link: "https://lumen.example.com/#/alerts", Alerts: vs}
+	title, body := alerts.Compose(status, vs, "https://kluard.example.com/#/alerts")
+	return alerts.Message{Tenant: "acme", Channel: "x", Status: status, Title: title, Body: body, Link: "https://kluard.example.com/#/alerts", Alerts: vs}
 }
 
 type call struct {
@@ -101,11 +101,11 @@ func TestPagerDuty(t *testing.T) {
 	}
 	c := f.calls[0]
 	pl, _ := c.Body["payload"].(map[string]any)
-	if c.Path != "/v2/enqueue" || c.Body["routing_key"] != "RK-123" || c.Body["event_action"] != "trigger" || c.Body["dedup_key"] != "fp-web1" || pl["severity"] != "critical" || !strings.Contains(pl["summary"].(string), "host=web1") || pl["source"] != "Lumen" {
+	if c.Path != "/v2/enqueue" || c.Body["routing_key"] != "RK-123" || c.Body["event_action"] != "trigger" || c.Body["dedup_key"] != "fp-web1" || pl["severity"] != "critical" || !strings.Contains(pl["summary"].(string), "host=web1") || pl["source"] != "Kluard" {
 		t.Fatalf("trigger: %+v", c)
 	}
 	if links, _ := c.Body["links"].([]any); len(links) != 1 {
-		t.Fatalf("a link back to Lumen: %+v", c.Body)
+		t.Fatalf("a link back to Kluard: %+v", c.Body)
 	}
 	if _, err := (pagerDuty{}).Send(context.Background(), deps(), cfg, message("resolved", view("web1", ""))); err != nil {
 		t.Fatal(err)
@@ -131,7 +131,7 @@ func TestOpsgenie(t *testing.T) {
 		t.Fatal(err)
 	}
 	c := f.last()
-	if c.Path != "/v2/alerts" || c.Auth != "GenieKey GK-1" || c.Body["alias"] != "fp-web1" || c.Body["priority"] != "P1" || c.Body["source"] != "Lumen" || !strings.Contains(c.Body["description"].(string), "Free some space") {
+	if c.Path != "/v2/alerts" || c.Auth != "GenieKey GK-1" || c.Body["alias"] != "fp-web1" || c.Body["priority"] != "P1" || c.Body["source"] != "Kluard" || !strings.Contains(c.Body["description"].(string), "Free some space") {
 		t.Fatalf("create: %+v", c)
 	}
 	if _, err := (opsgenie{}).Send(context.Background(), deps(), cfg, message("resolved", view("web1", ""))); err != nil {
@@ -252,7 +252,7 @@ func TestServiceNow(t *testing.T) {
 	if _, err := (serviceNow{}).Send(context.Background(), deps(), cfg, message("resolved", view("web1", "abc123"))); err != nil {
 		t.Fatal(err)
 	}
-	if c := f.last(); c.Method != "PATCH" || c.Body["state"] != "6" || c.Body["close_notes"] != "Resolved in Lumen" {
+	if c := f.last(); c.Method != "PATCH" || c.Body["state"] != "6" || c.Body["close_notes"] != "Resolved in Kluard" {
 		t.Fatalf("resolve: %+v", c)
 	}
 }
@@ -295,7 +295,7 @@ func TestEngineKeepsTheJiraTicketForTheAlert(t *testing.T) {
 	now := t0
 	reg := alerts.NewRegistry()
 	RegisterEnterprise(reg)
-	e := &alerts.Engine{License: allowAll{}, DB: db, Box: box, Eval: &alerts.Evaluator{Q: q, St: noStatus{}}, Reg: reg, Guard: alerts.Guard{AllowPrivate: true}, Now: func() time.Time { return now }, GroupWait: time.Second, RepeatEvery: time.Hour, PublicURL: "https://lumen.example.com"}
+	e := &alerts.Engine{License: allowAll{}, DB: db, Box: box, Eval: &alerts.Evaluator{Q: q, St: noStatus{}}, Reg: reg, Guard: alerts.Guard{AllowPrivate: true}, Now: func() time.Time { return now }, GroupWait: time.Second, RepeatEvery: time.Hour, PublicURL: "https://kluard.example.com"}
 	if _, err := e.PutChannel("acme", "", alerts.ChannelIn{Name: "tickets", Type: "jira", Enabled: true, Settings: cfg.Settings, Secrets: map[string]string{"api_token": "TOKEN"}}); err != nil {
 		t.Fatal(err)
 	}

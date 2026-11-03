@@ -4,17 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/inmagma/lumen/internal/buildinfo"
+	"github.com/getkluard/kluard/internal/buildinfo"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/model"
-	"github.com/inmagma/lumen/internal/perm"
-	"github.com/inmagma/lumen/internal/registry"
-	"github.com/inmagma/lumen/internal/status"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/model"
+	"github.com/getkluard/kluard/internal/perm"
+	"github.com/getkluard/kluard/internal/registry"
+	"github.com/getkluard/kluard/internal/status"
 )
 
 // WithRegistry enables hosts, instances, status and the agents' remote configuration.
@@ -47,6 +47,7 @@ func (s *Server) snapshot(ctx context.Context, tenant string) (snapshot, error) 
 	if err != nil {
 		return snapshot{}, err
 	}
+	rows = status.CanonRows(rows)
 	sn := snapshot{at: now, rows: rows, sum: status.ComputeWith(now, rows, s.reg.ListHosts(tenant), s.reg.ListInstances(tenant), s.reg.GoneInstances(tenant))}
 	sn.sum.Redis = status.RedisList(now, rows, s.reg.ListRedis(tenant))
 	s.snaps.mu.Lock()
@@ -99,7 +100,7 @@ func (s *Server) regErr(w http.ResponseWriter, err error) {
 		writeErr(w, http.StatusNotFound, "not found")
 	default:
 		s.log.Error("registry error", "err", err)
-		writeErr(w, http.StatusServiceUnavailable, "the settings store is unavailable (the reason is in the server log: docker compose logs lumen, look for \"registry error\")")
+		writeErr(w, http.StatusServiceUnavailable, "the settings store is unavailable (the reason is in the server log: docker compose logs kluard, look for \"registry error\")")
 	}
 }
 

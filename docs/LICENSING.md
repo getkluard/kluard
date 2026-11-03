@@ -2,13 +2,13 @@
 
 [Svenska](LICENSING.sv.md) · English
 
-How Enterprise and Operator licences work, for the **publisher** who issues them and for the **customer** who uses them. The promises behind this are in [EDITIONS.md](EDITIONS.md): the check is offline, Lumen never contacts anyone, nothing is ever deleted when a licence ends, and Community features always keep working.
+How Enterprise and Operator licences work, for the **publisher** who issues them and for the **customer** who uses them. The promises behind this are in [EDITIONS.md](EDITIONS.md): the check is offline, Kluard never contacts anyone, nothing is ever deleted when a licence ends, and Community features always keep working.
 
 ## How it works in one minute
 
 - A licence is a small file signed with the publisher's **private** key. The program contains the matching **public** key, so it can check the signature without any network.
 - The file says who it is for, which editions it covers, when it ends and, if wanted, soft limits for hosts and tenants.
-- Without a licence Lumen is the **Community edition**. With a valid one the Enterprise features work: groups with their own permissions, single sign-on (OIDC), billing, and Jira, ServiceNow, PagerDuty and Opsgenie notifications. Any number of users in the built-in Admin and User groups is Community.
+- Without a licence Kluard is the **Community edition**. With a valid one the Enterprise features work: groups with their own permissions, single sign-on (OIDC), billing, and Jira, ServiceNow, PagerDuty and Opsgenie notifications. Any number of users in the built-in Admin and User groups is Community.
 - 30 days before the end an amber reminder appears for administrators. After the end date there is a **30-day grace period** in which everything keeps working, with a red reminder. After that the Enterprise features stop. Community features, all data and all settings stay as they are, and a renewed licence switches everything back on at once.
 
 ## For the publisher
@@ -16,7 +16,7 @@ How Enterprise and Operator licences work, for the **publisher** who issues them
 ### One-time setup
 
 ```bash
-go run ./cmd/lumen-license keygen --id main --dir keys
+go run ./cmd/kluard-license keygen --id main --dir keys
 ```
 
 This writes `keys/main.key` (**private, secret**) and `keys/main.pub` (public). Then:
@@ -30,29 +30,29 @@ Only the `.pub` file is committed. `*.key`, `*.license`, `/keys/` and `issued.js
 
 ### One build for everyone
 
-There is no separate Enterprise build. Every build contains the Enterprise code (`ee/`), and what is switched on is decided at run time by the licence: add a licence under **Settings** (or point `LUMEN_LICENSE_FILE` at it) and the Enterprise features work within a minute, with no rebuild, no other image and no restart. When the licence ends and the grace period has passed, they stop again; Community features and all data are untouched.
+There is no separate Enterprise build. Every build contains the Enterprise code (`ee/`), and what is switched on is decided at run time by the licence: add a licence under **Settings** (or point `KLUARD_LICENSE_FILE` at it) and the Enterprise features work within a minute, with no rebuild, no other image and no restart. When the licence ends and the grace period has passed, they stop again; Community features and all data are untouched.
 
 The one thing the build must contain is your **public key**, compiled in from `internal/license/keys/` (see above). A build without it trusts no licence, whatever file it is given, and says so when one is added.
 
 ### Issuing a licence
 
 ```bash
-go run ./cmd/lumen-license issue --key keys/main.key --customer "ACME AB" \
+go run ./cmd/kluard-license issue --key keys/main.key --customer "ACME AB" \
   --editions enterprise --days 365 --hosts 50 --ledger issued.jsonl --out acme.license
 ```
 
 - `--editions` is `enterprise`, `operator` or both (`enterprise,operator`).
 - Give an end with `--days 365` or `--expires 2027-12-31` (the end of that day, UTC).
-- `--hosts` and `--tenants` are **soft** limits: Lumen warns at 90 percent and when they are exceeded and never refuses data.
+- `--hosts` and `--tenants` are **soft** limits: Kluard warns at 90 percent and when they are exceeded and never refuses data.
 - `--issued 2026-12-31` dates the licence earlier or later than today, for example so that a renewal starts when the old one ends.
 - `--ledger issued.jsonl` appends a line per licence: your own record of what you issued, to whom, until when. The tool does not phone anything; this file is yours to keep (and to back up, but not in the public repository).
 - Send the customer the `.license` file. It is not secret, but it is made for them.
-- Check a file at any time with `go run ./cmd/lumen-license inspect acme.license --pub keys/main.pub`.
+- Check a file at any time with `go run ./cmd/kluard-license inspect acme.license --pub keys/main.pub`.
 
 ### Trial licences
 
 ```bash
-go run ./cmd/lumen-license trial --key keys/main.key --customer "ACME AB" --ledger issued.jsonl
+go run ./cmd/kluard-license trial --key keys/main.key --customer "ACME AB" --ledger issued.jsonl
 ```
 
 A trial is **every feature for 30 days** (`enterprise,operator`), made with one command. It has no grace period, so it stops on its end date, and the reminder starts a week before instead of a month. The interface calls it a trial. `--days`, `--editions`, `--hosts` and `--tenants` work as for `issue`. After the trial the installation is a Community edition again with all its data; installing a real licence switches everything back on at once.
@@ -68,8 +68,8 @@ A renewal is a new licence: the customer installs it over the old one.
 ## For the customer
 
 - **Install:** sign in as an administrator of the tenant that owns the installation, open **Settings**, and under **Licence** choose the `.license` file (or paste its contents) and press **Install licence**. A wrong or edited file is refused with the reason, and nothing changes.
-- **As a file:** set `LUMEN_LICENSE_FILE` to a file path. It is read at start-up and again every minute, so a renewal can be dropped in as a file. A licence that comes from a file is renewed by replacing the file; the interface says so.
-- **Who manages it:** the licence belongs to the installation, so in an installation with several tenants only the tenant that owns it (the one created at installation, `LUMEN_ADMIN_TENANT`) may see or change it. Another customer's administrator cannot remove it.
+- **As a file:** set `KLUARD_LICENSE_FILE` to a file path. It is read at start-up and again every minute, so a renewal can be dropped in as a file. A licence that comes from a file is renewed by replacing the file; the interface says so.
+- **Who manages it:** the licence belongs to the installation, so in an installation with several tenants only the tenant that owns it (the one created at installation, `KLUARD_ADMIN_TENANT`) may see or change it. Another customer's administrator cannot remove it.
 
 | State | What it means | Enterprise features |
 |---|---|---|
@@ -88,12 +88,12 @@ When Enterprise features are off, **nothing is deleted**: channels and settings 
 |---|---|
 | the signature does not match | The file was changed after it was made (even one character), or it was made for something else |
 | signed with the key "x", which this build does not trust | Another publisher's licence, or a build without your public key |
-| this build of Lumen trusts no licence keys | The publisher's public key is not in the build: add it to `internal/license/keys/` and build again |
-| that is not a Lumen licence file | Not the `.license` file (try pasting the whole file, braces included) |
-| the licence in force is read from the file … | `LUMEN_LICENSE_FILE` is set: replace that file instead |
+| this build of Kluard trusts no licence keys | The publisher's public key is not in the build: add it to `internal/license/keys/` and build again |
+| that is not a Kluard licence file | Not the `.license` file (try pasting the whole file, braces included) |
+| the licence in force is read from the file … | `KLUARD_LICENSE_FILE` is set: replace that file instead |
 
 ## Honest limits
 
-- **The source is open.** Anyone who can build Lumen could change the check. The licence check keeps honest customers honest and makes accidental use easy to see; the contract is what protects the commercial edition. If some Enterprise code has real value, consider keeping it in a private repository (see the notes in the main discussion of editions).
-- **A clock set back** extends a licence. Lumen does not try to defend against that (it would need an online check, which we promise never to do).
+- **The source is open.** Anyone who can build Kluard could change the check. The licence check keeps honest customers honest and makes accidental use easy to see; the contract is what protects the commercial edition. If some Enterprise code has real value, consider keeping it in a private repository (see the notes in the main discussion of editions).
+- **A clock set back** extends a licence. Kluard does not try to defend against that (it would need an online check, which we promise never to do).
 - **Host counts** in the warnings are those of the signed-in tenant until the Operator add-on has tenant records to count the whole installation.

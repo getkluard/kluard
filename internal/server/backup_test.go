@@ -13,11 +13,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/backup"
-	"github.com/inmagma/lumen/internal/dashboards"
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/store"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/backup"
+	"github.com/getkluard/kluard/internal/dashboards"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/store"
 )
 
 type bkSrc struct{ loaded map[string]map[string]bool }

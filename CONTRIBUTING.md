@@ -1,12 +1,12 @@
 # Contributing
 
-Thanks for helping. Lumen is small and standard-library only, so getting started is quick.
+Thanks for helping. Kluard is small and standard-library only, so getting started is quick.
 
 ## Set up
 
 ```bash
-git clone https://github.com/inmagma/lumen.git
-cd lumen
+git clone https://github.com/getkluard/kluard.git
+cd kluard
 go version        # 1.22 or newer
 make test         # gofmt check, go vet, go test ./...
 ```

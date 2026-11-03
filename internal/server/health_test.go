@@ -10,19 +10,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/alerts"
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/dashboards"
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/health"
-	"github.com/inmagma/lumen/internal/secretbox"
+	"github.com/getkluard/kluard/internal/alerts"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/dashboards"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/health"
+	"github.com/getkluard/kluard/internal/secretbox"
 )
 
 type chFake struct{ ch health.CH }
 
 func (c chFake) Health(context.Context) (health.CH, error) { return c.ch, nil }
 
-func TestLumensOwnHealth(t *testing.T) {
+func TestKluardsOwnHealth(t *testing.T) {
 	f, _ := docstore.OpenFile(t.TempDir())
 	st, _ := auth.Open(f, 0)
 	st.CreateUser("admin", "acme", "admins-long-password")
@@ -81,16 +81,16 @@ func TestLumensOwnHealth(t *testing.T) {
 	if _, b := do(gx, "GET", ts.URL+"/api/v1/me", ""); strings.Contains(string(b), `"health"`) {
 		t.Fatalf("%s", b)
 	}
-	// the rules about Lumen itself: offered to the owner and made by the owner only
+	// the rules about Kluard itself: offered to the owner and made by the owner only
 	_, b = do(ad, "GET", ts.URL+"/api/v1/alerts/templates", "")
-	if !strings.Contains(string(b), "Lumen: a disk is more than 80% full") {
-		t.Fatalf("the owner is offered the rules about Lumen itself: %s", b)
+	if !strings.Contains(string(b), "Kluard: a disk is more than 80% full") {
+		t.Fatalf("the owner is offered the rules about Kluard itself: %s", b)
 	}
 	_, b = do(gx, "GET", ts.URL+"/api/v1/alerts/templates", "")
-	if strings.Contains(string(b), "Lumen:") || !strings.Contains(string(b), "Nextcloud") {
+	if strings.Contains(string(b), "Kluard:") || !strings.Contains(string(b), "Nextcloud") {
 		t.Fatalf("another tenant is not, but gets the others: %s", b)
 	}
-	rule := `{"name":"Disk","kind":"status","status":"lumen_disk","threshold":85}`
+	rule := `{"name":"Disk","kind":"status","status":"kluard_disk","threshold":85}`
 	if c := code(gx, "POST", ts.URL+"/api/v1/alerts/rules", rule); c != 403 {
 		t.Fatalf("another tenant cannot make one: %d", c)
 	}

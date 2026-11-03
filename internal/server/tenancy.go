@@ -9,12 +9,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/inmagma/lumen/internal/audit"
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/license"
-	"github.com/inmagma/lumen/internal/metering"
-	"github.com/inmagma/lumen/internal/perm"
-	"github.com/inmagma/lumen/internal/tenants"
+	"github.com/getkluard/kluard/internal/audit"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/license"
+	"github.com/getkluard/kluard/internal/metering"
+	"github.com/getkluard/kluard/internal/perm"
+	"github.com/getkluard/kluard/internal/tenants"
 )
 
 // Tenancy is everything about tenants as a whole: their records, what they use, the record of who did what, and the
@@ -33,7 +33,7 @@ type Tenancy struct {
 // WithTenancy enables tenant records, metering, limits and the operator console.
 func (s *Server) WithTenancy(t *Tenancy) *Server { s.ten = t; return s }
 
-// enforced tells whether limits and suspension apply. They need the Operator licence: without it Lumen only counts.
+// enforced tells whether limits and suspension apply. They need the Operator licence: without it Kluard only counts.
 func (s *Server) enforced() bool {
 	return s.ten != nil && s.lic != nil && s.lic.Allows(license.Operator)
 }

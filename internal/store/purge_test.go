@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/inmagma/lumen/internal/config"
+	"github.com/getkluard/kluard/internal/config"
 )
 
 func TestPurgeAndCountSendTheRightStatements(t *testing.T) {
@@ -29,7 +29,7 @@ func TestPurgeAndCountSendTheRightStatements(t *testing.T) {
 		}
 	}))
 	defer srv.Close()
-	c := NewClickHouse(config.Config{ClickHouseURL: srv.URL, ClickHouseDB: "lumen", ClickHouseUser: "default"})
+	c := NewClickHouse(config.Config{ClickHouseURL: srv.URL, ClickHouseDB: "kluard", ClickHouseUser: "default"})
 	if err := c.PurgeTenant(context.Background(), "acme"); err != nil {
 		t.Fatal(err)
 	}
@@ -69,7 +69,7 @@ func TestPurgeAndCountSendTheRightStatements(t *testing.T) {
 	// a failing ClickHouse is an error, not a silent success
 	bad := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.Error(w, "Code: 999", 500) }))
 	defer bad.Close()
-	c2 := NewClickHouse(config.Config{ClickHouseURL: bad.URL, ClickHouseDB: "lumen"})
+	c2 := NewClickHouse(config.Config{ClickHouseURL: bad.URL, ClickHouseDB: "kluard"})
 	if err := c2.PurgeTenant(context.Background(), "acme"); err == nil || !strings.Contains(err.Error(), "purging otel_spans") {
 		t.Fatalf("%v", err)
 	}

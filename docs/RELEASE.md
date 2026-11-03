@@ -9,17 +9,20 @@ The repository is public, so this comes first.
 - [x] Scan the full history with `gitleaks detect --source . --log-opts="--all"`: no findings (the findings left are reviewed false alarms, listed in `.gitleaks.toml`)
 - [x] Rotate every real secret that was ever in the old history: the scan of all 49 reachable commits found none (only variables, an example command and test passwords)
 - [x] Check that no `.tar.gz`, `.env`, `.key` or `.pem` is tracked: `git ls-files | grep -E '\.tar\.gz$|\.env$|\.key$|\.pem$'` prints nothing (`keys/main.pub` is fine, `main.key` never)
-- [ ] Settle what happens to the old repository `danielingemar/lumen`: if it redirects to `inmagma/lumen` it is the same repository and nothing is deleted; if it is a separate copy, delete it
-- [ ] Remove the temporary push key from GitHub (SSH keys) and from the build server
-- [ ] Remove the read-only deploy keys that servers no longer need (the repository is public)
-- [ ] Remove old working copies and backups on the build server (`backup-före-rensning`, `/opt/lumen.old`)
-- [ ] The private licence key (`main.key`) exists only offline; only `internal/license/keys/main.pub` is in the repository
-- [ ] Turn on branch protection for `main`, and secret scanning and push protection in the repository settings
-- [ ] Fix the Go module path in the source tree from `your-org` to `inmagma`, so deliveries need no rewriting
+- [x] Settle what happens to the old repository `danielingemar/lumen` and `inmagma/lumen`: they redirect to the same repository (now `getkluard/kluard`), so nothing is deleted
+- [x] Remove the temporary push key from GitHub (SSH keys) and from the build server
+- [x] Remove the read-only deploy keys that servers no longer need (the repository is public)
+- [x] Remove old working copies and backups on the build server (`backup-före-rensning`, `/opt/kluard.old`)
+- [x] Old release tags (`stable-2026-10-06`, `v1.0.0`, `v1.0.1`) deleted from GitHub
+- [x] Update archives (`*.tar.gz`, `*.zip`) were tracked by mistake; removed from `main` and ignored by `.gitignore` (they held only older source code, no secrets)
+- [x] The private licence key (`main.key`) exists only offline; only `internal/license/keys/main.pub` is in the repository
+- [x] Turn on branch protection for `main`, and secret scanning and push protection in the repository settings
+- [x] Fix the Go module path in the source tree (`github.com/getkluard/kluard`), so deliveries need no rewriting
 
 ## 2. Decisions
 
-- [ ] **Decide** the product name (Lumen is a working name); check trademark and domain
+- [x] **Decide** the product name: **Kluard**, domain kluard.com (repository `getkluard/kluard`)
+- [ ] Check **Kluard** for trademark conflicts in the markets that matter (EU and the US), and register the domain's mail address for security and licensing contacts
 - [ ] **Decide** the licence of the core (the code says Apache-2.0; the charter has it open)
 - [ ] **Decide** DCO or CLA for contributions
 - [ ] **Decide** the trademark policy for name and logo

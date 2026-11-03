@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/inmagma/lumen/internal/buildinfo"
+	"github.com/getkluard/kluard/internal/buildinfo"
 	"io"
 	"log/slog"
 	"net/http"
@@ -12,12 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/dashboards"
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/model"
-	"github.com/inmagma/lumen/internal/registry"
-	"github.com/inmagma/lumen/internal/secretbox"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/dashboards"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/model"
+	"github.com/getkluard/kluard/internal/registry"
+	"github.com/getkluard/kluard/internal/secretbox"
 )
 
 func regServer(t *testing.T) (*httptest.Server, *auth.Auth, *fakeStore) {
@@ -44,7 +44,7 @@ func TestInstancesAPIPermissionsAndSecrets(t *testing.T) {
 	now := time.Now().Unix()
 	fs.latestFor = "acme"
 	fs.latest = []model.Latest{
-		{Name: "lumen_agent_info", Attrs: map[string]string{"host": "web1", "version": "0.3", "os": "linux/amd64"}, Value: 1, T: now - 3},
+		{Name: "kluard_agent_info", Attrs: map[string]string{"host": "web1", "version": "0.3", "os": "linux/amd64"}, Value: 1, T: now - 3},
 		{Name: "nextcloud_up", Service: "ks", Attrs: map[string]string{"instance": "cloud.example.com", "host": "web1"}, Value: 0, T: now - 3},
 	}
 	r, b := do(ad, "POST", ts.URL+"/api/v1/instances", `{"name":"ks","url":"https://cloud.example.com","host":"web1","token":"TOPSECRET"}`)
@@ -115,7 +115,7 @@ func TestHostsAndStatusAPI(t *testing.T) {
 	login(t, rd, ts, "reader", "readers-long-password")
 	now := time.Now().Unix()
 	fs.latest = []model.Latest{
-		{Name: "lumen_agent_info", Attrs: map[string]string{"host": "web1", "version": "0.3", "os": "linux/amd64"}, Value: 1, T: now - 3},
+		{Name: "kluard_agent_info", Attrs: map[string]string{"host": "web1", "version": "0.3", "os": "linux/amd64"}, Value: 1, T: now - 3},
 		{Name: "system_service_up", Attrs: map[string]string{"host": "web1", "service": "nginx", "state": "running"}, Value: 1, T: now - 3},
 		{Name: "system_service_up", Attrs: map[string]string{"host": "web1", "service": "postfix", "state": "failed"}, Value: 0, T: now - 3},
 		{Name: "container_up", Attrs: map[string]string{"host": "web1", "container": "app", "state": "running"}, Value: 1, T: now - 3},
@@ -166,7 +166,7 @@ func TestInstancesThatAreGoneCanBeRemoved(t *testing.T) {
 	}
 	fs.latestFor = "acme"
 	fs.latest = []model.Latest{
-		{Name: "lumen_agent_info", Attrs: map[string]string{"host": "web1"}, Value: 1, T: now - 3},
+		{Name: "kluard_agent_info", Attrs: map[string]string{"host": "web1"}, Value: 1, T: now - 3},
 		unm("legacy", "old.example.com", 0, 600), unm("unreach", "unreach.example.com", 0, 20), unm("alive", "alive.example.com", 1, 3), unm("stale", "stale.example.com", 1, 600), unm("ks", "ks.example.com", 1, 3),
 	}
 	names := func() string {
@@ -287,7 +287,7 @@ func TestOneClickAgentUpdate(t *testing.T) {
 		if self != "" {
 			at["self_update"] = self
 		}
-		return model.Latest{Name: "lumen_agent_info", Attrs: at, Value: 1, T: now - 3}
+		return model.Latest{Name: "kluard_agent_info", Attrs: at, Value: 1, T: now - 3}
 	}
 	fs.latestFor = "acme"
 	fs.latest = []model.Latest{info("web1", "src-old", "systemd"), info("web2", "src-old", ""), info("web3", "src-new", "systemd"), info("web4", "src-old", "exec")}
@@ -414,7 +414,7 @@ func TestAgentsThatOnlyCheckInstancesAreNotHosts(t *testing.T) {
 		if role != "" {
 			at["role"] = role
 		}
-		return model.Latest{Name: "lumen_agent_info", Attrs: at, Value: 1, T: now - 3}
+		return model.Latest{Name: "kluard_agent_info", Attrs: at, Value: 1, T: now - 3}
 	}
 	fs.latestFor = "acme"
 	fs.latest = []model.Latest{info("web1", "host", "systemd"), info("nc-checker", "checker", "exec"),

@@ -1,4 +1,4 @@
-# Running Lumen for several tenants (operator guide)
+# Running Kluard for several tenants (operator guide)
 
 [Svenska](OPERATING.sv.md) · English
 
@@ -6,8 +6,8 @@ For the people who run an installation for customers or teams. The design behind
 
 ## Set up
 
-1. Install with `LUMEN_ADMIN_TENANT=operator` in `deploy/.env`. The first administrator then belongs to the reserved tenant `operator`, which holds the **Tenants** console and owns the licence. (To add more operators: `lumen users add --tenant operator --group admin NAME`.)
-2. Install an **Operator licence** under *Settings, Licence*. Without it the console is closed, Lumen only counts what each tenant sends, and nothing is enforced: a lapsed licence never cuts your customers off.
+1. Install with `KLUARD_ADMIN_TENANT=operator` in `deploy/.env`. The first administrator then belongs to the reserved tenant `operator`, which holds the **Tenants** console and owns the licence. (To add more operators: `kluard users add --tenant operator --group admin NAME`.)
+2. Install an **Operator licence** under *Settings, Licence*. Without it the console is closed, Kluard only counts what each tenant sends, and nothing is enforced: a lapsed licence never cuts your customers off.
 3. Open **Tenants**. Tenants that already existed are there, with default settings (support access: *any time*, because they predate the setting). Add new ones with **+ Add tenant**.
 
 ## Day to day
@@ -20,7 +20,7 @@ For the people who run an installation for customers or teams. The design behind
 | Help a customer | Ask them to allow support access (Settings, Support access, Allow access). Then open the tenant and **Go into tenant**: read-only unless you tick changes, 30 minutes to 4 hours. A banner shows you are inside; **Leave tenant** ends it. |
 | Invoice | Tenants, Usage: per tenant and day, or **Download CSV** (the period and tenant you chose). |
 | Give a customer their data | Open the tenant, **Export** (a zip of settings and documents without secrets). Telemetry is in the daily backups. |
-| Remove a customer | Open the tenant, **Remove...**, type its id. Everything of the tenant is deleted, also the archive and the daily backups, and Lumen checks that nothing is left. Usage records and the access log are kept. |
+| Remove a customer | Open the tenant, **Remove...**, type its id. Everything of the tenant is deleted, also the archive and the daily backups, and Kluard checks that nothing is left. Usage records and the access log are kept. |
 
 ## What the customer sees
 

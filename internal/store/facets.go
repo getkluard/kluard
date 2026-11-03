@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/inmagma/lumen/internal/model"
+	"github.com/getkluard/kluard/internal/model"
 )
 
 // buildFacetsQuery lists, for one signal, the services, hosts and (for traces) root operations that have data in a

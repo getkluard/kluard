@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Try Lumen on your own machine, reachable from other VMs on the same network. No root, nothing installed
+# Try Kluard on your own machine, reachable from other VMs on the same network. No root, nothing installed
 # except what Docker pulls. Needs Docker with the compose plugin.
 #
 #   ./dev.sh                 start (auto-detects this machine's LAN IP)
@@ -35,17 +35,17 @@ check_docker
 
 case "$CMD" in
   stop)   "${COMPOSE[@]}" down; exit 0;;
-  reset)  read -r -p "Delete all Lumen data and secrets? [y/N] " a; [ "$a" = y ] || exit 0
+  reset)  read -r -p "Delete all Kluard data and secrets? [y/N] " a; [ "$a" = y ] || exit 0
           "${COMPOSE[@]}" down -v; rm -f deploy/.env; exit 0;;
   status) "${COMPOSE[@]}" ps; curl -fsS -m 3 http://127.0.0.1:4318/healthz && echo " (healthy)"; exit 0;;
 esac
 
 # Elasticsearch needs vm.max_map_count >= 262144 on a Linux host (Docker Desktop on Mac/Windows handles this itself)
-if [ -r /proc/sys/vm/max_map_count ] && [ -z "${LUMEN_SKIP_SYSCTL_CHECK:-}" ] && [ "$(cat /proc/sys/vm/max_map_count)" -lt 262144 ]; then
+if [ -r /proc/sys/vm/max_map_count ] && [ -z "${KLUARD_SKIP_SYSCTL_CHECK:-}" ] && [ "$(cat /proc/sys/vm/max_map_count)" -lt 262144 ]; then
   echo "Elasticsearch needs vm.max_map_count=262144 (now $(cat /proc/sys/vm/max_map_count)). Setting it (sudo may ask for your password):"
   echo "  sudo sysctl -w vm.max_map_count=262144"
-  echo "  echo 'vm.max_map_count=262144' | sudo tee /etc/sysctl.d/99-lumen.conf"
-  if sudo sysctl -w vm.max_map_count=262144 && echo 'vm.max_map_count=262144' | sudo tee /etc/sysctl.d/99-lumen.conf >/dev/null; then
+  echo "  echo 'vm.max_map_count=262144' | sudo tee /etc/sysctl.d/99-kluard.conf"
+  if sudo sysctl -w vm.max_map_count=262144 && echo 'vm.max_map_count=262144' | sudo tee /etc/sysctl.d/99-kluard.conf >/dev/null; then
     echo "  done."
   else
     die "could not set vm.max_map_count. Run the two commands above as root, then run ./dev.sh again."
@@ -61,13 +61,13 @@ detect_ip() {
   return 1
 }
 # An address already set in deploy/.env is kept; --ip is the explicit way to change it.
-EXISTING_URL="$(grep '^LUMEN_PUBLIC_URL=' deploy/.env 2>/dev/null | head -n1 | cut -d= -f2- || true)"
+EXISTING_URL="$(grep '^KLUARD_PUBLIC_URL=' deploy/.env 2>/dev/null | head -n1 | cut -d= -f2- || true)"
 if [ -n "$IP" ]; then
   printf '%s' "$IP" | grep -Eq '^[0-9A-Za-z.-]+$' || die "invalid --ip"
   URL="http://$IP:4318"
 elif [ -n "$EXISTING_URL" ]; then
   URL="$EXISTING_URL"
-  echo "Keeping the existing LUMEN_PUBLIC_URL=$URL (use --ip to change it)."
+  echo "Keeping the existing KLUARD_PUBLIC_URL=$URL (use --ip to change it)."
 else
   IP="$(detect_ip || true)"
   [ -n "$IP" ] || die "could not detect this machine's IP. Re-run with: ./dev.sh --ip <address your VM can reach>"
@@ -78,28 +78,28 @@ fi
 [ -f deploy/.env ] || bash deploy/gen-env.sh dev >/dev/null
 set_env() { if grep -q "^$1=" deploy/.env; then sed -i.bak "s#^$1=.*#$1=$2#" deploy/.env && rm -f deploy/.env.bak; else echo "$1=$2" >> deploy/.env; fi; }
 TENANT=dev
-if ! grep -q '^LUMEN_ADMIN_PASSWORD=' deploy/.env; then
-  printf 'LUMEN_ADMIN_USER=admin\nLUMEN_ADMIN_PASSWORD=%s\nLUMEN_ADMIN_TENANT=%s\n' "$(openssl rand -hex 12)" "${TENANT:-main}" >> deploy/.env
+if ! grep -q '^KLUARD_ADMIN_PASSWORD=' deploy/.env; then
+  printf 'KLUARD_ADMIN_USER=admin\nKLUARD_ADMIN_PASSWORD=%s\nKLUARD_ADMIN_TENANT=%s\n' "$(openssl rand -hex 12)" "${TENANT:-main}" >> deploy/.env
 fi
 grep -q '^ELASTIC_PASSWORD=' deploy/.env || printf 'ELASTIC_PASSWORD=%s\n' "$(openssl rand -hex 16)" >> deploy/.env
-grep -q '^LUMEN_SECRET_KEY=' deploy/.env || printf 'LUMEN_SECRET_KEY=%s\n' "$(openssl rand -hex 32)" >> deploy/.env
-ADMIN_USER="$(grep '^LUMEN_ADMIN_USER=' deploy/.env | cut -d= -f2-)"; ADMIN_PW="$(grep '^LUMEN_ADMIN_PASSWORD=' deploy/.env | cut -d= -f2-)"
-[ "$URL" = "$EXISTING_URL" ] || set_env LUMEN_PUBLIC_URL "$URL"
-grep -q '^LUMEN_BIND=' deploy/.env || set_env LUMEN_BIND "0.0.0.0"   # a value you set (for example 127.0.0.1 behind a proxy) is kept
-KEY="$(grep '^LUMEN_API_KEYS=' deploy/.env | cut -d= -f2- | cut -d, -f1 | cut -d: -f1)"
+grep -q '^KLUARD_SECRET_KEY=' deploy/.env || printf 'KLUARD_SECRET_KEY=%s\n' "$(openssl rand -hex 32)" >> deploy/.env
+ADMIN_USER="$(grep '^KLUARD_ADMIN_USER=' deploy/.env | cut -d= -f2-)"; ADMIN_PW="$(grep '^KLUARD_ADMIN_PASSWORD=' deploy/.env | cut -d= -f2-)"
+[ "$URL" = "$EXISTING_URL" ] || set_env KLUARD_PUBLIC_URL "$URL"
+grep -q '^KLUARD_BIND=' deploy/.env || set_env KLUARD_BIND "0.0.0.0"   # a value you set (for example 127.0.0.1 behind a proxy) is kept
+KEY="$(grep '^KLUARD_API_KEYS=' deploy/.env | cut -d= -f2- | cut -d, -f1 | cut -d: -f1)"
 
-echo "Starting Lumen (first start builds the image and can take a few minutes)..."
+echo "Starting Kluard (first start builds the image and can take a few minutes)..."
 "${COMPOSE[@]}" up -d --build
 for i in $(seq 1 60); do
   curl -fsS -m 3 http://127.0.0.1:4318/healthz >/dev/null 2>&1 && break
-  [ "$i" = 60 ] && { "${COMPOSE[@]}" logs --tail 30; die "Lumen did not become healthy"; }
+  [ "$i" = 60 ] && { "${COMPOSE[@]}" logs --tail 30; die "Kluard did not become healthy"; }
   sleep 3
 done
 curl -fsS -m 3 "$URL/healthz" >/dev/null 2>&1 && REACH="reachable on $URL" || REACH="NOT reachable on $URL from this machine (wrong --ip?)"
 
 cat <<MSG
 
-Lumen is running ($REACH).
+Kluard is running ($REACH).
 
   Open in a browser:  $URL/
   Log in with:        $ADMIN_USER  /  $ADMIN_PW      (change the password in the UI)

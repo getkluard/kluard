@@ -2,13 +2,13 @@
 
 Svenska · [English](LICENSING.md)
 
-Så fungerar Enterprise- och Operator-licenser, för den **utgivare** som utfärdar dem och den **kund** som använder dem. Löftena bakom finns i [EDITIONS.sv.md](EDITIONS.sv.md): kontrollen sker offline, Lumen kontaktar aldrig någon, ingenting raderas när en licens går ut och Community-funktionerna fungerar alltid.
+Så fungerar Enterprise- och Operator-licenser, för den **utgivare** som utfärdar dem och den **kund** som använder dem. Löftena bakom finns i [EDITIONS.sv.md](EDITIONS.sv.md): kontrollen sker offline, Kluard kontaktar aldrig någon, ingenting raderas när en licens går ut och Community-funktionerna fungerar alltid.
 
 ## Så fungerar det på en minut
 
 - En licens är en liten fil som är signerad med utgivarens **privata** nyckel. Programmet innehåller den matchande **publika** nyckeln och kan därför kontrollera signaturen utan något nätverk.
 - Filen anger vem den gäller, vilka utgåvor den omfattar, när den går ut och, om man vill, mjuka gränser för hostar och tenants.
-- Utan licens är Lumen **Community-utgåvan**. Med en giltig licens fungerar Enterprise-funktionerna: grupper med egna behörigheter, inloggning via en identitetsleverantör (OIDC), fakturering samt notiser till Jira, ServiceNow, PagerDuty och Opsgenie. Obegränsat antal användare i de inbyggda grupperna Admin och User är Community.
+- Utan licens är Kluard **Community-utgåvan**. Med en giltig licens fungerar Enterprise-funktionerna: grupper med egna behörigheter, inloggning via en identitetsleverantör (OIDC), fakturering samt notiser till Jira, ServiceNow, PagerDuty och Opsgenie. Obegränsat antal användare i de inbyggda grupperna Admin och User är Community.
 - 30 dagar före slutet visas en gul påminnelse för administratörer. Efter slutdatumet gäller **30 dagars frist** då allt fortsätter att fungera, med en röd påminnelse. Därefter slutar Enterprise-funktionerna. Community-funktionerna, all data och alla inställningar finns kvar som de är, och en förnyad licens slår på allt igen direkt.
 
 ## För utgivaren
@@ -16,7 +16,7 @@ Så fungerar Enterprise- och Operator-licenser, för den **utgivare** som utfär
 ### Engångsinställning
 
 ```bash
-go run ./cmd/lumen-license keygen --id main --dir keys
+go run ./cmd/kluard-license keygen --id main --dir keys
 ```
 
 Det skriver `keys/main.key` (**privat, hemlig**) och `keys/main.pub` (publik). Därefter:
@@ -30,31 +30,31 @@ Bara `.pub`-filen checkas in. `*.key`, `*.license`, `/keys/` och `issued.jsonl` 
 
 ### Ett bygge för alla
 
-Det finns inget separat Enterprise-bygge. Varje bygge innehåller Enterprise-koden (`ee/`), och licensen avgör vid körning vad som är påslaget: lägg in en licens under **Settings** (eller peka `LUMEN_LICENSE_FILE` på den) så fungerar Enterprise-funktionerna inom en minut, utan ombyggnad, annan image eller omstart. När licensen har gått ut och nådetiden är slut stängs de av igen; Community-funktionerna och all data påverkas inte.
+Det finns inget separat Enterprise-bygge. Varje bygge innehåller Enterprise-koden (`ee/`), och licensen avgör vid körning vad som är påslaget: lägg in en licens under **Settings** (eller peka `KLUARD_LICENSE_FILE` på den) så fungerar Enterprise-funktionerna inom en minut, utan ombyggnad, annan image eller omstart. När licensen har gått ut och nådetiden är slut stängs de av igen; Community-funktionerna och all data påverkas inte.
 
 Det enda bygget måste innehålla är din **publika nyckel**, som kompileras in från `internal/license/keys/` (se ovan). Ett bygge utan den litar inte på någon licens, vilken fil det än får, och säger det när någon läggs in.
 
 ### Utfärda en licens
 
 ```bash
-go run ./cmd/lumen-license issue --key keys/main.key --customer "ACME AB" \
+go run ./cmd/kluard-license issue --key keys/main.key --customer "ACME AB" \
   --editions enterprise --days 365 --hosts 50 --ledger issued.jsonl --out acme.license
 ```
 
 - `--editions` är `enterprise`, `operator` eller båda (`enterprise,operator`).
 - Ange slutet med `--days 365` eller `--expires 2027-12-31` (slutet av den dagen, UTC).
-- `--hosts` och `--tenants` är **mjuka** gränser: Lumen varnar vid 90 procent och när de överskrids, och nekar aldrig data.
+- `--hosts` och `--tenants` är **mjuka** gränser: Kluard varnar vid 90 procent och när de överskrids, och nekar aldrig data.
 - `--issued 2026-12-31` datumsätter licensen tidigare eller senare än i dag, till exempel så att en förnyelse börjar när den gamla slutar.
 - `--ledger issued.jsonl` lägger till en rad per licens: din egen förteckning över vad du utfärdat, till vem och till när. Verktyget ringer ingenstans; filen är din att spara (och säkerhetskopiera, men inte i det publika repot).
 - Skicka `.license`-filen till kunden. Den är inte hemlig, men den är gjord för dem.
-- Kontrollera en fil när som helst med `go run ./cmd/lumen-license inspect acme.license --pub keys/main.pub`.
+- Kontrollera en fil när som helst med `go run ./cmd/kluard-license inspect acme.license --pub keys/main.pub`.
 
 En provlicens är en licens med kort slutdatum (`--days 30`). En förnyelse är en ny licens: kunden installerar den över den gamla.
 
 ### Provlicenser
 
 ```bash
-go run ./cmd/lumen-license trial --key keys/main.key --customer "ACME AB" --ledger issued.jsonl
+go run ./cmd/kluard-license trial --key keys/main.key --customer "ACME AB" --ledger issued.jsonl
 ```
 
 En provlicens är **alla funktioner i 30 dagar** (`enterprise,operator`), gjord med ett kommando. Den har ingen nådetid, så den slutar på slutdatumet, och påminnelsen börjar en vecka före i stället för en månad. Gränssnittet kallar den en provlicens. `--days`, `--editions`, `--hosts` och `--tenants` fungerar som för `issue`. Efter provet är installationen Community igen med all sin data; en riktig licens slår på allt på en gång.
@@ -68,8 +68,8 @@ En provlicens är **alla funktioner i 30 dagar** (`enterprise,operator`), gjord 
 ## För kunden
 
 - **Installera:** logga in som administratör i den tenant som äger installationen, öppna **Settings** och välj under **Licence** filen `.license` (eller klistra in innehållet) och tryck **Install licence**. En felaktig eller ändrad fil nekas med orsak, och inget ändras.
-- **Som fil:** sätt `LUMEN_LICENSE_FILE` till en filsökväg. Den läses vid start och sedan varje minut, så en förnyelse kan läggas dit som fil. En licens som kommer från en fil förnyas genom att filen byts; gränssnittet säger det.
-- **Vem som hanterar den:** licensen tillhör installationen, så i en installation med flera tenants får bara den tenant som äger den (den som skapades vid installationen, `LUMEN_ADMIN_TENANT`) se eller ändra den. En annan kunds administratör kan inte ta bort den.
+- **Som fil:** sätt `KLUARD_LICENSE_FILE` till en filsökväg. Den läses vid start och sedan varje minut, så en förnyelse kan läggas dit som fil. En licens som kommer från en fil förnyas genom att filen byts; gränssnittet säger det.
+- **Vem som hanterar den:** licensen tillhör installationen, så i en installation med flera tenants får bara den tenant som äger den (den som skapades vid installationen, `KLUARD_ADMIN_TENANT`) se eller ändra den. En annan kunds administratör kan inte ta bort den.
 
 | Tillstånd | Betydelse | Enterprise-funktioner |
 |---|---|---|
@@ -88,12 +88,12 @@ När Enterprise-funktioner är av **raderas ingenting**: kanaler och inställnin
 |---|---|
 | the signature does not match | Filen ändrades efter att den gjordes (även ett enda tecken), eller gjordes för något annat |
 | signed with the key "x", which this build does not trust | En annan utgivares licens, eller ett bygge utan din publika nyckel |
-| this build of Lumen trusts no licence keys | Utgivarens publika nyckel finns inte i bygget: lägg den i `internal/license/keys/` och bygg om |
-| that is not a Lumen licence file | Inte `.license`-filen (försök klistra in hela filen, med klammerparenteser) |
-| the licence in force is read from the file … | `LUMEN_LICENSE_FILE` är satt: byt den filen i stället |
+| this build of Kluard trusts no licence keys | Utgivarens publika nyckel finns inte i bygget: lägg den i `internal/license/keys/` och bygg om |
+| that is not a Kluard licence file | Inte `.license`-filen (försök klistra in hela filen, med klammerparenteser) |
+| the licence in force is read from the file … | `KLUARD_LICENSE_FILE` är satt: byt den filen i stället |
 
 ## Ärliga begränsningar
 
-- **Källkoden är öppen.** Den som kan bygga Lumen kan ändra kontrollen. Licenskontrollen håller ärliga kunder ärliga och gör oavsiktlig användning lätt att se. Det är avtalet som skyddar den kommersiella utgåvan. Har viss Enterprise-kod verkligt värde, överväg att ha den i ett privat repo (se resonemanget om utgåvor).
-- **En klocka som ställts tillbaka** förlänger en licens. Lumen försöker inte försvara sig mot det (det skulle kräva en onlinekontroll, vilket vi lovat att aldrig göra).
+- **Källkoden är öppen.** Den som kan bygga Kluard kan ändra kontrollen. Licenskontrollen håller ärliga kunder ärliga och gör oavsiktlig användning lätt att se. Det är avtalet som skyddar den kommersiella utgåvan. Har viss Enterprise-kod verkligt värde, överväg att ha den i ett privat repo (se resonemanget om utgåvor).
+- **En klocka som ställts tillbaka** förlänger en licens. Kluard försöker inte försvara sig mot det (det skulle kräva en onlinekontroll, vilket vi lovat att aldrig göra).
 - **Hostantalet** i varningarna är den inloggade tenantens tills Operator-tillägget har tenant-poster som kan räkna hela installationen.

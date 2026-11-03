@@ -13,10 +13,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/docstore/estest"
-	"github.com/inmagma/lumen/internal/model"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/docstore/estest"
+	"github.com/getkluard/kluard/internal/model"
 )
 
 func init() { auth.Iterations = 1000 }
@@ -151,7 +151,7 @@ func TestSessionsReadButCannotIngest_KeysIngest(t *testing.T) {
 	resp := post(c, ts.URL+"/api/v1/keys", `{"name":"vm1"}`)
 	var k struct{ Key, ID string }
 	json.NewDecoder(resp.Body).Decode(&k)
-	if resp.StatusCode != 200 || !strings.HasPrefix(k.Key, "lmn_") {
+	if resp.StatusCode != 200 || !strings.HasPrefix(k.Key, "klu_") {
 		t.Fatalf("key creation: %d %+v", resp.StatusCode, k)
 	}
 	fs.spans = nil
@@ -216,7 +216,7 @@ func TestLoginWithAPIKey(t *testing.T) {
 			ts, fs, a := authServerOn(t, backend)
 			plain, _, _ := a.Store.CreateKey("acme", "vm1")
 			c := client()
-			if post(c, ts.URL+"/api/v1/login", `{"api_key":"lmn_wrong"}`).StatusCode != 401 {
+			if post(c, ts.URL+"/api/v1/login", `{"api_key":"klu_wrong"}`).StatusCode != 401 {
 				t.Fatal("a wrong API key must be refused")
 			}
 			resp := post(c, ts.URL+"/api/v1/login", `{"api_key":"`+plain+`"}`)

@@ -38,7 +38,7 @@ func (g Guard) blocked(ip net.IP) error {
 		if g.AllowPrivate {
 			return nil
 		}
-		return fmt.Errorf("address %s is internal; internal destinations must be allowed by the administrator (LUMEN_ALERT_ALLOW_PRIVATE)", ip)
+		return fmt.Errorf("address %s is internal; internal destinations must be allowed by the administrator (KLUARD_ALERT_ALLOW_PRIVATE)", ip)
 	}
 	return nil
 }

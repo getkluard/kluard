@@ -1,11 +1,11 @@
 <div align="center">
 
-# Lumen
+# Kluard
 
 **OpenTelemetry-native observability in one binary.**<br>
 Traces, logs and metrics, dashboards you build yourself, host / service / Docker / Nextcloud monitoring, users and groups, and automatic backups of old data.
 
-[![CI](https://github.com/danielingemar/lumen/actions/workflows/ci.yml/badge.svg)](https://github.com/danielingemar/lumen/actions/workflows/ci.yml)
+[![CI](https://github.com/getkluard/kluard/actions/workflows/ci.yml/badge.svg)](https://github.com/getkluard/kluard/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 ![Go](https://img.shields.io/badge/go-1.22%2B-00ADD8.svg)
 ![Dependencies](https://img.shields.io/badge/dependencies-stdlib%20only-brightgreen.svg)
@@ -13,7 +13,7 @@ Traces, logs and metrics, dashboards you build yourself, host / service / Docker
 
 <img src="docs/screenshots/dashboard-nextcloud.png" alt="Nextcloud dashboard with up and down boxes" width="900">
 
-*Lumen is a working name.*
+*Formerly called Lumen. Website: [kluard.com](https://kluard.com).*
 
 </div>
 
@@ -39,8 +39,8 @@ Traces, logs and metrics, dashboards you build yourself, host / service / Docker
 | **Up / Down at a glance** | Boxes for Nextcloud instances, hosts, systemd services and Docker containers. A *Down* box shows a green **0** when all is well and turns red, with names and reasons, when something is not. |
 | **Alerts that reach people** | Rules on metrics, up/down status and log counts; notifications by **email, webhook, Slack, Teams**, and in Enterprise **Jira, ServiceNow, PagerDuty, Opsgenie**. Grouping, retries, acknowledge, silences, a replay of the last 24 hours before you save a rule. |
 | **Hosts & Instances pages** | See every machine and Nextcloud instance. Rename hosts, remove old ones, add log paths, choose watched services, fix a mistyped Nextcloud URL, **all in the browser**: agents pick up the change within a minute. |
-| **Dropdowns of everything that comes in** | Traces, Logs and Metrics list every service, operation, log source, host and metric Lumen has received, so you pick instead of typing. |
-| **Your company name and logo** | Add them under **Settings**. They show beneath Lumen in the menu and on the login page. Lumen itself is always shown at the top. |
+| **Dropdowns of everything that comes in** | Traces, Logs and Metrics list every service, operation, log source, host and metric Kluard has received, so you pick instead of typing. |
+| **Your company name and logo** | Add them under **Settings**. They show beneath Kluard in the menu and on the login page. Kluard itself is always shown at the top. |
 | **Everything about a host** | Open a host to see CPU (also by state: user, system, iowait, steal), load, memory (used, cached, buffers, free), swap, usage of every local disk, **disk I/O** (throughput, IOPS, busy time per device), **network** traffic and errors, processes and uptime, as charts over the chosen time range. |
 | **Services on your machines** | systemd units and Docker containers are reported automatically (`system_service_up`, `container_up`). |
 | **Users and groups** | Any number of users in *Admin* (everything) or *User* (read-only). With an Enterprise licence also *custom* groups with none / read / write per area. Enforced by the server. |
@@ -70,14 +70,14 @@ Traces, logs and metrics, dashboards you build yourself, host / service / Docker
 ```mermaid
 flowchart LR
   subgraph machines [Your machines]
-    A1[lumen-agent<br/>host metrics, systemd, Docker,<br/>logs, Nextcloud checks]
+    A1[kluard-agent<br/>host metrics, systemd, Docker,<br/>logs, Nextcloud checks]
     A2[OTel SDK / Collector]
   end
   A1 -- "OTLP/HTTP JSON<br/>(API key)" --> L
   A2 -- "OTLP/HTTP JSON" --> L
   L -. "GET /api/v1/agent/config<br/>every 60 s" .-> A1
-  subgraph server [Lumen server]
-    L[lumen<br/>API + web UI]
+  subgraph server [Kluard server]
+    L[kluard<br/>API + web UI]
   end
   L -- "traces, logs, metrics" --> CH[(ClickHouse<br/>30 days)]
   L -- "users, groups, dashboards,<br/>hosts, instances" --> ES[(Elasticsearch)]
@@ -90,20 +90,20 @@ Telemetry lives in **ClickHouse**. Small, frequently changing records (users, gr
 ## Quick start
 
 ```bash
-git clone https://github.com/danielingemar/lumen.git
-cd lumen
+git clone https://github.com/getkluard/kluard.git
+cd kluard
 ```
 
 Needs Docker with the compose plugin and about 8 GB RAM (Elasticsearch + ClickHouse). On Linux hosts Elasticsearch needs `vm.max_map_count=262144` (Docker Desktop on Mac/Windows handles it itself).
 
 ```bash
 sudo sysctl -w vm.max_map_count=262144                                   # Linux only
-echo 'vm.max_map_count=262144' | sudo tee /etc/sysctl.d/99-lumen.conf    # keep it after reboot
+echo 'vm.max_map_count=262144' | sudo tee /etc/sysctl.d/99-kluard.conf    # keep it after reboot
 ./dev.sh                      # auto-detects your LAN IP
 ./dev.sh --ip 192.168.56.1    # or choose the address your VM can reach
 ```
 
-It starts Lumen, ClickHouse and Elasticsearch, prints the web UI address, the `admin` login and ready-to-paste commands for other machines. `./dev.sh status | stop | reset` manage it.
+It starts Kluard, ClickHouse and Elasticsearch, prints the web UI address, the `admin` login and ready-to-paste commands for other machines. `./dev.sh status | stop | reset` manage it.
 
 If a VM cannot connect, use an IP it can reach (bridged: your LAN IP; NAT/host-only: the host address of that network) and allow inbound TCP 4318.
 
@@ -113,24 +113,24 @@ Rocky Linux / AlmaLinux / RHEL 9, Ubuntu or Debian, or any host with Docker. 2+ 
 
 ```bash
 sudo sysctl -w vm.max_map_count=262144
-echo 'vm.max_map_count=262144' | sudo tee /etc/sysctl.d/99-lumen.conf
-sudo ./install.sh --public-url https://lumen.example.com --tenant main
+echo 'vm.max_map_count=262144' | sudo tee /etc/sysctl.d/99-kluard.conf
+sudo ./install.sh --public-url https://kluard.example.com --tenant main
 ```
 
 Installs Docker if missing, generates secrets into `deploy/.env`, runs a preflight check, starts everything, waits until healthy and prints the address and the admin login. Add `--allow-podman-removal` if podman is installed. Manual steps: `deploy/install-rhel-family.sh` or `deploy/install-debian-family.sh`, `deploy/gen-env.sh`, `deploy/preflight.sh`, `make up`.
 
-**Keep `deploy/.env` safe.** It holds `LUMEN_SECRET_KEY`, which encrypts stored Nextcloud credentials; without it they cannot be read again.
+**Keep `deploy/.env` safe.** It holds `KLUARD_SECRET_KEY`, which encrypts stored Nextcloud credentials; without it they cannot be read again.
 
 Production notes:
-- **Use HTTPS.** API keys travel in headers and Nextcloud tokens are sent to agents. Put Nginx/Caddy in front and set `LUMEN_BIND=127.0.0.1` in `deploy/.env`. Docker-published ports usually bypass firewalld, so do not rely on it alone.
+- **Use HTTPS.** API keys travel in headers and Nextcloud tokens are sent to agents. Put Nginx/Caddy in front and set `KLUARD_BIND=127.0.0.1` in `deploy/.env`. Docker-published ports usually bypass firewalld, so do not rely on it alone.
 - Set `--public-url` to the address agents will use; it is written into the install scripts.
-- If agents reach Lumen through a proxy such as Squid, exempt the Lumen host.
+- If agents reach Kluard through a proxy such as Squid, exempt the Kluard host.
 
 ### Upgrade
 
 Full step-by-step guide, including how to upgrade with read-only access: **[UPGRADING.md](UPGRADING.md)**. In short:
 
-The menu shows the build of the running server (`build 3fa91c2d`); agents built from the same source report the same value, and the Hosts page marks agents that differ with **update**. Pull the new source and run `./install.sh` (or `./dev.sh`) again: it adds missing settings such as `LUMEN_SECRET_KEY` to `deploy/.env`, rebuilds and restarts. **Your address and other settings in `deploy/.env` are never replaced**: `LUMEN_PUBLIC_URL` only changes if you pass `--public-url` (or `--ip` to `dev.sh`), and `LUMEN_BIND` is only set when missing. Several Lumen servers with different addresses can therefore be upgraded the same way. To upgrade without running any script at all: `docker compose -f deploy/docker-compose.yml up -d --build`. Existing data is kept, retention changes are applied to existing tables, and accounts from before groups existed become admins. **Run the agent install command once more on each machine** to get the current agent.
+The menu shows the build of the running server (`build 3fa91c2d`); agents built from the same source report the same value, and the Hosts page marks agents that differ with **update**. Pull the new source and run `./install.sh` (or `./dev.sh`) again: it adds missing settings such as `KLUARD_SECRET_KEY` to `deploy/.env`, rebuilds and restarts. **Your address and other settings in `deploy/.env` are never replaced**: `KLUARD_PUBLIC_URL` only changes if you pass `--public-url` (or `--ip` to `dev.sh`), and `KLUARD_BIND` is only set when missing. Several Kluard servers with different addresses can therefore be upgraded the same way. To upgrade without running any script at all: `docker compose -f deploy/docker-compose.yml up -d --build`. Existing data is kept, retention changes are applied to existing tables, and accounts from before groups existed become admins. **Run the agent install command once more on each machine** to get the current agent.
 
 ## Add machines
 
@@ -138,7 +138,7 @@ In the UI open **Add a machine**, create an agent key (for example `web-server-1
 
 | Type | Command | What it does |
 |---|---|---|
-| **Linux server** | `curl -fsSL URL/install/agent.sh \| sudo sh -s -- --key KEY` (later: `... -- --update`) | systemd service as an unprivileged `lumen-agent` user. Options: `--logs '/var/log/*.log'`, `--docker-logs`, `--docker` |
+| **Linux server** | `curl -fsSL URL/install/agent.sh \| sudo sh -s -- --key KEY` (later: `... -- --update`) | systemd service as an unprivileged `kluard-agent` user. Options: `--logs '/var/log/*.log'`, `--docker-logs`, `--docker` |
 | **Windows** | `& ([scriptblock]::Create((irm URL/install/agent.ps1))) -Key KEY` (elevated PowerShell) | Scheduled task running as SYSTEM, restarts on failure. Option: `-LogPath` |
 | **Docker host** | a `docker run ... alpine:3.20 sh -c 'wget -qO- URL/install/agent-docker.sh \| sh'` command | Agent as a container; downloads and checksum-verifies at start. Nothing to build |
 | **Nextcloud** | add the instance on the **Instances** page | see [Nextcloud monitoring](#nextcloud-monitoring) |
@@ -148,19 +148,19 @@ In the UI open **Add a machine**, create an agent key (for example `web-server-1
 
 **Updating agents.** An agent that is not the same build as the server is marked *update* on the Hosts page. Click it, or *Update N agents*, to update it (a root-owned helper installs what the server offers after checking its checksums and rolls back if the new version does not stay up; a container agent replaces itself in place). Agents from before this feature, and Windows agents, need the install command once: click the label to see it. See [UPGRADING.md](UPGRADING.md).
 
-Remove an agent with `--uninstall` (Linux), `-Uninstall` (Windows) or `docker rm -f lumen-agent`.
+Remove an agent with `--uninstall` (Linux), `-Uninstall` (Windows) or `docker rm -f kluard-agent`.
 
 `--docker` adds the agent to the `docker` group so it can list containers. **Docker socket access is equivalent to root on that machine**; only use it if you want container up/down status. The Windows script and the Docker-container agent do not collect services yet.
 
-Agents report their own health (`service.name=lumen-agent`): uptime, items sent, send errors, scrape errors, refused log paths. Set `"metrics_listen": "127.0.0.1:9464"` to also expose `/metrics`. An agent that cannot reach Lumen cannot say so: watch for a missing `lumen_agent_info` (the *Hosts DOWN* box does this).
+Agents report their own health (`service.name=kluard-agent`): uptime, items sent, send errors, scrape errors, refused log paths. Set `"metrics_listen": "127.0.0.1:9464"` to also expose `/metrics`. An agent that cannot reach Kluard cannot say so: watch for a missing `kluard_agent_info` (the *Hosts DOWN* box does this).
 
 ## Hosts, instances and remote configuration
 
-- **Hosts** lists every machine with an agent: status, **IP address**, agent version, OS, services and containers up/down. The agent reports the address it uses to reach Lumen (the one to show first) plus its other addresses; loopback, link-local and container-bridge addresses (docker0, br-…, veth…) are left out. Agents installed before this feature must be updated (run the install command again) before an address shows up. A container agent reports the container's own address, not the host's. Open a host to **rename** it (a display name, useful when a container agent reports a random ID; the real name stays and is what agents and instances use), **remove** it from the list (only when it is not reporting, and not while Nextcloud instances are still checked by it; it comes back by itself if its agent reports again), set the **log files to ship**, Docker log shipping, **services that must be running** (shown DOWN when stopped or missing), and to switch service/container reporting on or off.
+- **Hosts** lists every machine with an agent: status, **IP address**, agent version, OS, services and containers up/down. The agent reports the address it uses to reach Kluard (the one to show first) plus its other addresses; loopback, link-local and container-bridge addresses (docker0, br-…, veth…) are left out. Agents installed before this feature must be updated (run the install command again) before an address shows up. A container agent reports the container's own address, not the host's. Open a host to **rename** it (a display name, useful when a container agent reports a random ID; the real name stays and is what agents and instances use), **remove** it from the list (only when it is not reporting, and not while Nextcloud instances are still checked by it; it comes back by itself if its agent reports again), set the **log files to ship**, Docker log shipping, **services that must be running** (shown DOWN when stopped or missing), and to switch service/container reporting on or off.
 - **Instances** manages the Nextcloud installations to monitor. **Click an instance** for its own page: status and the reason when it is down, Nextcloud/PHP/database versions, users, files, shares, storage, database size, free data space, active users, response time, availability and PHP cache as charts, and the instance's own log. Users, files and the rest need a serverinfo token or login; the page says so when they are missing or the token is wrong. Managing: URL, token or login, optional log file, and *which machine's agent runs the checks*.
 - Agents fetch `GET /api/v1/agent/config?host=NAME` (API key only) every 60 s and restart their collectors when it changes. Nothing to edit on the machines. Settings from the agent's local config and flags still work and are merged; an instance defined in the UI replaces a local one with the same URL.
 - **Safety:** log paths that come from the server are only read if they are under `/var/log`, `/var/lib/docker/containers`, `/var/lib/docker/volumes`, `/var/www`, `/srv`, `/mnt` or `/opt`, and never contain `..`. Otherwise a UI user could make every agent read `/etc/shadow`. Change it per machine with `allowed_log_dirs` in the agent config (`["*"]` allows all). Paths in the local config file are always trusted. Refused paths show as a warning on the host.
-- Nextcloud tokens are stored **encrypted** (AES-GCM, key from `LUMEN_SECRET_KEY`) and never shown again in the UI (only "set"). They are sent to the agent that needs them, hence HTTPS.
+- Nextcloud tokens are stored **encrypted** (AES-GCM, key from `KLUARD_SECRET_KEY`) and never shown again in the UI (only "set"). They are sent to the agent that needs them, hence HTTPS.
 - **Services:** systemd units that are running or failed, plus watched ones, as `system_service_up`. **Containers:** `container_up` through the Docker Engine API on the local socket, and every five minutes `container_network_bytes` (bytes sent and received since each running container started, used for [billing by traffic](#billing-for-nextcloud-instances)).
 
 ## Nextcloud monitoring
@@ -192,13 +192,13 @@ Then add the instance under **Instances → Add instance**: choose the machine w
 
 ## Redis monitoring
 
-Lumen checks Redis (also Valkey and KeyDB) that runs in Docker, with or without a password, any number per machine and across machines.
+Kluard checks Redis (also Valkey and KeyDB) that runs in Docker, with or without a password, any number per machine and across machines.
 
-- **Found by itself.** The agent looks at the running containers on its machine (it needs the Docker socket, so install it with Docker access; the Docker agent command in the UI adds `--network host` for this). A container whose image is `redis`, `valkey`, `keydb`, `dragonfly` or `redict` is checked; exporters and web UIs (`redis_exporter`, `redisinsight`, `redis-commander`, sentinel) are skipped. Put the label `lumen.redis=false` on a container to leave it out, or `lumen.redis.port=<port>` if it listens on another port than 6379.
+- **Found by itself.** The agent looks at the running containers on its machine (it needs the Docker socket, so install it with Docker access; the Docker agent command in the UI adds `--network host` for this). A container whose image is `redis`, `valkey`, `keydb`, `dragonfly` or `redict` is checked; exporters and web UIs (`redis_exporter`, `redisinsight`, `redis-commander`, sentinel) are skipped. Put the label `kluard.redis=false` on a container to leave it out, or `kluard.redis.port=<port>` if it listens on another port than 6379.
 - **No password:** nothing to do. It shows up under **Redis** in the menu.
 - **With a password:** it shows up as **PASSWORD**. Press **Set password** on the row (a Redis 6+ ACL user is a second field). The password is stored encrypted on the server and sent only to the agent on that machine, never back to the browser. One Redis can have a password and the next none; each gets its own.
 - **Not in Docker, or not found:** **+ Add Redis** with the machine that should connect and `host:port`.
-- **Many agents or one shared password:** `LUMEN_AGENT_REDIS_PASSWORD` on an agent is tried on every Redis that has no password of its own.
+- **Many agents or one shared password:** `KLUARD_AGENT_REDIS_PASSWORD` on an agent is tried on every Redis that has no password of its own.
 - **What is reported:** `redis_up`, `redis_auth_required`, memory used, `maxmemory` and `redis_memory_utilization` (only when a limit is set), clients, keys, uptime, hits and misses, evicted keys, commands, rejected connections, replicas, role and whether the last background save succeeded. The Redis page shows the main ones; all of them can be used on dashboards and in alert rules. Starter rules: **Redis down** and **Redis memory almost full**.
 - The agent only sends `AUTH` and `INFO`. It never reads or changes data.
 
@@ -237,7 +237,7 @@ Status panels (a single-value panel with data source **Status**, and the boxes o
 
 ## Dropdowns on Traces, Logs and Metrics
 
-The filter boxes list what Lumen has actually received, with counts, so you do not have to remember names:
+The filter boxes list what Kluard has actually received, with counts, so you do not have to remember names:
 
 - **Traces:** service, root operation (narrowed to the chosen service) and host.
 - **Logs:** log source (the service name, for example `nginx` or `system-logs`) and host. The log-volume chart follows the same filters.
@@ -247,13 +247,13 @@ On live data the lists cover the last 7 days (not just the chart range, so somet
 
 ## Settings: your logo and name
 
-**Settings** (needs the *Settings* permission) lets you upload a logo (PNG, JPEG, GIF, WebP or SVG, up to 512 KB) and a site name. With a logo the menu shows the logo (on a white background so dark logos work) and the browser tab icon becomes the logo, fitted into a square; the name is used in the tab title and under the logo on the login page. Without a logo the tab shows a built-in Lumen icon. They are the same for everyone on this server and visible before signing in, so in a multi-tenant installation only give the Settings permission to the operator.
+**Settings** (needs the *Settings* permission) lets you upload a logo (PNG, JPEG, GIF, WebP or SVG, up to 512 KB) and a site name. With a logo the menu shows the logo (on a white background so dark logos work) and the browser tab icon becomes the logo, fitted into a square; the name is used in the tab title and under the logo on the login page. Without a logo the tab shows a built-in Kluard icon. They are the same for everyone on this server and visible before signing in, so in a multi-tenant installation only give the Settings permission to the operator.
 
 Uploads are checked by their real content (not the declared type), SVG files with scripts or event handlers are refused, and the logo is served with a locked-down content-security policy so it can never run code.
 
 ## Alerting
 
-Lumen can tell people when something is wrong. **Alerts** in the menu has five tabs: *Active* (what is firing now, with Acknowledge and Silence), *Rules*, *Channels*, *Silences* and *History*.
+Kluard can tell people when something is wrong. **Alerts** in the menu has five tabs: *Active* (what is firing now, with Acknowledge and Silence), *Rules*, *Channels*, *Silences* and *History*.
 
 **Set it up in three steps**
 
@@ -269,7 +269,7 @@ Lumen can tell people when something is wrong. **Alerts** in the menu has five t
 - Alerts that belong together (one rule, several hosts) are sent as **one message** after a short wait (30 s).
 - A firing alert is announced again every 4 hours until someone **acknowledges** it. Acknowledging does not resolve it; it only stops the reminders.
 - A **silence** mutes alerts whose labels match, for a while (planned work, for example). Silenced alerts are still evaluated and shown, but nothing is sent.
-- A failed delivery is retried after 10 s, 30 s, 2 min, 10 min and 30 min, and the **History** tab shows every attempt, including the ones Lumen gave up on. A channel that keeps failing is marked FAILING.
+- A failed delivery is retried after 10 s, 30 s, 2 min, 10 min and 30 min, and the **History** tab shows every attempt, including the ones Kluard gave up on. A channel that keeps failing is marked FAILING.
 - A check that cannot run (for example the database is down) never resolves alerts; the rule shows why it cannot be checked.
 - State is kept, so a restart does not send everything again, and an alert that fired but was never delivered is sent after the restart.
 
@@ -278,15 +278,15 @@ Lumen can tell people when something is wrong. **Alerts** in the menu has five t
 | Channel | Edition | Notes |
 |---|---|---|
 | Email (SMTP) | Community | STARTTLS, TLS or none; login optional |
-| Webhook | Community | JSON, signed with `X-Lumen-Signature` (sha256 HMAC of `timestamp.body`) so the receiver can verify it |
+| Webhook | Community | JSON, signed with `X-Kluard-Signature` (sha256 HMAC of `timestamp.body`) so the receiver can verify it |
 | Slack, Microsoft Teams | Community | Incoming webhooks (https) |
-| Heartbeat | Community | Lumen calls a URL regularly; an outside service tells you when the calls stop, which means Lumen itself is down |
+| Heartbeat | Community | Kluard calls a URL regularly; an outside service tells you when the calls stop, which means Kluard itself is down |
 | PagerDuty, Opsgenie | Enterprise | One event or alert per alert; closed when it resolves |
 | Jira, ServiceNow | Enterprise | A ticket is created, commented on at each reminder and closed when the alert resolves |
 
 Each channel can be limited to some importances (for example only critical) and to alerts with certain labels (for example `host=web1`).
 
-**Security.** Channels make the server connect to addresses that users type. Lumen therefore **refuses loopback, private, link-local and cloud-metadata addresses** (checked on the real connection, so also after name resolution and redirects). To use an internal mail relay or an internal webhook receiver, an administrator sets `LUMEN_ALERT_ALLOW_PRIVATE=true`; the cloud-metadata address (169.254.x.x) stays blocked even then. Mail headers are built from validated fields only (no header injection), secrets are encrypted and never returned, errors never contain a webhook URL, and every change is audited in the server log. Permissions: **Alerts** (read or write: rules, silences, acknowledging) and **Notification channels** (read or write; kept separate because channels hold secrets and send from the server). The built-in *User* group can read alerts but not see channels.
+**Security.** Channels make the server connect to addresses that users type. Kluard therefore **refuses loopback, private, link-local and cloud-metadata addresses** (checked on the real connection, so also after name resolution and redirects). To use an internal mail relay or an internal webhook receiver, an administrator sets `KLUARD_ALERT_ALLOW_PRIVATE=true`; the cloud-metadata address (169.254.x.x) stays blocked even then. Mail headers are built from validated fields only (no header injection), secrets are encrypted and never returned, errors never contain a webhook URL, and every change is audited in the server log. Permissions: **Alerts** (read or write: rules, silences, acknowledging) and **Notification channels** (read or write; kept separate because channels hold secrets and send from the server). The built-in *User* group can read alerts but not see channels.
 
 **What is not there yet:** rules on traces (error rate, latency), escalation policies and on-call schedules, recurring maintenance windows, message templates, assigning an alert to a person, and metrics about the alert engine itself. See the [design](docs/design/alerting.md). A single server runs the evaluation; there is no high-availability mode yet.
 
@@ -298,7 +298,7 @@ Each channel can be limited to some importances (for example only critical) and 
 - **Only changes that went through are recorded.** A request that was refused, or failed, is not.
 - **Search and export:** filter by person, text and dates; **Export CSV** gives exactly what is shown (a cell that starts like a spreadsheet formula is made harmless).
 - **Who may read it:** whoever may see Settings, and only the entries of their own tenant. An operator who goes into a tenant to support it is recorded there too, so support access is never invisible.
-- **How long:** a year by default (`LUMEN_AUDIT_DAYS`), and at most 10 000 entries per tenant.
+- **How long:** a year by default (`KLUARD_AUDIT_DAYS`), and at most 10 000 entries per tenant.
 - It is added to every route that changes something by one guard, and a test fails if a route is added that does not pass it.
 
 API: `GET /api/v1/audit-log?actor=&q=&from=&to=&limit=&format=csv`.
@@ -309,34 +309,34 @@ Tamper-evident storage with long retention and SIEM export is an Enterprise feat
 
 *Enterprise.* Under **Settings, Single sign-on** you set up **one** OpenID Connect provider (Keycloak, Authentik, Microsoft Entra ID, Google, …), and the login page then offers “Sign in with …”.
 
-1. **Set `LUMEN_PUBLIC_URL`** to the address people use to reach Lumen (it is also used for the agent install scripts) and start Lumen again.
-2. **At the provider**, make an application (client) for Lumen and register the **redirect address** that the card shows: `https://your-lumen/auth/oidc/callback`.
-3. **In Lumen**, give the issuer address (exactly as the provider names itself; `…/.well-known/openid-configuration` must be under it), the client id and the client secret, and press *Test the provider*, then *Save*. It is only turned on if the provider answers as it should.
+1. **Set `KLUARD_PUBLIC_URL`** to the address people use to reach Kluard (it is also used for the agent install scripts) and start Kluard again.
+2. **At the provider**, make an application (client) for Kluard and register the **redirect address** that the card shows: `https://your-kluard/auth/oidc/callback`.
+3. **In Kluard**, give the issuer address (exactly as the provider names itself; `…/.well-known/openid-configuration` must be under it), the client id and the client secret, and press *Test the provider*, then *Save*. It is only turned on if the provider answers as it should.
 
 - **Who gets in:** choose the email domains that may sign in (empty lets in everybody the provider vouches for), whether an **account is made at the first sign-in** (and in which group; making administrators of everyone is not allowed without a domain list), and whether an existing account whose user name is the same email address is **linked** (only when the provider says the address is verified). An account is tied to the provider's own id for the person, so a changed address does not give anybody else the account.
 - **Passwords keep working.** The local accounts are the way in if the provider is down.
 - **What is checked:** the sign-in is started and finished in the same browser (state, nonce and a PKCE secret in a short-lived signed cookie); the token must be signed with RS256 or ES256 by a key the provider lists (never “none” or a shared-secret algorithm), and must be for this application, from this issuer, not expired, and for this very sign-in. Keys are read again when the provider rotates them (at most once a minute).
 - **Where it lives:** the people who sign in belong to the tenant of whoever saved the setting (the tenant that runs the installation). Only that tenant can change it.
-- A provider is reached over **https** (or on this very machine). For one inside a closed network over plain http, set `LUMEN_OIDC_ALLOW_HTTP=1`.
+- A provider is reached over **https** (or on this very machine). For one inside a closed network over plain http, set `KLUARD_OIDC_ALLOW_HTTP=1`.
 - Every sign-in, and every refusal with its reason, is in the audit log.
 
 SAML, SCIM, LDAP group mapping and enforced MFA are Enterprise features (see the edition charter).
 
 ## Where backups are kept
 
-By default backups go to `LUMEN_BACKUP_DIR` (`/backup`, a Docker volume). Under **Settings, Where backups are kept** you choose another folder yourself, for example a disk that is mounted at `/mnt/backup`, so that the backups are not on the same disk as the data.
+By default backups go to `KLUARD_BACKUP_DIR` (`/backup`, a Docker volume). Under **Settings, Where backups are kept** you choose another folder yourself, for example a disk that is mounted at `/mnt/backup`, so that the backups are not on the same disk as the data.
 
-- **Check** looks at a folder before you use it: is it there, can Lumen write to it (it writes and removes a small test file), how much room is there, and is it on the same disk as Lumen's data (a warning: a disk that fails takes both).
-- **Use this folder** takes effect from the next backup, without a restart. Backups already made stay in the old folder (Lumen tells you how many days); copy them over yourself if you want them in one place. **Use the default** goes back.
-- **In Docker the disk has to be mounted into the Lumen container.** Mount it on the machine, add `- /mnt/backup:/mnt/backup` under `lumen` → `volumes` in `deploy/docker-compose.yml`, run `docker compose up -d`, and then choose it. The card shows the exact line for the folder you type.
-- **Lumen never makes a folder you chose.** If the disk is not mounted (after a reboot, say), backups stop with a clear message until it is, instead of being written to whatever lies under the mount point (in a container, its own storage, which is lost when it is recreated).
-- **Where a folder may be:** inside `/backup`, `/mnt`, `/media`, `/srv` or `/var/backups` (change with `LUMEN_BACKUP_ROOTS`, a comma separated list), so that this setting cannot be used to write into the system. A link that leads out of those places is refused. Only the tenant that runs the installation can change it.
+- **Check** looks at a folder before you use it: is it there, can Kluard write to it (it writes and removes a small test file), how much room is there, and is it on the same disk as Kluard's data (a warning: a disk that fails takes both).
+- **Use this folder** takes effect from the next backup, without a restart. Backups already made stay in the old folder (Kluard tells you how many days); copy them over yourself if you want them in one place. **Use the default** goes back.
+- **In Docker the disk has to be mounted into the Kluard container.** Mount it on the machine, add `- /mnt/backup:/mnt/backup` under `kluard` → `volumes` in `deploy/docker-compose.yml`, run `docker compose up -d`, and then choose it. The card shows the exact line for the folder you type.
+- **Kluard never makes a folder you chose.** If the disk is not mounted (after a reboot, say), backups stop with a clear message until it is, instead of being written to whatever lies under the mount point (in a container, its own storage, which is lost when it is recreated).
+- **Where a folder may be:** inside `/backup`, `/mnt`, `/media`, `/srv` or `/var/backups` (change with `KLUARD_BACKUP_ROOTS`, a comma separated list), so that this setting cannot be used to write into the system. A link that leads out of those places is refused. Only the tenant that runs the installation can change it.
 
 API: `GET /api/v1/backup-location`, `POST /api/v1/backup-location/check`, `PUT /api/v1/backup-location` (`{"dir": ""}` goes back to the default).
 
 ## ClickHouse's own logs
 
-By default ClickHouse writes a very detailed log of itself into tables in its `system` database (`text_log`, `trace_log`, `metric_log` and more). They are for debugging ClickHouse, not for Lumen, and they have no limit: on one installation, a few weeks gave 18 GB of `text_log` and 10 GB of `trace_log` next to 33 MB of real telemetry, and the disk filled up. `deploy/docker-compose.yml` now mounts `deploy/clickhouse/lumen.xml`, which switches the big ones off (`query_log` and `part_log`, which are small, are kept). **Lumen warns** on the Home page and under Settings when these tables take more than 2 GB and more than your telemetry.
+By default ClickHouse writes a very detailed log of itself into tables in its `system` database (`text_log`, `trace_log`, `metric_log` and more). They are for debugging ClickHouse, not for Kluard, and they have no limit: on one installation, a few weeks gave 18 GB of `text_log` and 10 GB of `trace_log` next to 33 MB of real telemetry, and the disk filled up. `deploy/docker-compose.yml` now mounts `deploy/clickhouse/kluard.xml`, which switches the big ones off (`query_log` and `part_log`, which are small, are kept). **Kluard warns** on the Home page and under Settings when these tables take more than 2 GB and more than your telemetry.
 
 On an installation from before this, switch them off by updating, and empty what is already there:
 
@@ -347,19 +347,19 @@ for t in text_log trace_log metric_log asynchronous_metric_log processors_profil
 done
 ```
 
-## Lumen watches itself
+## Kluard watches itself
 
-The failure that is worst for an observability tool is its own disk filling up: Elasticsearch stops creating indices at 85 percent and refuses writes at 95, ClickHouse goes read-only, and the first sign is a page that says “unavailable”. So Lumen looks at itself:
+The failure that is worst for an observability tool is its own disk filling up: Elasticsearch stops creating indices at 85 percent and refuses writes at 95, ClickHouse goes read-only, and the first sign is a page that says “unavailable”. So Kluard looks at itself:
 
-- **The disk it writes to.** The file system under the data and backup folders, which in a container is the disk under Docker's volumes. Both warn at **80 percent** and are urgent at **90** (`LUMEN_DISK_WARN`, `LUMEN_DISK_CRIT`).
+- **The disk it writes to.** The file system under the data and backup folders, which in a container is the disk under Docker's volumes. Both warn at **80 percent** and are urgent at **90** (`KLUARD_DISK_WARN`, `KLUARD_DISK_CRIT`).
 - **Elasticsearch** (when it holds the settings): green, yellow or red, shards without a place, and the disk as Elasticsearch itself sees it.
 - **ClickHouse:** whether it can be reached, its disks, and **what takes the space**, biggest tables first, with ClickHouse's own system tables (query and trace logs), which grow without anyone looking.
 
 **Where you see it:** a box on the Home page, with what to do, as soon as something is wrong (and nothing when all is well); and a card in **Settings** with the details and a *Check now* button. It is shown to whoever runs the installation (the owner tenant in a multi-tenant setup), never to customers.
 
-**Where you are told:** under *Alerts, Rules, Starter rules* there are five “Lumen: …” rules (a disk more than 80 or 90 percent full, Elasticsearch not green, Elasticsearch red, ClickHouse unreachable or full). Add them with your channels and you get a message at 80 percent, not when the cluster has turned red. They work even when ClickHouse is the thing that is down, because they do not read from it. A rule limit is set in the rule (the disk percentage; for Elasticsearch “not green” or “red”).
+**Where you are told:** under *Alerts, Rules, Starter rules* there are five “Kluard: …” rules (a disk more than 80 or 90 percent full, Elasticsearch not green, Elasticsearch red, ClickHouse unreachable or full). Add them with your channels and you get a message at 80 percent, not when the cluster has turned red. They work even when ClickHouse is the thing that is down, because they do not read from it. A rule limit is set in the rule (the disk percentage; for Elasticsearch “not green” or “red”).
 
-A disk that Lumen, Elasticsearch and ClickHouse share is **one** problem, with every part that lives on it named. A yellow Elasticsearch names the indices that have no place; on a single node these are copies waiting for a second node, which is harmless, and Lumen takes the copies off its own indices when it starts (only on a cluster of one node, and only its own indices).
+A disk that Kluard, Elasticsearch and ClickHouse share is **one** problem, with every part that lives on it named. A yellow Elasticsearch names the indices that have no place; on a single node these are copies waiting for a second node, which is harmless, and Kluard takes the copies off its own indices when it starts (only on a cluster of one node, and only its own indices).
 
 API: `GET /api/v1/health` (`?refresh=1` looks again; the answer is otherwise kept for 30 seconds).
 
@@ -376,24 +376,24 @@ A **host group** is a name you put on hosts, so that you can look at, and alert 
 
 ## Billing for Nextcloud instances
 
-*Enterprise.* Under **Billing** you set what you charge and get, for any period you choose, what each customer owes: the basis for an invoice. Lumen is not an invoicing program: you copy the figures into yours, or export them.
+*Enterprise.* Under **Billing** you set what you charge and get, for any period you choose, what each customer owes: the basis for an invoice. Kluard is not an invoicing program: you copy the figures into yours, or export them.
 
 - **Three prices, all chosen by you:** a price **per user and month**, a price **per gigabyte of stored data and month**, and a fixed **price per instance and month** (what an instance costs you whatever its size: server, monitoring, updates). The fee is charged for every instance that reported in the period, follows "charge only the days reported", and is part of what VAT is charged on. Each customer can have its own fee (Customers, Own prices); empty means the default, and 0 means none. A customer in another currency has no fee unless it gets one of its own. Prices are decimals (`49.50`, `0.125`); a comma is accepted.
 - **Currency:** SEK, EUR, USD, GBP, NOK, DKK, CHF, ISK, PLN, CZK, CAD, AUD, NZD, JPY, CNY and INR. A customer can have a currency of its own (then both prices in that currency are set for it). There is no conversion: every invoice is in one currency and the totals are added up per currency.
 - **What is counted:** the users and the data the accounts' files take, as the Nextcloud instance reports them (the same numbers as on the instance page; they need the serverinfo token or an administrator login). The **users are counted on the last day of the period** (they hardly change, and an invoice is for how many there are when it is made); you can instead charge the highest number of any day or the average. The data is charged on the peak of the period by default, and can also be the average or the last day. Data is counted in GB (10^9 bytes) or GiB (2^30).
-- **Stored data or network traffic:** the GB price can be charged on the data the accounts keep on the instance (the default), or on the **network traffic of the instance's containers** instead. For traffic, the agent on the machine that runs the containers reads Docker's counters of bytes sent and received per container every five minutes (the agent needs access to Docker, as for the container list; an agent that itself runs as a container needs the Docker socket mounted into it, `-v /var/run/docker.sock:/var/run/docker.sock`, which *Add a machine → Nextcloud → Docker* adds when you tick the box), and Lumen adds up the steps per day; a container that is restarted starts its counter again at zero, which is taken care of. Under **Prices & customers**, give each instance its containers (for example `nextcloud-ks`, or `host/nextcloud-ks` for the one on that machine; several are added up) and choose whether only what they **send** is charged or sent and received. Know what it counts: a container's counter is everything it puts on the network, so it includes the traffic to users and to external storage such as S3, but also to the database and other containers on the same Docker network, and a container on the host's own network has no counter. Traffic cannot be told apart by destination. Traffic is not shared out over the month: the days that were recorded are charged.
+- **Stored data or network traffic:** the GB price can be charged on the data the accounts keep on the instance (the default), or on the **network traffic of the instance's containers** instead. For traffic, the agent on the machine that runs the containers reads Docker's counters of bytes sent and received per container every five minutes (the agent needs access to Docker, as for the container list; an agent that itself runs as a container needs the Docker socket mounted into it, `-v /var/run/docker.sock:/var/run/docker.sock`, which *Add a machine → Nextcloud → Docker* adds when you tick the box), and Kluard adds up the steps per day; a container that is restarted starts its counter again at zero, which is taken care of. Under **Prices & customers**, give each instance its containers (for example `nextcloud-ks`, or `host/nextcloud-ks` for the one on that machine; several are added up) and choose whether only what they **send** is charged or sent and received. Know what it counts: a container's counter is everything it puts on the network, so it includes the traffic to users and to external storage such as S3, but also to the database and other containers on the same Docker network, and a container on the host's own network has no counter. Traffic cannot be told apart by destination. Traffic is not shared out over the month: the days that were recorded are charged.
 - **Customers:** instances with the same customer name are on one invoice. Per instance you can set a discount, another VAT rate, a note, or mark it **not invoiced** (your own and test instances). VAT is stated per rate, as an invoice does. An instance that reported only part of the month can be charged for those days (*prorate*).
 - **Money is exact:** amounts are whole öre/cents, rounded once per line, half up. The report warns about instances that reported nothing, or without users or data (the token is missing, for example).
 - **Reports:** for any days from one date to another (both included; at most a year), with buttons for this month, last month and the last 30 days, as a table, as **CSV per customer** or **per instance**, or a clean page to print or save as PDF. The prices are for the whole period you pick, so pick the days you invoice (the 1st to the last day of the month, say). A period that has not ended is marked as not final.
-- **History:** Lumen copies the daily numbers into its settings store every half hour, so a month can be invoiced long after the telemetry has expired (30 days by default).
+- **History:** Kluard copies the daily numbers into its settings store every half hour, so a month can be invoiced long after the telemetry has expired (30 days by default).
 
 Permission: **Billing** (read to see, write to change prices). Changes are in the [audit log](#audit-log). API: `GET/PUT /api/v1/billing` and `GET /api/v1/billing/report?from=2026-09-05&to=2026-10-04` (or `period=2026-09`)`[&format=csv&view=invoices|lines]`.
 
 ## Tenants and the operator console
 
-A **tenant** is one customer (or team) of an installation: its users, keys, dashboards, hosts and data are invisible to every other tenant. Isolation is always on and free. The people who run the installation can manage all tenants from the **Tenants** page, which is part of the **Operator add-on** (it needs an Operator licence; without one Lumen still counts what each tenant sends, but enforces nothing and never cuts anyone off).
+A **tenant** is one customer (or team) of an installation: its users, keys, dashboards, hosts and data are invisible to every other tenant. Isolation is always on and free. The people who run the installation can manage all tenants from the **Tenants** page, which is part of the **Operator add-on** (it needs an Operator licence; without one Kluard still counts what each tenant sends, but enforces nothing and never cuts anyone off).
 
-**Setting up.** The operators are users of the reserved tenant `operator`. In an installation with several tenants, install with `LUMEN_ADMIN_TENANT=operator` (or add an administrator there with `lumen users add --tenant operator --group admin`). Tenants that already exist get a record automatically at start-up. A customer's group can never be given the console, however it is made.
+**Setting up.** The operators are users of the reserved tenant `operator`. In an installation with several tenants, install with `KLUARD_ADMIN_TENANT=operator` (or add an administrator there with `kluard users add --tenant operator --group admin`). Tenants that already exist get a record automatically at start-up. A customer's group can never be given the console, however it is made.
 
 **What an operator can do** (Tenants in the menu):
 
@@ -402,7 +402,7 @@ A **tenant** is one customer (or team) of an installation: its users, keys, dash
 - **Suspend** a tenant, with a reason: its users cannot sign in, open sessions stop, and incoming data is either refused or accepted and thrown away (your choice). Nothing is deleted. Resume brings everything back at once. The operator tenant cannot be suspended.
 - **Go into a tenant** for support, for up to 4 hours, read-only or with write access. The tenant decides whether that is allowed: *off*, *only when an administrator allows it* (the default for new tenants; they allow it for a chosen time under Settings, Support access) or *any time*. Inside, you act as one of the tenant's administrators, a banner tells you so, **everything you change is on record and the tenant can read the record** (Settings, Access log), and you cannot widen your own access.
 - **Export** a tenant's settings and documents as a zip (no passwords, key hashes or sealed secrets; telemetry is in the daily backups).
-- **Remove** a tenant for good: you type its id, then its users, keys, dashboards, hosts, instances, alert rules and channels, and its traces, logs and metrics (also archived days and the daily backups) are deleted, and Lumen checks that nothing is left. The usage records (for your invoices) and the access log are kept, and the name stays taken. A removal that fails (for example the database is down) says which step and why, and can be run again.
+- **Remove** a tenant for good: you type its id, then its users, keys, dashboards, hosts, instances, alert rules and channels, and its traces, logs and metrics (also archived days and the daily backups) are deleted, and Kluard checks that nothing is left. The usage records (for your invoices) and the access log are kept, and the name stays taken. A removal that fails (for example the database is down) says which step and why, and can be run again.
 - **Usage**: what each tenant sent per day (items and bytes per signal, hosts that reported, the highest number of users, keys and so on), as a table or a **CSV for your invoicing**. A byte is a byte of accepted OTLP payload after decompression, so a customer can check it. The prices and invoice basis for your own Nextcloud instances are under [Billing](#billing-for-nextcloud-instances).
 - **Audit log**: every operator action and everything done inside a tenant.
 
@@ -425,45 +425,45 @@ Custom groups, single sign-on and billing need an Enterprise licence. Without on
 The server enforces permissions on every request; the UI just hides what you cannot use. API keys (agents, scripts) can read data and manage dashboards, never users or keys. Safeguards: you cannot delete yourself, change your own group, or remove the last user who can manage users. A group change applies immediately; resetting a password ends that user's sessions. New passwords are generated and shown once.
 
 ```bash
-lumen users add alice --tenant main --group admin|user|GROUP_ID    # default group: user
-lumen users set-group alice GROUP
+kluard users add alice --tenant main --group admin|user|GROUP_ID    # default group: user
+kluard users set-group alice GROUP
 ```
 
 ## Login, keys and security
 
 - **People log in with username and password.** Passwords are salted PBKDF2-HMAC-SHA256 (600,000 iterations); sessions are signed HttpOnly `SameSite=Strict` cookies (12 h, `Secure` over HTTPS); logins are throttled per username (10 failures / 10 min); changing a password ends that user's sessions.
 - **Machines use API keys**, stored only as SHA-256 hashes (shown once). A browser session can never send telemetry. You can also sign in to the UI *with* an API key: that session reads data and uses dashboards but cannot manage keys, users or passwords, and ends when the key is deleted.
-- **Storage:** users, groups, key hashes, dashboards, host settings, instances and the session secret live in Elasticsearch (`lumen-users`, `-groups`, `-keys`, `-dashboards`, `-hosts`, `-instances`, `-meta`). Writes are single-document with optimistic concurrency (two people saving the same dashboard cannot silently overwrite each other). Elasticsearch has no multi-document transactions. Without `LUMEN_ELASTICSEARCH_URL` Lumen uses a JSON file (`documents.json`, mode 0600).
-- The first admin is created at startup from `LUMEN_ADMIN_USER` / `LUMEN_ADMIN_PASSWORD` / `LUMEN_ADMIN_TENANT`. Changing the password in `.env` later has no effect; use the UI or CLI. Locked out? `docker compose -f deploy/docker-compose.yml exec lumen /lumen users passwd admin`.
-- **Licensing note:** Elasticsearch is not Apache-licensed (Elastic License 2.0 / SSPL, plus AGPL from 8.16). Running it as a separate service is fine; read the terms before redistributing it or offering a hosted service. Lumen only uses basic document and search APIs, so **OpenSearch** (Apache-2.0) should work by pointing `LUMEN_ELASTICSEARCH_URL` at it (not tested).
+- **Storage:** users, groups, key hashes, dashboards, host settings, instances and the session secret live in Elasticsearch (`kluard-users`, `-groups`, `-keys`, `-dashboards`, `-hosts`, `-instances`, `-meta`). Writes are single-document with optimistic concurrency (two people saving the same dashboard cannot silently overwrite each other). Elasticsearch has no multi-document transactions. Without `KLUARD_ELASTICSEARCH_URL` Kluard uses a JSON file (`documents.json`, mode 0600).
+- The first admin is created at startup from `KLUARD_ADMIN_USER` / `KLUARD_ADMIN_PASSWORD` / `KLUARD_ADMIN_TENANT`. Changing the password in `.env` later has no effect; use the UI or CLI. Locked out? `docker compose -f deploy/docker-compose.yml exec kluard /kluard users passwd admin`.
+- **Licensing note:** Elasticsearch is not Apache-licensed (Elastic License 2.0 / SSPL, plus AGPL from 8.16). Running it as a separate service is fine; read the terms before redistributing it or offering a hosted service. Kluard only uses basic document and search APIs, so **OpenSearch** (Apache-2.0) should work by pointing `KLUARD_ELASTICSEARCH_URL` at it (not tested).
 
 CLI (also works while the server runs):
 
 ```bash
-docker compose -f deploy/docker-compose.yml exec lumen /lumen users list
-docker compose -f deploy/docker-compose.yml exec lumen /lumen users add alice --tenant main
-docker compose -f deploy/docker-compose.yml exec lumen /lumen users passwd alice
-docker compose -f deploy/docker-compose.yml exec lumen /lumen users delete alice
-docker compose -f deploy/docker-compose.yml exec lumen /lumen keys create --tenant main --name vm1
+docker compose -f deploy/docker-compose.yml exec kluard /kluard users list
+docker compose -f deploy/docker-compose.yml exec kluard /kluard users add alice --tenant main
+docker compose -f deploy/docker-compose.yml exec kluard /kluard users passwd alice
+docker compose -f deploy/docker-compose.yml exec kluard /kluard users delete alice
+docker compose -f deploy/docker-compose.yml exec kluard /kluard keys create --tenant main --name vm1
 ```
 
 ## Retention, backup and archive
 
-Live data stays in ClickHouse for `LUMEN_RETENTION_DAYS` (**30**); changing the value also updates existing tables at startup. Before data expires, every completed UTC day is exported once per tenant and table as gzip JSON lines:
+Live data stays in ClickHouse for `KLUARD_RETENTION_DAYS` (**30**); changing the value also updates existing tables at startup. Before data expires, every completed UTC day is exported once per tenant and table as gzip JSON lines:
 
 ```
 /backup/telemetry/YYYY-MM-DD/<tenant>/otel_{spans,logs,metrics}.jsonl.gz   (+ a DONE marker, written last)
-/backup/config/lumen-config-YYYY-MM-DD.json.gz    users, groups, dashboards, hosts, instances (last 30)
+/backup/config/kluard-config-YYYY-MM-DD.json.gz    users, groups, dashboards, hosts, instances (last 30)
 ```
 
-Backups are kept `LUMEN_BACKUP_RETENTION_DAYS` (**365**; `0` = forever). A failed export leaves no partial day and is retried.
+Backups are kept `KLUARD_BACKUP_RETENTION_DAYS` (**365**; `0` = forever). A failed export leaves no partial day and is retried.
 
-**Looking at an old day:** open **Backups & archive**, choose *View in archive* (the day is loaded into `*_archive` tables that never expire), and Lumen switches the top bar to **Archive** with a custom time range. Traces, logs, metrics and dashboards then show that day. Switch back with *Back to live data*, and *Unload* when done. The raw files can also be downloaded or read directly: `zcat .../otel_logs.jsonl.gz | less`.
+**Looking at an old day:** open **Backups & archive**, choose *View in archive* (the day is loaded into `*_archive` tables that never expire), and Kluard switches the top bar to **Archive** with a custom time range. Traces, logs, metrics and dashboards then show that day. Switch back with *Back to live data*, and *Unload* when done. The raw files can also be downloaded or read directly: `zcat .../otel_logs.jsonl.gz | less`.
 
 > The config dump contains **all tenants** (password hashes, encrypted credentials) and is for the operator only; it is never served by the API.
 >
 > **The backup lives on the same server as the data.** Copy it elsewhere regularly, for example from cron:
-> `docker compose -f deploy/docker-compose.yml cp lumen:/backup ./lumen-backup`
+> `docker compose -f deploy/docker-compose.yml cp kluard:/backup ./kluard-backup`
 
 ## Configuration
 
@@ -471,30 +471,30 @@ Backups are kept `LUMEN_BACKUP_RETENTION_DAYS` (**365**; `0` = forever). A faile
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `LUMEN_ADDR` | `:4318` | listen address |
-| `LUMEN_PUBLIC_URL` | | address agents use; written into the install scripts |
-| `LUMEN_CLICKHOUSE_URL` / `_DB` / `_USER` / `_PASSWORD` | `http://localhost:8123` / `lumen` / `default` / | ClickHouse |
-| `LUMEN_RETENTION_DAYS` | `30` | days of live data |
-| `LUMEN_BACKUP_DIR` | `/backup` | daily export of expiring data; empty disables backups |
-| `LUMEN_BACKUP_RETENTION_DAYS` | `365` | how long backups are kept; `0` = forever |
-| `LUMEN_ALERTS` | `true` | `false` switches alerting off |
-| `LUMEN_ALERT_ALLOW_PRIVATE` | `false` | let alert channels reach loopback and private addresses (an internal mail relay or webhook receiver) |
-| `LUMEN_ALERT_GROUP_WAIT` | `30s` | how long related alerts are collected into one message |
-| `LUMEN_ALERT_REPEAT` | `4h` | how often a firing alert is announced again until acknowledged |
-| `LUMEN_ADMIN_TENANT` | `main` | the tenant of the first administrator. In an installation with several tenants set it to `operator`: that tenant holds the operator console and owns the licence |
-| `LUMEN_LICENSE_FILE` | | path of a licence file (read at start and every minute, so a renewal can be dropped in); otherwise the licence saved under Settings is used |
-| `LUMEN_SECRET_KEY` | | encrypts stored Nextcloud credentials (falls back to the session secret with a warning) |
-| `LUMEN_ELASTICSEARCH_URL` / `_USER` / `_PASSWORD` / `_API_KEY` / `_PREFIX` | / / / / `lumen` | document store; without a URL a JSON file in `LUMEN_DATA_DIR` (`/data`) is used |
-| `LUMEN_ADMIN_USER` / `_PASSWORD` / `_TENANT` | / / `main` | first admin, created at startup |
-| `LUMEN_API_KEYS` | | optional bootstrap keys, `key:tenant,key:tenant` |
-| `LUMEN_DIST_DIR` | `/dist` | agent binaries served for installs |
-| `LUMEN_DEV_MODE` | `false` | `true` disables authentication entirely (single tenant `default`); private test machines only |
+| `KLUARD_ADDR` | `:4318` | listen address |
+| `KLUARD_PUBLIC_URL` | | address agents use; written into the install scripts |
+| `KLUARD_CLICKHOUSE_URL` / `_DB` / `_USER` / `_PASSWORD` | `http://localhost:8123` / `kluard` / `default` / | ClickHouse |
+| `KLUARD_RETENTION_DAYS` | `30` | days of live data |
+| `KLUARD_BACKUP_DIR` | `/backup` | daily export of expiring data; empty disables backups |
+| `KLUARD_BACKUP_RETENTION_DAYS` | `365` | how long backups are kept; `0` = forever |
+| `KLUARD_ALERTS` | `true` | `false` switches alerting off |
+| `KLUARD_ALERT_ALLOW_PRIVATE` | `false` | let alert channels reach loopback and private addresses (an internal mail relay or webhook receiver) |
+| `KLUARD_ALERT_GROUP_WAIT` | `30s` | how long related alerts are collected into one message |
+| `KLUARD_ALERT_REPEAT` | `4h` | how often a firing alert is announced again until acknowledged |
+| `KLUARD_ADMIN_TENANT` | `main` | the tenant of the first administrator. In an installation with several tenants set it to `operator`: that tenant holds the operator console and owns the licence |
+| `KLUARD_LICENSE_FILE` | | path of a licence file (read at start and every minute, so a renewal can be dropped in); otherwise the licence saved under Settings is used |
+| `KLUARD_SECRET_KEY` | | encrypts stored Nextcloud credentials (falls back to the session secret with a warning) |
+| `KLUARD_ELASTICSEARCH_URL` / `_USER` / `_PASSWORD` / `_API_KEY` / `_PREFIX` | / / / / `kluard` | document store; without a URL a JSON file in `KLUARD_DATA_DIR` (`/data`) is used |
+| `KLUARD_ADMIN_USER` / `_PASSWORD` / `_TENANT` | / / `main` | first admin, created at startup |
+| `KLUARD_API_KEYS` | | optional bootstrap keys, `key:tenant,key:tenant` |
+| `KLUARD_DIST_DIR` | `/dist` | agent binaries served for installs |
+| `KLUARD_DEV_MODE` | `false` | `true` disables authentication entirely (single tenant `default`); private test machines only |
 
 If there are no users and no keys, nobody can log in and the server log says so.
 
-**Agent:** a JSON file (`-config`, see `lumen-agent.example.json`) and/or environment variables (variables win): `LUMEN_AGENT_URL`, `LUMEN_AGENT_API_KEY`, `LUMEN_AGENT_INTERVAL`, `LUMEN_AGENT_HOST_METRICS`, `LUMEN_AGENT_SYSTEMD`, `LUMEN_AGENT_CONTAINERS`, `LUMEN_AGENT_LOG_PATHS`, `LUMEN_AGENT_DOCKER_LOGS`, `LUMEN_AGENT_METRICS_LISTEN`, `LUMEN_AGENT_NO_REMOTE` (ignore the server's settings), `LUMEN_AGENT_NEXTCLOUD_{URL,TOKEN,USER,PASSWORD,SERVICE,LOG}`. The agent also scrapes any Prometheus `/metrics` endpoint (`scrape` list), so node_exporter, cAdvisor and app exporters work unchanged.
+**Agent:** a JSON file (`-config`, see `kluard-agent.example.json`) and/or environment variables (variables win): `KLUARD_AGENT_URL`, `KLUARD_AGENT_API_KEY`, `KLUARD_AGENT_INTERVAL`, `KLUARD_AGENT_HOST_METRICS`, `KLUARD_AGENT_SYSTEMD`, `KLUARD_AGENT_CONTAINERS`, `KLUARD_AGENT_LOG_PATHS`, `KLUARD_AGENT_DOCKER_LOGS`, `KLUARD_AGENT_METRICS_LISTEN`, `KLUARD_AGENT_NO_REMOTE` (ignore the server's settings), `KLUARD_AGENT_NEXTCLOUD_{URL,TOKEN,USER,PASSWORD,SERVICE,LOG}`. The agent also scrapes any Prometheus `/metrics` endpoint (`scrape` list), so node_exporter, cAdvisor and app exporters work unchanged.
 
-Two agent settings decide how an agent is listed: `LUMEN_AGENT_ROLE` (`host` or `checker`; by default an agent with host metrics switched off that checks Nextcloud instances is a *checker*, anything else a *host*) and `LUMEN_AGENT_HOSTNAME` (the name it reports under, instead of the machine's own).
+Two agent settings decide how an agent is listed: `KLUARD_AGENT_ROLE` (`host` or `checker`; by default an agent with host metrics switched off that checks Nextcloud instances is a *checker*, anything else a *host*) and `KLUARD_AGENT_HOSTNAME` (the name it reports under, instead of the machine's own).
 
 ## API
 
@@ -543,12 +543,12 @@ Two agent settings decide how an agent is listed: `LUMEN_AGENT_ROLE` (`host` or 
 | any read | `?archive=1` | backups (read): query restored data |
 | GET | `/install/agent.sh`, `/install/agent.ps1`, `/install/agent-docker.sh`, `/download/{file}` | none; contain no secrets |
 
-OpenTelemetry SDKs and the Collector can send directly: exporter encoding `json`, endpoint `http://lumen:4318`, header `Authorization: Bearer KEY`.
+OpenTelemetry SDKs and the Collector can send directly: exporter encoding `json`, endpoint `http://kluard:4318`, header `Authorization: Bearer KEY`.
 
 ## Development
 
 ```
-cmd/lumen             server                    cmd/lumen-agent    agent
+cmd/kluard             server                    cmd/kluard-agent    agent
 internal/server       HTTP API, UI and installer routes, permission gate
 internal/store        ClickHouse over HTTP (no driver), archive tables, backup export/import
 internal/otlp         OTLP JSON decoding
@@ -565,7 +565,7 @@ internal/tenants      tenant records, limits, support-access consent, removal an
 internal/metering     per-tenant counters, rate limiting, usage and CSV
 internal/audit        the record of operator actions and support access
 internal/license      signed licence files, offline verification, states and grace period, soft limits
-cmd/lumen-license     the publisher's tool: make signing keys, issue and inspect licences
+cmd/kluard-license     the publisher's tool: make signing keys, issue and inspect licences
 internal/backup       daily export, prune, load/unload of archive days
 internal/docstore     Elasticsearch client + JSON-file fallback (estest = fake ES, tests only)
 internal/dashboards   dashboards per tenant
@@ -577,14 +577,14 @@ install.sh dev.sh     server installer / local test setup
 
 ```bash
 make test          # go vet ./... && go test ./...
-make build         # bin/lumen and bin/lumen-agent
+make build         # bin/kluard and bin/kluard-agent
 ```
 
 The SQL (DDL, queries, backup export/import round trip, retention) is also run against a real ClickHouse engine:
 
 ```bash
 pip install chdb
-LUMEN_DUMP_SQL=/tmp/sql.json go test ./internal/store -run Dump && python3 scripts/test-sql.py /tmp/sql.json
+KLUARD_DUMP_SQL=/tmp/sql.json go test ./internal/store -run Dump && python3 scripts/test-sql.py /tmp/sql.json
 ```
 
 Only the Go standard library is used, so there is nothing to download. The Elasticsearch client is tested against a small fake (`internal/docstore/estest`), not a real Elasticsearch.
@@ -593,11 +593,11 @@ Only the Go standard library is used, so there is nothing to download. The Elast
 
 Issues and pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). Report security problems privately, see [SECURITY.md](SECURITY.md). Changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
-Before you fork this into a product of your own: pick the final name and check it for trademark conflicts, and add your commercial terms to `ee/LICENSE` (or delete `ee/` and `cmd/lumen/enterprise.go` if you do not want an enterprise tier). To rename the Go module: `./scripts/set-module.sh github.com/YOU/lumen`.
+Before you fork this into a product of your own: pick your own name (the name Kluard and its logo are not part of the Apache-2.0 licence; a trademark policy is to be written), and add your commercial terms to `ee/LICENSE` (or delete `ee/` and `cmd/kluard/enterprise.go` if you do not want an enterprise tier). To rename the Go module: `./scripts/set-module.sh github.com/YOU/kluard`.
 
 ## Editions and design documents
 
-Lumen is open core: a free **Community** edition, **Enterprise** for governance and scale, and an **Operator** add-on for running Lumen for customers or business units. The line between them is written down as a public charter, with promises such as "a released Community feature is never moved to a paid edition". These are **drafts** for discussion; nothing in them is implemented yet unless the text says *exists*. The licence mechanism itself exists: Enterprise features (today the Jira, ServiceNow, PagerDuty and Opsgenie channels) need a signed licence file that is checked **offline** inside Lumen, with a 30-day grace period and no data ever deleted. Without a licence Lumen is the Community edition. Install a licence under **Settings → Licence**, or point `LUMEN_LICENSE_FILE` at it. There is one build for everyone: the Enterprise code is in it and the licence switches it on, with no rebuild. The publisher's tool `lumen-license` makes keys and licences (see the licensing guide).
+Kluard is open core: a free **Community** edition, **Enterprise** for governance and scale, and an **Operator** add-on for running Kluard for customers or business units. The line between them is written down as a public charter, with promises such as "a released Community feature is never moved to a paid edition". These are **drafts** for discussion; nothing in them is implemented yet unless the text says *exists*. The licence mechanism itself exists: Enterprise features (today the Jira, ServiceNow, PagerDuty and Opsgenie channels) need a signed licence file that is checked **offline** inside Kluard, with a 30-day grace period and no data ever deleted. Without a licence Kluard is the Community edition. Install a licence under **Settings → Licence**, or point `KLUARD_LICENSE_FILE` at it. There is one build for everyone: the Enterprise code is in it and the licence switches it on, with no rebuild. The publisher's tool `kluard-license` makes keys and licences (see the licensing guide).
 
 | Document | English | Svenska |
 |---|---|---|

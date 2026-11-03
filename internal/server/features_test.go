@@ -10,15 +10,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/billing"
-	"github.com/inmagma/lumen/internal/dashboards"
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/license"
-	"github.com/inmagma/lumen/internal/oidc"
-	"github.com/inmagma/lumen/internal/perm"
-	"github.com/inmagma/lumen/internal/registry"
-	"github.com/inmagma/lumen/internal/secretbox"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/billing"
+	"github.com/getkluard/kluard/internal/dashboards"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/license"
+	"github.com/getkluard/kluard/internal/oidc"
+	"github.com/getkluard/kluard/internal/perm"
+	"github.com/getkluard/kluard/internal/registry"
+	"github.com/getkluard/kluard/internal/secretbox"
 )
 
 // enterpriseLicense is a manager holding a valid Enterprise licence, for tests of the features it unlocks.
@@ -45,7 +45,7 @@ func TestEnterpriseFeaturesAreLockedWithoutALicence(t *testing.T) {
 	pub, priv, _ := license.NewKeyPair()
 	mgr := license.NewManager(f, license.Keys{"main": pub}, "")
 	mgr.Load()
-	svc := &oidc.Service{DB: f, Box: box, PublicURL: "http://lumen.test", Secret: st.Secret}
+	svc := &oidc.Service{DB: f, Box: box, PublicURL: "http://kluard.test", Secret: st.Secret}
 	srv := New(&fakeStore{}, a, slog.New(slog.NewTextHandler(io.Discard, nil))).WithAuth(a).WithDashboards(dashboards.New(f)).WithOIDC(svc).WithRegistry(registry.New(f, box)).WithLicense(mgr).WithOwnerTenant("acme").
 		WithBilling(&Billing{Svc: billing.New(f), DB: f})
 	ts := httptest.NewServer(srv.Handler())

@@ -13,13 +13,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/alerts"
-	"github.com/inmagma/lumen/internal/audit"
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/dashboards"
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/registry"
-	"github.com/inmagma/lumen/internal/secretbox"
+	"github.com/getkluard/kluard/internal/alerts"
+	"github.com/getkluard/kluard/internal/audit"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/dashboards"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/registry"
+	"github.com/getkluard/kluard/internal/secretbox"
 )
 
 type auditEnv struct {
@@ -196,7 +196,7 @@ func TestTheLogCanBeSearchedAndExported(t *testing.T) {
 	}
 	r, b := do(e.ad, "GET", e.ts.URL+"/api/v1/audit-log?format=csv", "")
 	body := string(b)
-	if r.StatusCode != 200 || !strings.HasPrefix(r.Header.Get("Content-Type"), "text/csv") || !strings.Contains(r.Header.Get("Content-Disposition"), "lumen-audit-log.csv") || !strings.HasPrefix(body, "time_utc,who,via,ip,what,action,target,detail") {
+	if r.StatusCode != 200 || !strings.HasPrefix(r.Header.Get("Content-Type"), "text/csv") || !strings.Contains(r.Header.Get("Content-Disposition"), "kluard-audit-log.csv") || !strings.HasPrefix(body, "time_utc,who,via,ip,what,action,target,detail") {
 		t.Fatalf("%d %q", r.StatusCode, body[:80])
 	}
 	if strings.Contains(body, ",=HYPERLINK") || !strings.Contains(body, "'=HYPERLINK") {

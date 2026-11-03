@@ -3,13 +3,13 @@ package alerts
 import (
 	"context"
 	"fmt"
-	"github.com/inmagma/lumen/internal/health"
+	"github.com/getkluard/kluard/internal/health"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/inmagma/lumen/internal/model"
-	"github.com/inmagma/lumen/internal/status"
+	"github.com/getkluard/kluard/internal/model"
+	"github.com/getkluard/kluard/internal/status"
 )
 
 // Querier runs chart queries; it is implemented by the telemetry store. Every call carries the tenant.
@@ -26,11 +26,11 @@ type StatusSource interface {
 type Evaluator struct {
 	Q  Querier
 	St StatusSource
-	H  HealthSource // Lumen's own health, for the rules about the disk, Elasticsearch and ClickHouse
+	H  HealthSource // Kluard's own health, for the rules about the disk, Elasticsearch and ClickHouse
 	G  GroupSource  // resolves a host group to its hosts; without it a rule that names a group sees no hosts
 }
 
-// HealthSource gives the health of Lumen itself. It is only for the owner of the installation: for anyone else the report is empty.
+// HealthSource gives the health of Kluard itself. It is only for the owner of the installation: for anyone else the report is empty.
 type HealthSource interface {
 	Health(ctx context.Context, tenant string) (health.Report, error)
 }
@@ -78,9 +78,9 @@ func logQuery(r Rule, from, to time.Time, hosts []string) model.SeriesQuery {
 func (e *Evaluator) Eval(ctx context.Context, rule Rule, now time.Time) (samples []Sample, noData bool, err error) {
 	switch rule.Kind {
 	case KindStatus:
-		if strings.HasPrefix(rule.Status, "lumen_") {
+		if strings.HasPrefix(rule.Status, "kluard_") {
 			if e.H == nil {
-				return nil, false, fmt.Errorf("the health of Lumen itself cannot be read here")
+				return nil, false, fmt.Errorf("the health of Kluard itself cannot be read here")
 			}
 			rep, err := e.H.Health(ctx, rule.Tenant)
 			if err != nil {
@@ -178,7 +178,7 @@ type Interval struct {
 // reduction and the same "for" rule as the live evaluation, on the stored history of the metric.
 func (e *Evaluator) Backtest(ctx context.Context, rule Rule, from, to time.Time) ([]Interval, error) {
 	if rule.Kind == KindStatus {
-		return nil, fmt.Errorf("status rules cannot be replayed: Lumen does not keep a history of up/down states")
+		return nil, fmt.Errorf("status rules cannot be replayed: Kluard does not keep a history of up/down states")
 	}
 	win := time.Duration(rule.WindowSec) * time.Second
 	var q model.SeriesQuery
@@ -243,7 +243,7 @@ func (e *Evaluator) Backtest(ctx context.Context, rule Rule, from, to time.Time)
 	return out, nil
 }
 
-// healthSamples lists what is wrong with Lumen itself right now. What is fine is not listed, which resolves an alert.
+// healthSamples lists what is wrong with Kluard itself right now. What is fine is not listed, which resolves an alert.
 func healthSamples(kind string, threshold float64, r health.Report) []Sample {
 	var out []Sample
 	add := func(l map[string]string) { out = append(out, Sample{Labels: l, Value: 1, Firing: true}) }
@@ -254,11 +254,11 @@ func healthSamples(kind string, threshold float64, r health.Report) []Sample {
 		}
 	}
 	switch kind {
-	case "lumen_disk": // every disk anything of Lumen's lives on, once (Lumen, Elasticsearch and ClickHouse usually share one)
+	case "kluard_disk": // every disk anything of Kluard's lives on, once (Kluard, Elasticsearch and ClickHouse usually share one)
 		for _, m := range health.MergeDisks(health.Views(r)) {
 			disk(m.Disk, map[string]string{"disk": strings.Join(m.Who, " + ")})
 		}
-	case "lumen_elasticsearch":
+	case "kluard_elasticsearch":
 		if r.ES == nil {
 			break
 		}
@@ -270,7 +270,7 @@ func healthSamples(kind string, threshold float64, r health.Report) []Sample {
 		case r.ES.Status == "yellow" && threshold <= 1:
 			add(map[string]string{"component": "elasticsearch", "state": "yellow"})
 		}
-	case "lumen_clickhouse":
+	case "kluard_clickhouse":
 		if r.CH == nil {
 			break
 		}

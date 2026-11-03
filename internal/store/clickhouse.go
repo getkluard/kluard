@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/inmagma/lumen/internal/config"
-	"github.com/inmagma/lumen/internal/model"
+	"github.com/getkluard/kluard/internal/config"
+	"github.com/getkluard/kluard/internal/model"
 )
 
 // ClickHouse talks to ClickHouse over its HTTP interface. No driver dependency:
@@ -89,7 +89,7 @@ func (c *ClickHouse) Migrate(ctx context.Context) error {
 			return err
 		}
 	}
-	// a changed LUMEN_RETENTION_DAYS must also apply to tables that already exist
+	// a changed KLUARD_RETENTION_DAYS must also apply to tables that already exist
 	for _, t := range tables {
 		cur, err := c.do(ctx, ttlQuery, map[string]string{"db": c.cfg.ClickHouseDB, "t": t.Name}, nil)
 		if err != nil {

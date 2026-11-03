@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/model"
-	"github.com/inmagma/lumen/internal/registry"
+	"github.com/getkluard/kluard/internal/model"
+	"github.com/getkluard/kluard/internal/registry"
 )
 
 var now = time.Unix(1_800_000_000, 0)
@@ -17,8 +17,8 @@ func row(name string, v float64, ageS int64, attrs map[string]string) model.Late
 
 func TestHostsServicesAndContainers(t *testing.T) {
 	rows := []model.Latest{
-		row("lumen_agent_info", 1, 5, map[string]string{"host": "web1", "version": "0.3", "os": "linux/amd64"}),
-		row("lumen_agent_info", 1, 600, map[string]string{"host": "old1"}), // stopped reporting
+		row("kluard_agent_info", 1, 5, map[string]string{"host": "web1", "version": "0.3", "os": "linux/amd64"}),
+		row("kluard_agent_info", 1, 600, map[string]string{"host": "old1"}), // stopped reporting
 		row("system_service_up", 1, 5, map[string]string{"host": "web1", "service": "nginx", "state": "running"}),
 		row("system_service_up", 0, 5, map[string]string{"host": "web1", "service": "postfix", "state": "failed"}),
 		row("system_service_up", 0, 5, map[string]string{"host": "old1", "service": "sshd", "state": "failed"}), // host down: not counted
@@ -116,10 +116,10 @@ func TestNextcloudInstanceStates(t *testing.T) {
 
 func TestRemovedHostsStayHiddenUntilTheyReportAgain(t *testing.T) {
 	rows := []model.Latest{
-		row("lumen_agent_info", 1, 7200, map[string]string{"host": "gone1"}), // last seen before it was removed
+		row("kluard_agent_info", 1, 7200, map[string]string{"host": "gone1"}), // last seen before it was removed
 		row("system_service_up", 0, 7200, map[string]string{"host": "gone1", "service": "x", "state": "failed"}),
-		row("lumen_agent_info", 1, 5, map[string]string{"host": "back1"}),
-		row("lumen_agent_info", 1, 5, map[string]string{"host": "web1"}),
+		row("kluard_agent_info", 1, 5, map[string]string{"host": "back1"}),
+		row("kluard_agent_info", 1, 5, map[string]string{"host": "web1"}),
 	}
 	removedAt := now.Add(-time.Hour)
 	cfg := map[string]registry.HostConfig{
@@ -128,7 +128,7 @@ func TestRemovedHostsStayHiddenUntilTheyReportAgain(t *testing.T) {
 		"back1": {Host: "back1", Removed: true, RemovedAt: now.Add(-time.Hour)}, // reports again after the removal
 		"web1":  {Host: "web1", DisplayName: "Web server 1"},
 	}
-	s := Compute(now, append(rows, row("lumen_agent_info", 1, 5, map[string]string{"host": "web1"})), cfg, nil)
+	s := Compute(now, append(rows, row("kluard_agent_info", 1, 5, map[string]string{"host": "web1"})), cfg, nil)
 	names := map[string]Host{}
 	for _, h := range s.HostList {
 		names[h.Name] = h
@@ -155,9 +155,9 @@ func TestRemovedHostsStayHiddenUntilTheyReportAgain(t *testing.T) {
 
 func TestHostAddresses(t *testing.T) {
 	rows := []model.Latest{
-		row("lumen_agent_info", 1, 5, map[string]string{"host": "web1", "ip": "192.168.20.131", "ips": "192.168.20.131, 10.0.0.7,,"}),
-		row("lumen_agent_info", 1, 5, map[string]string{"host": "old1"}),                                                // an agent from before addresses were reported
-		row("lumen_agent_info", 1, 400, map[string]string{"host": "web1", "ip": "192.168.99.9", "ips": "192.168.99.9"}), // the address before it moved
+		row("kluard_agent_info", 1, 5, map[string]string{"host": "web1", "ip": "192.168.20.131", "ips": "192.168.20.131, 10.0.0.7,,"}),
+		row("kluard_agent_info", 1, 5, map[string]string{"host": "old1"}),                                                // an agent from before addresses were reported
+		row("kluard_agent_info", 1, 400, map[string]string{"host": "web1", "ip": "192.168.99.9", "ips": "192.168.99.9"}), // the address before it moved
 	}
 	s := Compute(now, rows, nil, nil)
 	by := map[string]Host{}
@@ -294,9 +294,9 @@ func TestDeeperChecksOfAnInstance(t *testing.T) {
 
 func TestAgentsThatOnlyCheckInstancesAreNotHosts(t *testing.T) {
 	rows := []model.Latest{
-		row("lumen_agent_info", 1, 3, map[string]string{"host": "web1", "version": "v1", "role": "host"}),
-		row("lumen_agent_info", 1, 3, map[string]string{"host": "oldagent", "version": "v0"}), // an agent from before roles: a host
-		row("lumen_agent_info", 1, 3, map[string]string{"host": "nc-checker", "version": "v1", "role": "checker", "self_update": "exec"}),
+		row("kluard_agent_info", 1, 3, map[string]string{"host": "web1", "version": "v1", "role": "host"}),
+		row("kluard_agent_info", 1, 3, map[string]string{"host": "oldagent", "version": "v0"}), // an agent from before roles: a host
+		row("kluard_agent_info", 1, 3, map[string]string{"host": "nc-checker", "version": "v1", "role": "checker", "self_update": "exec"}),
 		row("system_service_up", 1, 3, map[string]string{"host": "web1", "service": "sshd"}),
 		row("nextcloud_up", 1, 3, map[string]string{"instance": "cloud.example.com", "host": "nc-checker"}),
 	}
@@ -318,7 +318,7 @@ func TestAgentsThatOnlyCheckInstancesAreNotHosts(t *testing.T) {
 		t.Fatalf("the instance it checks is unaffected: %+v", s.Instances)
 	}
 	// a checker that has stopped is a checker that is down: it does not turn into a host that is down
-	rows[2] = row("lumen_agent_info", 1, 900, map[string]string{"host": "nc-checker", "version": "v1", "role": "checker"})
+	rows[2] = row("kluard_agent_info", 1, 900, map[string]string{"host": "nc-checker", "version": "v1", "role": "checker"})
 	s = Compute(now, rows, nil, nil)
 	if s.Hosts.Down != 0 || len(s.Checkers) != 1 || s.Checkers[0].Status != "down" {
 		t.Fatalf("%+v %+v", s.Hosts, s.Checkers)

@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/inmagma/lumen/internal/alerts"
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/perm"
-	"github.com/inmagma/lumen/internal/status"
+	"github.com/getkluard/kluard/internal/alerts"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/perm"
+	"github.com/getkluard/kluard/internal/status"
 )
 
 // WithAlerts enables alert rules, notifications and the alerts API.
@@ -48,8 +48,8 @@ func (s *Server) alertRoutes(mux *http.ServeMux) {
 	mux.Handle("GET /api/v1/alerts/templates", s.need(perm.Alerts, false, func(w http.ResponseWriter, r *http.Request, id edition.Identity) {
 		out := []alerts.Rule{}
 		for _, t := range alerts.Templates() {
-			if lumenRule(t.Status) && !(s.health != nil && s.ownsInstallation(id.Tenant)) {
-				continue // the rules about Lumen itself are for whoever runs it
+			if kluardRule(t.Status) && !(s.health != nil && s.ownsInstallation(id.Tenant)) {
+				continue // the rules about Kluard itself are for whoever runs it
 			}
 			out = append(out, t)
 		}
@@ -140,8 +140,8 @@ func (s *Server) putRule(pathID string) handler {
 			return
 		}
 		in := body.Rule
-		if lumenRule(in.Status) && !(s.health != nil && s.ownsInstallation(id.Tenant)) {
-			writeErr(w, http.StatusForbidden, "rules about Lumen itself (its disk, Elasticsearch, ClickHouse) are for the tenant that runs the installation")
+		if kluardRule(in.Status) && !(s.health != nil && s.ownsInstallation(id.Tenant)) {
+			writeErr(w, http.StatusForbidden, "rules about Kluard itself (its disk, Elasticsearch, ClickHouse) are for the tenant that runs the installation")
 			return
 		}
 		rid := ""

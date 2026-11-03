@@ -14,7 +14,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/docstore"
+	"github.com/getkluard/kluard/internal/docstore"
 )
 
 // fakeSrc is a tiny in-memory telemetry database: rows[table][tenant][day] = lines.
@@ -150,7 +150,7 @@ func TestExportLayoutAndSkipping(t *testing.T) {
 		t.Fatalf("state: %+v", st)
 	}
 	// config dump: for the operator, mode 0600, includes users and dashboards
-	cfgs, _ := filepath.Glob(filepath.Join(dir, "config", "lumen-config-2026-10-01.json.gz"))
+	cfgs, _ := filepath.Glob(filepath.Join(dir, "config", "kluard-config-2026-10-01.json.gz"))
 	if len(cfgs) != 1 {
 		t.Fatal("expected the daily config dump")
 	}

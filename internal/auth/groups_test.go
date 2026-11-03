@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/perm"
+	"github.com/getkluard/kluard/internal/perm"
 )
 
 func TestOperatorConsoleOnlyInTheOperatorTenant(t *testing.T) {

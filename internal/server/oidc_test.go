@@ -19,12 +19,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/audit"
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/dashboards"
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/oidc"
-	"github.com/inmagma/lumen/internal/secretbox"
+	"github.com/getkluard/kluard/internal/audit"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/dashboards"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/oidc"
+	"github.com/getkluard/kluard/internal/secretbox"
 )
 
 // a provider that signs in whoever the test says
@@ -50,7 +50,7 @@ func newFakeProvider(t *testing.T) *fakeProvider {
 	mux.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 		p.mu.Lock()
-		cl := map[string]any{"iss": p.srv.URL, "aud": "lumen-client", "exp": time.Now().Add(time.Hour).Unix(), "iat": time.Now().Unix(), "nonce": p.nonces[r.Form.Get("code")]}
+		cl := map[string]any{"iss": p.srv.URL, "aud": "kluard-client", "exp": time.Now().Add(time.Hour).Unix(), "iat": time.Now().Unix(), "nonce": p.nonces[r.Form.Get("code")]}
 		for k, v := range p.claims {
 			cl[k] = v
 		}
@@ -87,7 +87,7 @@ func newOIDCEnv(t *testing.T) *oidcEnv {
 	a := auth.New(st, nil, false)
 	box, _ := secretbox.New("k")
 	al := audit.New(f)
-	svc := &oidc.Service{DB: f, Box: box, PublicURL: "http://lumen.test", Secret: st.Secret}
+	svc := &oidc.Service{DB: f, Box: box, PublicURL: "http://kluard.test", Secret: st.Secret}
 	srv := New(&fakeStore{}, a, slog.New(slog.NewTextHandler(io.Discard, nil))).WithAuth(a).WithDashboards(dashboards.New(f)).WithAudit(al).WithOIDC(svc).WithLicense(enterpriseLicense(t, f)).WithOwnerTenant("acme")
 	ts := httptest.NewServer(srv.Handler())
 	t.Cleanup(ts.Close)
@@ -99,7 +99,7 @@ func newOIDCEnv(t *testing.T) *oidcEnv {
 }
 
 func (e *oidcEnv) setup(t *testing.T, extra string) {
-	body := `{"enabled":true,"issuer":"` + e.p.srv.URL + `","client_id":"lumen-client","client_secret":"s3cret","label":"Company login"` + extra + `}`
+	body := `{"enabled":true,"issuer":"` + e.p.srv.URL + `","client_id":"kluard-client","client_secret":"s3cret","label":"Company login"` + extra + `}`
 	if r, b := do(e.admin, "PUT", e.ts.URL+"/api/v1/settings/oidc", body); r.StatusCode != 200 {
 		t.Fatalf("%d %s", r.StatusCode, b)
 	}
@@ -186,14 +186,14 @@ func TestTheSettingOfSingleSignOn(t *testing.T) {
 	}
 	e.setup(t, `,"domains":["@Example.com","example.org"],"auto_create":true,"default_group":"user"`)
 	_, b := do(e.admin, "GET", e.ts.URL+"/api/v1/settings/oidc", "")
-	if strings.Contains(string(b), "s3cret") || !strings.Contains(string(b), `"has_secret":true`) || !strings.Contains(string(b), `"redirect_uri":"http://lumen.test/auth/oidc/callback"`) || !strings.Contains(string(b), `"domains":["example.com","example.org"]`) {
+	if strings.Contains(string(b), "s3cret") || !strings.Contains(string(b), `"has_secret":true`) || !strings.Contains(string(b), `"redirect_uri":"http://kluard.test/auth/oidc/callback"`) || !strings.Contains(string(b), `"domains":["example.com","example.org"]`) {
 		t.Fatalf("the secret is never given back; domains are tidied: %s", b)
 	}
 	if _, b = do(client(), "GET", e.ts.URL+"/api/v1/auth/providers", ""); !strings.Contains(string(b), `"label":"Company login"`) {
 		t.Fatalf("%s", b)
 	}
 	// saving again without a secret keeps the one that is there
-	do(e.admin, "PUT", e.ts.URL+"/api/v1/settings/oidc", `{"enabled":true,"issuer":"`+e.p.srv.URL+`","client_id":"lumen-client","label":"Our SSO","auto_create":true}`)
+	do(e.admin, "PUT", e.ts.URL+"/api/v1/settings/oidc", `{"enabled":true,"issuer":"`+e.p.srv.URL+`","client_id":"kluard-client","label":"Our SSO","auto_create":true}`)
 	c, _ := e.svc.Load(context.Background())
 	if e.svc.Box == nil || c.Secret == "" || c.Label != "Our SSO" {
 		t.Fatalf("%+v", c)

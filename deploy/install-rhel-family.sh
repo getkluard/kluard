@@ -26,7 +26,7 @@ if ! command -v docker >/dev/null; then
   if rpm -q podman >/dev/null 2>&1 && [ -z "$ALLOW_ERASE" ]; then
     echo "podman is installed and conflicts with docker-ce's containerd.io (runc)."
     echo "Re-run with --allow-podman-removal to let dnf remove podman/buildah,"
-    echo "or keep podman and run Lumen with podman-compose instead."
+    echo "or keep podman and run Kluard with podman-compose instead."
     exit 1
   fi
   dnf config-manager --add-repo "https://download.docker.com/linux/${REPO}/docker-ce.repo"
@@ -34,7 +34,7 @@ if ! command -v docker >/dev/null; then
 fi
 systemctl enable --now docker
 # Elasticsearch needs a larger memory-map limit on the host
-echo 'vm.max_map_count=262144' > /etc/sysctl.d/99-lumen.conf
+echo 'vm.max_map_count=262144' > /etc/sysctl.d/99-kluard.conf
 sysctl -w vm.max_map_count=262144 >/dev/null
 dnf -y install chrony && systemctl enable --now chronyd
 

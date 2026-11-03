@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/inmagma/lumen/internal/branding"
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/perm"
+	"github.com/getkluard/kluard/internal/branding"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/perm"
 )
 
 // WithBranding enables the site name and logo.
@@ -53,7 +53,7 @@ func (s *Server) putBranding(w http.ResponseWriter, r *http.Request, id edition.
 		writeErr(w, http.StatusBadRequest, err.Error())
 	case err != nil:
 		s.log.Error("branding update failed", "err", err)
-		writeErr(w, http.StatusServiceUnavailable, "the settings store is unavailable (the reason is in the server log: docker compose logs lumen, look for \"registry error\")")
+		writeErr(w, http.StatusServiceUnavailable, "the settings store is unavailable (the reason is in the server log: docker compose logs kluard, look for \"registry error\")")
 	default:
 		s.log.Info("branding changed", "by", id.User, "tenant", id.Tenant)
 		writeJSON(w, p)

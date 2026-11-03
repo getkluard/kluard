@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/inmagma/lumen/internal/health"
+	"github.com/getkluard/kluard/internal/health"
 	"io"
 	"net/http"
 	"net/url"
@@ -155,9 +155,9 @@ func (e *ES) EnsureIndices(ctx context.Context) error {
 	return nil
 }
 
-// settleReplicas takes the copies off Lumen's own indices when the cluster is a single node. A copy (a replica) cannot live
+// settleReplicas takes the copies off Kluard's own indices when the cluster is a single node. A copy (a replica) cannot live
 // on the node that has the original, so it would wait for ever and keep the cluster yellow. It is best effort: it changes
-// only Lumen's own indices, and never on a cluster with more than one node, where copies are what protects the data.
+// only Kluard's own indices, and never on a cluster with more than one node, where copies are what protects the data.
 func (e *ES) settleReplicas(ctx context.Context) {
 	code, b, err := e.do(ctx, "GET", "/_cluster/health", nil)
 	if err != nil || code != 200 {
@@ -226,7 +226,7 @@ func (e *ES) write(ctx context.Context, op, coll, id string, v any, version stri
 		q += "&if_seq_no=" + url.QueryEscape(seq) + "&if_primary_term=" + url.QueryEscape(term)
 	}
 	code, b, err := e.do(ctx, "PUT", "/"+e.index(coll)+"/"+op+"/"+url.PathEscape(id)+q, v)
-	if err == nil && noIndex(code, b) && version == "" { // a collection that has no index yet (added by a newer version of Lumen)
+	if err == nil && noIndex(code, b) && version == "" { // a collection that has no index yet (added by a newer version of Kluard)
 		if cerr := e.createIndex(ctx, coll); cerr != nil {
 			return cerr
 		}

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Runs Lumen's real DDL and queries against an embedded ClickHouse engine (pip install chdb).
+"""Runs Kluard's real DDL and queries against an embedded ClickHouse engine (pip install chdb).
 
-  LUMEN_DUMP_SQL=/tmp/sqldump.json go test ./internal/store -run Dump
+  KLUARD_DUMP_SQL=/tmp/sqldump.json go test ./internal/store -run Dump
   python3 scripts/test-sql.py /tmp/sqldump.json
 """
 import json, sys, time, datetime
@@ -9,7 +9,7 @@ from chdb import session
 
 dump = json.load(open(sys.argv[1]))
 s = session.Session()
-s.query("CREATE DATABASE lumen"); s.query("USE lumen")
+s.query("CREATE DATABASE kluard"); s.query("USE kluard")
 for ddl in dump["ddl"]:
     s.query(ddl)
 for ddl in dump["archive_ddl"]:
@@ -129,8 +129,8 @@ try:
     r = run(Q["ttl check"]); cq = r[0]["create_table_query"]
     check("ttl check sees the 30 day TTL as toIntervalDay(30)", "toIntervalDay(30)" in cq, r)
     s.query(dump["ttl_alter"]); r = run(Q["ttl check"])
-    check("ALTER ... MODIFY TTL changes it (so a new LUMEN_RETENTION_DAYS applies to existing tables)", "toIntervalDay(14)" in r[0]["create_table_query"], r)
-    ar = run(dict(SQL="SELECT create_table_query FROM system.tables WHERE database = 'lumen' AND name = 'otel_logs_archive' FORMAT JSONEachRow", Params={}))
+    check("ALTER ... MODIFY TTL changes it (so a new KLUARD_RETENTION_DAYS applies to existing tables)", "toIntervalDay(14)" in r[0]["create_table_query"], r)
+    ar = run(dict(SQL="SELECT create_table_query FROM system.tables WHERE database = 'kluard' AND name = 'otel_logs_archive' FORMAT JSONEachRow", Params={}))
     check("archive tables exist and have NO expiry", len(ar) == 1 and "TTL" not in ar[0]["create_table_query"], ar)
 
     # ---- backup: export one day for one tenant, load it into the archive, compare, unload

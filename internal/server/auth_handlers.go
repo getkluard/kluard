@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/buildinfo"
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/perm"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/buildinfo"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/perm"
 )
 
 // WithAuth enables username/password login, sessions and stored API keys.
@@ -143,7 +143,7 @@ func (s *Server) me(w http.ResponseWriter, r *http.Request, id edition.Identity)
 	}
 	me := map[string]any{"user": id.User, "tenant": id.Tenant, "session": id.Session, "via_key": id.ViaKey, "group": group, "group_name": groupName, "perms": id.Perms, "archive_enabled": id.Can(perm.Backups, false), "version": buildinfo.Version}
 	if s.health != nil && s.ownsInstallation(id.Tenant) && !id.Acting && id.Can(perm.Settings, false) {
-		me["health"] = true // the pages may show the health of Lumen itself
+		me["health"] = true // the pages may show the health of Kluard itself
 	}
 	if id.Acting {
 		me["acting"] = map[string]any{"tenant": id.Tenant, "operator": id.Operator, "until": id.ActingUntil.UTC().Format(time.RFC3339), "write": id.ActingWrite}

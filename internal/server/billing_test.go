@@ -10,13 +10,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/inmagma/lumen/internal/audit"
-	"github.com/inmagma/lumen/internal/auth"
-	"github.com/inmagma/lumen/internal/billing"
-	"github.com/inmagma/lumen/internal/dashboards"
-	"github.com/inmagma/lumen/internal/docstore"
-	"github.com/inmagma/lumen/internal/registry"
-	"github.com/inmagma/lumen/internal/secretbox"
+	"github.com/getkluard/kluard/internal/audit"
+	"github.com/getkluard/kluard/internal/auth"
+	"github.com/getkluard/kluard/internal/billing"
+	"github.com/getkluard/kluard/internal/dashboards"
+	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/registry"
+	"github.com/getkluard/kluard/internal/secretbox"
 )
 
 type usageSrc struct {
@@ -137,7 +137,7 @@ func TestBillingPricesAndInvoiceBasis(t *testing.T) {
 	}
 	// files for a spreadsheet
 	r, b = do(ad, "GET", u+"/report?period=2026-10&format=csv&view=invoices&locale=sv", "")
-	if r.Header.Get("Content-Type") != "text/csv; charset=utf-8" || !strings.Contains(r.Header.Get("Content-Disposition"), "lumen-billing-2026-10-invoices.csv") ||
+	if r.Header.Get("Content-Type") != "text/csv; charset=utf-8" || !strings.Contains(r.Header.Get("Content-Disposition"), "kluard-billing-2026-10-invoices.csv") ||
 		!strings.Contains(string(b), "666,67") || !strings.Contains(string(b), "Kund Holding AB") {
 		t.Fatalf("%v %q", r.Header, b)
 	}
@@ -154,7 +154,7 @@ func TestBillingPricesAndInvoiceBasis(t *testing.T) {
 	if r.StatusCode != 200 || len(rr.Invoices) != 1 || rr.Invoices[0].Net != 66667 || rr.Period != "2026-10-01 to 2026-10-31" {
 		t.Fatalf("%d %s", r.StatusCode, b)
 	}
-	if r, _ = do(ad, "GET", u+"/report?from=2026-10-01&to=2026-10-31&format=csv", ""); !strings.Contains(r.Header.Get("Content-Disposition"), "lumen-billing-2026-10-01_2026-10-31-lines.csv") {
+	if r, _ = do(ad, "GET", u+"/report?from=2026-10-01&to=2026-10-31&format=csv", ""); !strings.Contains(r.Header.Get("Content-Disposition"), "kluard-billing-2026-10-01_2026-10-31-lines.csv") {
 		t.Fatalf("%v", r.Header)
 	}
 	for _, q := range []string{"from=2026-10-31&to=2026-10-01", "from=2026-10-01", "from=x&to=y"} {

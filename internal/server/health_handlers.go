@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/inmagma/lumen/internal/edition"
-	"github.com/inmagma/lumen/internal/health"
-	"github.com/inmagma/lumen/internal/perm"
+	"github.com/getkluard/kluard/internal/edition"
+	"github.com/getkluard/kluard/internal/health"
+	"github.com/getkluard/kluard/internal/perm"
 )
 
-// WithHealth lets Lumen look at itself: the disk it writes to, Elasticsearch and ClickHouse.
+// WithHealth lets Kluard look at itself: the disk it writes to, Elasticsearch and ClickHouse.
 func (s *Server) WithHealth(m *health.Monitor) *Server { s.health = m; return s }
 
 func (s *Server) healthRoutes(mux *http.ServeMux) {
@@ -37,7 +37,7 @@ func (s *Server) getHealth(w http.ResponseWriter, r *http.Request, id edition.Id
 	writeJSON(w, map[string]any{"report": rep, "warn": s.health.Warn, "crit": s.health.Crit})
 }
 
-// Health is what the alert rules about Lumen itself read. Anyone but the owner gets an empty report.
+// Health is what the alert rules about Kluard itself read. Anyone but the owner gets an empty report.
 func (s *Server) Health(ctx context.Context, tenant string) (health.Report, error) {
 	if s.health == nil || !s.ownsInstallation(tenant) {
 		return health.Report{}, nil
@@ -45,5 +45,5 @@ func (s *Server) Health(ctx context.Context, tenant string) (health.Report, erro
 	return s.health.Report(ctx), nil
 }
 
-// lumenRule tells whether a rule is about Lumen itself.
-func lumenRule(status string) bool { return strings.HasPrefix(status, "lumen_") }
+// kluardRule tells whether a rule is about Kluard itself.
+func kluardRule(status string) bool { return strings.HasPrefix(status, "kluard_") }
