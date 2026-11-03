@@ -80,7 +80,7 @@ textarea{width:100%;min-height:84px;font-family:ui-monospace,monospace;font-size
 .help{color:var(--mut);font-size:12px;margin:4px 0 0}
 .badge.info{background:#e0e7ff;color:#3730a3}[data-theme=dark] .badge.info{background:#312e81;color:#c7d2fe}
 #side nav a .nb{margin-left:auto;background:var(--err);color:#fff;border-radius:99px;font-size:11px;font-weight:700;padding:0 7px;min-width:18px;text-align:center}.warn{color:#b45309}[data-theme=dark] .warn{color:#fbbf24}
-</style><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235b5bd6'/%3E%3Cpath d='M22 14v30h22' fill='none' stroke='white' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+</style><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%235b5bd6'/%3E%3Cpath d='M22 14v36M44 14L24 33M30 29l16 21' fill='none' stroke='white' stroke-width='8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 </head><body><div id="root"></div>
 <script>
 'use strict';
@@ -469,7 +469,7 @@ function applyFavicon(){}
 // Kluard is always on top. The company name and logo (Settings) are shown beneath it.
 const brandEl=big=>{const b=S.brand||{};
   const co=(b.has_logo||b.name)?el('span',{class:'co'},b.has_logo?el('img',{src:'/branding/logo?v='+encodeURIComponent(b.version||''),alt:b.name||'Company logo'}):null,b.name?el('span',{class:'cn'},b.name):null):null;
-  return el('span',{class:'brand'},el('span',{class:'lm'},'Lum',el('span',{class:'en'},'en')),co)};
+  return el('span',{class:'brand'},el('span',{class:'lm'},'Klu',el('span',{class:'en'},'ard')),co)};
 // real names and the names an administrator gave the hosts (best effort: needs read access to hosts)
 async function hostAliases(){try{const r=await api('/api/v1/hosts',{},{quiet:true});S.hn={};for(const h of r.data||[])if(h.display_name)S.hn[h.name]=h.display_name}catch{}}
 // what has come in, for the dropdowns; follows the range only for archive and custom ranges, otherwise the last week
