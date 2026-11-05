@@ -75,7 +75,7 @@ type Keys map[string]ed25519.PublicKey
 
 // The prefix is part of what is signed, so it must never change: it keeps the name the licences were issued under, and
 // renaming it would make every licence ever issued fail ("the signature does not match").
-func message(payload []byte) []byte { return append([]byte("LUMEN-LICENSE-V1\n"), payload...) }
+func message(payload []byte) []byte { return append([]byte("KLUARD-LICENSE-V1\n"), payload...) }
 
 var knownEditions = map[string]bool{Enterprise: true, Operator: true}
 
