@@ -36,7 +36,7 @@ func TestToolEndToEnd(t *testing.T) {
 		t.Fatal("a key needs a name")
 	}
 	lic, ledger := filepath.Join(dir, "acme.license"), filepath.Join(dir, "issued.jsonl")
-	out, e, code := runTool(t, "issue", "--key", filepath.Join(keys, "main.key"), "--customer", "ACME AB", "--editions", "enterprise,operator", "--days", "365", "--hosts", "50", "--tenants", "10", "--out", lic, "--ledger", ledger)
+	out, e, code := runTool(t, "issue", "--key", filepath.Join(keys, "main.key"), "--customer", "ACME AB", "--editions", "enterprise,operator", "--days", "365", "--unbound", "--hosts", "50", "--tenants", "10", "--out", lic, "--ledger", ledger)
 	if code != 0 || !strings.Contains(out, "ACME AB") || !strings.Contains(out, "enterprise+operator") || !strings.Contains(out, "hosts limit 50") {
 		t.Fatalf("%d %s %s", code, out, e)
 	}
@@ -75,7 +75,7 @@ func TestToolEndToEnd(t *testing.T) {
 		t.Fatalf("%d %s", code, e)
 	}
 	// a fixed end date, and refusing nonsense
-	out, _, code = runTool(t, "issue", "--key", filepath.Join(keys, "main.key"), "--customer", "Trial AB", "--expires", "2099-01-31", "--out", filepath.Join(dir, "trial.license"))
+	out, _, code = runTool(t, "issue", "--key", filepath.Join(keys, "main.key"), "--customer", "Trial AB", "--unbound", "--expires", "2099-01-31", "--out", filepath.Join(dir, "trial.license"))
 	if code != 0 || !strings.Contains(out, "valid until 2099-01-31") {
 		t.Fatalf("%d %s", code, out)
 	}
@@ -90,7 +90,7 @@ func TestToolEndToEnd(t *testing.T) {
 		}
 	}
 	// a licence can be dated earlier: it is then already over, which is how the tests of the grace period are made
-	out, _, code = runTool(t, "issue", "--key", filepath.Join(keys, "main.key"), "--customer", "Old AB", "--issued", "2024-01-01", "--expires", "2024-12-31", "--out", filepath.Join(dir, "old.license"))
+	out, _, code = runTool(t, "issue", "--key", filepath.Join(keys, "main.key"), "--customer", "Old AB", "--unbound", "--issued", "2024-01-01", "--expires", "2024-12-31", "--out", filepath.Join(dir, "old.license"))
 	if code != 0 {
 		t.Fatalf("%d %s", code, out)
 	}
@@ -99,7 +99,7 @@ func TestToolEndToEnd(t *testing.T) {
 	if lo.State(time.Now()) != license.StateExpired || lo.Issued.Year() != 2024 {
 		t.Fatalf("%+v", lo)
 	}
-	if _, _, code := runTool(t, "issue", "--key", filepath.Join(keys, "main.key"), "--customer", "x", "--issued", "yesterday", "--days", "5", "--out", filepath.Join(dir, "x.license")); code != 1 {
+	if _, _, code := runTool(t, "issue", "--key", filepath.Join(keys, "main.key"), "--customer", "x", "--unbound", "--issued", "yesterday", "--days", "5", "--out", filepath.Join(dir, "x.license")); code != 1 {
 		t.Fatal("bad issue date")
 	}
 	if _, _, code := runTool(t); code != 2 {
@@ -141,5 +141,37 @@ func TestTrialCommand(t *testing.T) {
 	}
 	if out, _, code := runTool(t, "inspect", lic2, "--pub", filepath.Join(keys, "main.pub")); code != 0 || !strings.Contains(out, "(TRIAL)") || !strings.Contains(out, "hosts     5") {
 		t.Fatalf("%d %s", code, out)
+	}
+}
+
+func TestPaidLicenceNeedsInstallationID(t *testing.T) {
+	dir := t.TempDir()
+	keys := filepath.Join(dir, "keys")
+	if _, _, code := runTool(t, "keygen", "--id", "main", "--dir", keys); code != 0 {
+		t.Fatal("keygen")
+	}
+	key := filepath.Join(keys, "main.key")
+	// no installation id and no --unbound: refused with an explanation
+	_, e, code := runTool(t, "issue", "--key", key, "--customer", "ACME AB", "--days", "365", "--out", filepath.Join(dir, "a.license"))
+	if code != 1 || !strings.Contains(e, "--installation") {
+		t.Fatalf("%d %q", code, e)
+	}
+	// a malformed id and both flags are refused
+	for _, args := range [][]string{{"--installation", "KLU-1234"}, {"--installation", "KLU-7K2M-9QXA-4HDP-WE3T", "--unbound"}} {
+		if _, _, code := runTool(t, append([]string{"issue", "--key", key, "--customer", "ACME AB", "--days", "365", "--out", filepath.Join(dir, "b.license")}, args...)...); code != 1 {
+			t.Fatalf("%v", args)
+		}
+	}
+	// a good one (typed in lower case with spaces) is bound and shown by inspect
+	f := filepath.Join(dir, "c.license")
+	if out, e, code := runTool(t, "issue", "--key", key, "--customer", "ACME AB", "--days", "365", "--installation", " klu-7k2m-9qxa-4hdp-we3t ", "--out", f); code != 0 || !strings.Contains(out, "KLU-7K2M-9QXA-4HDP-WE3T") {
+		t.Fatalf("%d %q %q", code, out, e)
+	}
+	if out, _, code := runTool(t, "inspect", f, "--pub", filepath.Join(keys, "main.pub")); code != 0 || !strings.Contains(out, "bound to  KLU-7K2M-9QXA-4HDP-WE3T") {
+		t.Fatalf("%d %q", code, out)
+	}
+	// a trial needs none
+	if _, e, code := runTool(t, "trial", "--key", key, "--customer", "Try AB", "--out", filepath.Join(dir, "t.license")); code != 0 {
+		t.Fatalf("%q", e)
 	}
 }

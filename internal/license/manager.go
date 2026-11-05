@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	coll  = "meta"
-	docID = "license"
+	coll   = "meta"
+	docID  = "license"
+	instID = "installation"
 )
 
 // Manager holds the licence in force. It is read from KLUARD_LICENSE_FILE if that is set and the file exists (so a renewal
@@ -28,10 +29,65 @@ type Manager struct {
 	lic    *License
 	source string // "file" | "stored"
 	err    string // why a licence that exists cannot be used
+	inst   string // this installation's id
 }
 
 func NewManager(db docstore.Backend, keys Keys, file string) *Manager {
 	return &Manager{db: db, keys: keys, file: file, Now: time.Now}
+}
+
+type instDoc struct {
+	ID      string    `json:"id"`
+	Created time.Time `json:"created"`
+}
+
+// InstallationID is the id of this installation. It is made the first time it is asked for and then kept in the
+// store, so it stays the same across restarts and upgrades. A licence bound to it works here and nowhere else.
+func (m *Manager) InstallationID() string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.inst != "" {
+		return m.inst
+	}
+	if m.db != nil {
+		c, cancel := ctx5()
+		defer cancel()
+		read := func() bool {
+			if d, err := m.db.Get(c, coll, instID); err == nil {
+				var x instDoc
+				if d.Decode(&x) == nil && ValidInstallationID(x.ID) {
+					m.inst = x.ID
+					return true
+				}
+			}
+			return false
+		}
+		if read() {
+			return m.inst
+		}
+		id := NewInstallationID()
+		err := m.db.Create(c, coll, instID, instDoc{ID: id, Created: m.Now().UTC()})
+		if err == nil {
+			m.inst = id
+			return id
+		}
+		if read() { // another instance made it first
+			return m.inst
+		}
+	}
+	m.inst = NewInstallationID() // no store (tests): lasts as long as the process
+	return m.inst
+}
+
+// checkBound refuses a licence bound to another installation.
+func (m *Manager) checkBound(l License) error {
+	if l.Installation == "" {
+		return nil
+	}
+	if mine := m.InstallationID(); l.Installation != mine {
+		return bad("this licence was issued for the installation %s, but this installation is %s; ask for a licence for this installation id (see Settings)", l.Installation, mine)
+	}
+	return nil
 }
 
 type stored struct {
@@ -50,6 +106,9 @@ func (m *Manager) Load() {
 	var source, errText string
 	try := func(raw []byte, src string) bool {
 		l, err := Parse(raw, m.keys)
+		if err == nil {
+			err = m.checkBound(l)
+		}
 		if err != nil {
 			errText = err.Error()
 			return false
@@ -83,6 +142,9 @@ func (m *Manager) Load() {
 func (m *Manager) Set(raw []byte, by string) (License, error) {
 	l, err := Parse(raw, m.keys)
 	if err != nil {
+		return License{}, err
+	}
+	if err := m.checkBound(l); err != nil {
 		return License{}, err
 	}
 	m.mu.RLock()
@@ -155,12 +217,17 @@ type Info struct {
 	Trial     bool     `json:"trial,omitempty"`
 	Problem   string   `json:"problem,omitempty"`
 	Trusted   int      `json:"trusted_keys"`
+	// Installation is this installation's id (always shown, also without a licence); Bound is the id the licence in
+	// force is bound to, empty when it is not bound.
+	Installation string `json:"installation"`
+	Bound        string `json:"bound_to,omitempty"`
 }
 
 func (m *Manager) Info() Info {
+	inst := m.InstallationID()
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	in := Info{State: StateNone, Trusted: len(m.keys), Problem: m.err}
+	in := Info{State: StateNone, Trusted: len(m.keys), Problem: m.err, Installation: inst}
 	if m.lic == nil {
 		if m.err != "" {
 			in.State = StateInvalid
@@ -170,7 +237,7 @@ func (m *Manager) Info() Info {
 	l, now := *m.lic, m.Now()
 	in.State, in.Customer, in.ID, in.Editions, in.Limits, in.Source = l.State(now), l.Customer, l.ID, l.Editions, l.Limits, m.source
 	in.Issued, in.Expires, in.GraceEnds = l.Issued.Format(time.RFC3339), l.Expires.Format(time.RFC3339), l.Expires.Add(Grace).Format(time.RFC3339)
-	in.DaysLeft, in.Trial = l.DaysLeft(now), l.Trial
+	in.DaysLeft, in.Trial, in.Bound = l.DaysLeft(now), l.Trial, l.Installation
 	if l.Trial {
 		in.GraceEnds = in.Expires
 	}

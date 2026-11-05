@@ -38,8 +38,11 @@ The one thing the build must contain is your **public key**, compiled in from `i
 
 ```bash
 go run ./cmd/kluard-license issue --key keys/main.key --customer "ACME AB" \
-  --editions enterprise --days 365 --hosts 50 --ledger issued.jsonl --out acme.license
+  --editions enterprise --days 365 --hosts 50 --installation KLU-7K2M-9QXA-4HDP-WE3T \
+  --ledger issued.jsonl --out acme.license
 ```
+
+- `--installation` is the customer's **installation id**. They read it in plain text under **Settings, Licence** (it exists from the first start, also without a licence). A licence made with it works on that installation only; anywhere else Kluard refuses it and names both ids. A paid licence needs `--installation`, or `--unbound` for an exception that works anywhere. Trial licences are never bound.
 
 - `--editions` is `enterprise`, `operator` or both (`enterprise,operator`).
 - Give an end with `--days 365` or `--expires 2027-12-31` (the end of that day, UTC).
@@ -90,10 +93,12 @@ When Enterprise features are off, **nothing is deleted**: channels and settings 
 | signed with the key "x", which this build does not trust | Another publisher's licence, or a build without your public key |
 | this build of Kluard trusts no licence keys | The publisher's public key is not in the build: add it to `internal/license/keys/` and build again |
 | that is not a Kluard licence file | Not the `.license` file (try pasting the whole file, braces included) |
+| this licence was issued for the installation X, but this installation is Y | The licence is bound to another installation. Send the id under Settings, Licence and ask for a licence for it |
 | the licence in force is read from the file … | `KLUARD_LICENSE_FILE` is set: replace that file instead |
 
 ## Honest limits
 
 - **The source is open.** Anyone who can build Kluard could change the check. The licence check keeps honest customers honest and makes accidental use easy to see; the contract is what protects the commercial edition. If some Enterprise code has real value, consider keeping it in a private repository (see the notes in the main discussion of editions).
+- **Binding is not a lock.** The installation id stops everyday forwarding of a file (it simply does not work on another installation), but someone who can build Kluard can change the check, and a customer can copy the data directory (with its id) to another server. The contract and its audit rights cover that; Kluard never phones home to check.
 - **A clock set back** extends a licence. Kluard does not try to defend against that (it would need an online check, which we promise never to do).
 - **Host counts** in the warnings are those of the signed-in tenant until the Operator add-on has tenant records to count the whole installation.

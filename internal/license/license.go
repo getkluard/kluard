@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -53,7 +54,38 @@ type Payload struct {
 	Limits   Limits    `json:"limits"`
 	// Trial marks a try-out licence: it has no grace period and the interface says so.
 	Trial bool `json:"trial,omitempty"`
+	// Installation binds the licence to one installation (its installation id, shown under Settings). Empty = not bound:
+	// trial licences are, and so are licences issued before binding existed. Bound licences are refused elsewhere.
+	Installation string `json:"installation,omitempty"`
 }
+
+// An installation id looks like KLU-7K2M-9QXA-4HDP-WE3T: easy to read out and to type, without 0/O, 1/I/L or U.
+const idAlphabet = "23456789ABCDEFGHJKMNPQRSTVWXYZ"
+
+var installationRe = regexp.MustCompile(`^KLU(-[` + idAlphabet + `]{4}){4}$`)
+
+// NewInstallationID makes a random installation id (80 bits).
+func NewInstallationID() string {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+	var sb strings.Builder
+	sb.WriteString("KLU")
+	for i := 0; i < 16; i++ {
+		if i%4 == 0 {
+			sb.WriteByte('-')
+		}
+		sb.WriteByte(idAlphabet[int(b[i])%len(idAlphabet)])
+	}
+	return sb.String()
+}
+
+// NormalizeInstallationID tidies what a person typed or pasted (case, spaces) so it can be checked.
+func NormalizeInstallationID(s string) string { return strings.ToUpper(strings.TrimSpace(s)) }
+
+// ValidInstallationID tells whether s has the form of an installation id.
+func ValidInstallationID(s string) bool { return installationRe.MatchString(s) }
 
 // File is the licence as stored on disk: the payload as signed (so nothing needs to be re-encoded to verify it),
 // the signature, and the id of the key that made it.
@@ -97,6 +129,9 @@ func (p Payload) Validate() error {
 	}
 	if p.Issued.IsZero() || p.Expires.IsZero() || !p.Expires.After(p.Issued) {
 		return bad("the expiry date must be after the date of issue")
+	}
+	if p.Installation != "" && !ValidInstallationID(p.Installation) {
+		return bad("the installation id %q is not valid (it looks like KLU-7K2M-9QXA-4HDP-WE3T)", p.Installation)
 	}
 	if p.Limits.Hosts < 0 || p.Limits.Tenants < 0 {
 		return bad("limits cannot be negative")

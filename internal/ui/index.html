@@ -1686,10 +1686,14 @@ async function licenseCard(view,w){
     const rows=[];const row=(k,v)=>v?rows.push(el('tr',{},el('td',{class:'mut',style:'padding:2px 14px 2px 0'},k),el('td',{},v))):0;
     if(l.state!=='none'&&l.state!=='invalid'){row('Customer',l.customer);row('Editions',(l.editions||[]).join(', '));row('Valid until',fmtDate(l.expires)+(l.days_left>=0?' ('+l.days_left+' days left)':''));if(l.state==='grace')row('Enterprise works until',fmtDate(l.grace_ends));row('Licence id',l.id);
       row('Hosts',(l.limits&&l.limits.hosts)?r.usage.hosts+' of '+l.limits.hosts+' (in your tenant)':'');row('Tenants',(l.limits&&l.limits.tenants)?'up to '+l.limits.tenants:'');row('Read from',l.source==='file'?'a file on the server (KLUARD_LICENSE_FILE)':'saved in Kluard')}
+    const idBox=el('div',{style:'margin:10px 0'},el('div',{class:'help'},'Installation id (give this to us when you order a licence; a paid licence is made for this installation only)'),
+      el('div',{class:'bar',style:'margin:4px 0 0;align-items:center'},el('code',{style:'font-size:15px;user-select:all;padding:4px 8px;border:1px solid var(--line,#ccc);border-radius:6px'},l.installation||''),
+        el('button',{class:'btn ghost',onclick:async e=>{const b=e.target;try{await navigator.clipboard.writeText(l.installation);b.textContent='Copied'}catch(_){b.textContent='Select and copy it'}setTimeout(()=>b.textContent='Copy',2000)}},'Copy')),
+      l.bound_to?el('div',{class:'help'},'The licence in force is bound to this installation.'):(l.state!=='none'&&l.state!=='invalid'?el('div',{class:'help'},'The licence in force is not bound to an installation (for example a trial).'):null));
     card.replaceChildren(el('h2',{style:'margin-top:0'},'Licence ',el('span',{class:'badge '+badge[1],style:'vertical-align:middle'},badge[0])),
       l.state==='none'?el('p',{},'No licence: you are using the Community edition, which is free and complete for monitoring. A licence unlocks Enterprise features such as Jira, ServiceNow, PagerDuty and Opsgenie notifications.'):null,
       l.state==='invalid'?el('div',{class:'errbox'},l.problem):null,
-      rows.length?el('table',{},rows):null,(r.warnings||[]).map(x=>el('div',{class:'warnbox',style:'margin-top:8px'},x)),
+      rows.length?el('table',{},rows):null,l.installation?idBox:null,(r.warnings||[]).map(x=>el('div',{class:'warnbox',style:'margin-top:8px'},x)),
       w?el('div',{style:'margin-top:12px'},el('div',{class:'help'},l.state==='none'?'Install a licence':'Install a renewal or a new licence'),el('div',{style:'margin:6px 0'},file),ta,
         el('div',{class:'bar',style:'margin:8px 0 0'},el('button',{class:'btn',onclick:install},'Install licence'),
           l.state!=='none'&&l.source!=='file'?el('button',{class:'btn ghost',onclick:async()=>{if(!confirm('Remove the licence? Enterprise features stop; Community features and all data stay.'))return;try{draw(await api('/api/v1/settings/license',{},{method:'DELETE'}))}catch(er){msg.className='err';msg.textContent=er.message}}},'Remove licence'):null)):null,msg,

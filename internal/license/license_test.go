@@ -312,3 +312,48 @@ func TestTrialHasNoGrace(t *testing.T) {
 		t.Error("an ordinary licence keeps its grace period")
 	}
 }
+
+func TestInstallationBinding(t *testing.T) {
+	m, priv, _, db := newManager(t, "")
+	mine := m.InstallationID()
+	if !ValidInstallationID(mine) || m.Info().Installation != mine {
+		t.Fatalf("an installation id exists from the start, also without a licence: %q", mine)
+	}
+	// it is kept across restarts, and a second manager on the same store sees the same id
+	if m2 := NewManager(db, m.keys, ""); m2.InstallationID() != mine {
+		t.Fatal("the id must be stable")
+	}
+	// a licence for another installation is refused and changes nothing
+	other := NewInstallationID()
+	if other == mine || !ValidInstallationID(other) {
+		t.Fatal("ids differ and are valid")
+	}
+	_, err := m.Set(issue(t, priv, "main", func(p *Payload) { p.Installation = other }), "anna")
+	if !errors.Is(err, ErrInvalid) || !strings.Contains(err.Error(), other) || !strings.Contains(err.Error(), mine) || m.State() != StateNone {
+		t.Fatalf("%v", err)
+	}
+	// a licence for this installation works and shows what it is bound to
+	if _, err := m.Set(issue(t, priv, "main", func(p *Payload) { p.Installation = mine }), "anna"); err != nil || !m.Allows(Enterprise) || m.Info().Bound != mine {
+		t.Fatalf("%v", err)
+	}
+	// an unbound licence (a trial, for instance) works anywhere
+	if _, err := m.Set(issue(t, priv, "main", nil), "anna"); err != nil || !m.Allows(Enterprise) || m.Info().Bound != "" {
+		t.Fatalf("%v", err)
+	}
+	// a malformed id inside a signed licence is refused
+	if _, err := Sign(priv, "main", Payload{ID: "x", Customer: "A", Editions: []string{Enterprise}, Issued: t0, Expires: t0.AddDate(1, 0, 0), Installation: "KLU-0000-0000-0000-0000"}); !errors.Is(err, ErrInvalid) {
+		t.Fatal("0 and O are not in the alphabet")
+	}
+}
+
+func TestBoundLicenceFileMovedToAnotherInstallationIsRefused(t *testing.T) {
+	file := filepath.Join(t.TempDir(), "kluard.license")
+	m, priv, _, _ := newManager(t, file)
+	if err := os.WriteFile(file, issue(t, priv, "main", func(p *Payload) { p.Installation = NewInstallationID() }), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	m.Load()
+	if m.State() != StateInvalid || m.Allows(Enterprise) || !strings.Contains(m.Info().Problem, "issued for the installation") {
+		t.Fatalf("%v %q", m.State(), m.Info().Problem)
+	}
+}
