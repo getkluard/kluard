@@ -1,3 +1,6 @@
+// Kluard Enterprise Edition. NOT covered by the Apache-2.0 licence of the rest of this repository.
+// Use in production needs a valid Kluard licence. Terms: see /ee/LICENSE.
+
 // Package oidc lets people sign in with an OpenID Connect provider (Keycloak, Authentik, Entra ID, Google and so on): the
 // authorization code flow with PKCE, and a strict check of the ID token. It uses nothing but the standard library.
 //

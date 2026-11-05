@@ -1,3 +1,6 @@
+// Kluard Enterprise Edition. NOT covered by the Apache-2.0 licence of the rest of this repository.
+// Use in production needs a valid Kluard licence. Terms: see /ee/LICENSE.
+
 package server
 
 import (
@@ -8,13 +11,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/getkluard/kluard/ee/tenants"
 	"github.com/getkluard/kluard/internal/audit"
 	"github.com/getkluard/kluard/internal/auth"
 	"github.com/getkluard/kluard/internal/edition"
 	"github.com/getkluard/kluard/internal/license"
 	"github.com/getkluard/kluard/internal/metering"
 	"github.com/getkluard/kluard/internal/perm"
-	"github.com/getkluard/kluard/internal/tenants"
 )
 
 func (s *Server) tenancyRoutes(mux *http.ServeMux) {

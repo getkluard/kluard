@@ -76,10 +76,10 @@ Agenter; API:t och dataexport; isolering mellan tenants och varje behörighetsko
 
 ## 7. Bidrag och licenser
 
-- Kärnan är licensierad under [Apache-2.0 — ska bekräftas]. Katalogen `ee/` har en egen kommersiell licens.
-- Bidrag till kärnan tas emot under [DCO eller CLA — avgörs innan första externa bidraget accepteras].
+- Kärnan är licensierad under **Apache-2.0** (beslutat). Enterprise Edition har en egen kommersiell licens, [ee/LICENSE](../ee/LICENSE): katalogen `ee/` och filerna som heter `*_ee.go` och `*_ee_test.go`. Fakturering, enkel inloggning, tenant-konsolen och egna grupper finns där.
+- Bidrag tas emot under **Developer Certificate of Origin** (DCO, beslutat): varje commit har en `Signed-off-by`-rad, se [CONTRIBUTING.md](../CONTRIBUTING.md). Det finns inget avtal för bidragsgivare (CLA).
 - Enterprise-kod skrivs av underhållarna eller på uppdrag.
-- Namnet och loggan skyddas av en varumärkespolicy [ska skrivas].
+- Namnet och loggan skyddas av [varumärkespolicyn](../TRADEMARKS.sv.md).
 
 ## 8. Hur stadgan ändras
 
@@ -88,9 +88,9 @@ Agenter; API:t och dataexport; isolering mellan tenants och varje behörighetsko
 ## 9. Öppna punkter innan detta publiceras
 
 - [ ] Juridisk granskning av löftena och licensvillkoren
-- [ ] Besluta kärnans licens
-- [ ] Välja mellan DCO och CLA
-- [ ] Varumärkespolicy för namn och logga
+- [x] Beslutat: kärnan är Apache-2.0
+- [x] Beslutat: DCO, ingen CLA
+- [x] Varumärkespolicy för namn och logga skriven ([TRADEMARKS.sv.md](../TRADEMARKS.sv.md)); behöver juridisk granskning
 - [ ] Slutgiltiga utgåvonamn
 - [ ] Kontaktadress för licensfrågor
 - [x] Beslutat: OIDC, grupper med egna behörigheter, larmspårning per person och fakturering är Enterprise; obegränsat antal användare med de inbyggda rollerna Admin och User är Community

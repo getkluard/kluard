@@ -1,3 +1,6 @@
+// Kluard Enterprise Edition. NOT covered by the Apache-2.0 licence of the rest of this repository.
+// Use in production needs a valid Kluard licence. Terms: see /ee/LICENSE.
+
 // Package tenants holds the records of the tenants of an installation: their status, limits, support-access setting and
 // what is needed to offboard one. A tenant always existed implicitly (a name on users, keys and data); this package gives
 // each one a record that the operator of the installation can manage.

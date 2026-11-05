@@ -561,7 +561,9 @@ internal/registry     host settings and Nextcloud instances (secrets encrypted)
 internal/secretbox    AES-GCM for stored credentials
 internal/status       up/down computation
 internal/alerts       alert rules, state machine, notifications (email, webhook, Slack, Teams, heartbeat), SSRF guard
-internal/tenants      tenant records, limits, support-access consent, removal and export
+ee/tenants            tenant records, limits, support-access consent, removal and export (Operator add-on)
+ee/billing            usage-based billing: prices, reports, money, traffic metering (Enterprise)
+ee/oidc               single sign-on with OpenID Connect (Enterprise)
 internal/metering     per-tenant counters, rate limiting, usage and CSV
 internal/audit        the record of operator actions and support access
 internal/license      signed licence files, offline verification, states and grace period, soft limits
@@ -570,7 +572,8 @@ internal/backup       daily export, prune, load/unload of archive days
 internal/docstore     Elasticsearch client + JSON-file fallback (estest = fake ES, tests only)
 internal/dashboards   dashboards per tenant
 internal/edition      open-core hooks (auth, authorization)
-ee/                   enterprise features (commercial license, in every build, switched on by a licence): Jira, ServiceNow, PagerDuty, Opsgenie
+ee/                   Enterprise Edition (commercial licence, in every build, switched on by a licence): billing, single sign-on, tenant console, Jira, ServiceNow, PagerDuty, Opsgenie.
+                      Its HTTP handlers and tests sit next to the core in files named *_ee.go and *_ee_test.go
 deploy/               compose file, preflight, secrets generator, Docker installers (RHEL family, Ubuntu/Debian)
 install.sh dev.sh     server installer / local test setup
 ```
@@ -593,7 +596,7 @@ Only the Go standard library is used, so there is nothing to download. The Elast
 
 Issues and pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). Report security problems privately, see [SECURITY.md](SECURITY.md). Changes are listed in [CHANGELOG.md](CHANGELOG.md).
 
-Before you fork this into a product of your own: pick your own name (the name Kluard and its logo are not part of the Apache-2.0 licence; a trademark policy is to be written), and add your commercial terms to `ee/LICENSE` (or delete `ee/` and `cmd/kluard/enterprise.go` if you do not want an enterprise tier). To rename the Go module: `./scripts/set-module.sh github.com/YOU/kluard`.
+Before you fork this into a product of your own: pick your own name (the name Kluard and its logo are not part of the Apache-2.0 licence, see [TRADEMARKS.md](TRADEMARKS.md)). The Enterprise Edition (`ee/` and the `*_ee.go` files) is not Apache-licensed: you may not use it in production without a licence from us, see [ee/LICENSE](ee/LICENSE). To rename the Go module: `./scripts/set-module.sh github.com/YOU/kluard`.
 
 ## Editions and design documents
 
@@ -620,4 +623,8 @@ Kluard is open core: a free **Community** edition, **Enterprise** for governance
 
 ## License
 
-Apache-2.0 for the core, see [LICENSE](LICENSE). `ee/` is separately licensed.
+Apache-2.0 for the core, see [LICENSE](LICENSE).
+
+The Enterprise Edition is separately licensed under [ee/LICENSE](ee/LICENSE): the `ee/` directory and the files named `*_ee.go` and `*_ee_test.go`. It is in every build and switched on by a signed licence file.
+
+The name Kluard and the logo are trademarks, see [TRADEMARKS.md](TRADEMARKS.md). Contributions are accepted under the [DCO](DCO), see [CONTRIBUTING.md](CONTRIBUTING.md).

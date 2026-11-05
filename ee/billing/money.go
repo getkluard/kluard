@@ -1,3 +1,6 @@
+// Kluard Enterprise Edition. NOT covered by the Apache-2.0 licence of the rest of this repository.
+// Use in production needs a valid Kluard licence. Terms: see /ee/LICENSE.
+
 // Package billing turns what the Nextcloud instances use (users and stored data) into a basis for invoices: prices that
 // the operator chooses, in the currency the operator chooses, per customer if wanted.
 //

@@ -1,3 +1,6 @@
+// Kluard Enterprise Edition. NOT covered by the Apache-2.0 licence of the rest of this repository.
+// Use in production needs a valid Kluard licence. Terms: see /ee/LICENSE.
+
 // Package ee holds Kluard Enterprise features: ticket and on-call notifiers today (notifiers.go); SSO, audit export and
 // long-term retention tiers are planned (see docs/EDITIONS.md).
 // This directory is under a separate commercial license, see ee/LICENSE.

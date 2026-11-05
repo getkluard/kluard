@@ -90,91 +90,6 @@ func (s *Store) ListGroups(tenant string) []Group {
 	return append(out, own...)
 }
 
-func (s *Store) checkGroupName(tenant, name, exceptID string) (string, error) {
-	name = strings.TrimSpace(name)
-	if name == "" || len(name) > 60 {
-		return "", errors.New("the group name must be 1-60 characters")
-	}
-	for _, g := range s.ListGroups(tenant) {
-		if g.ID != exceptID && strings.EqualFold(g.Name, name) {
-			return "", errors.New("a group with that name already exists")
-		}
-	}
-	return name, nil
-}
-
-func (s *Store) CreateGroup(tenant, name, desc string, perms map[string]string) (Group, error) {
-	name, err := s.checkGroupName(tenant, name, "")
-	if err != nil {
-		return Group{}, err
-	}
-	p, err := perm.Normalize(perms)
-	if err != nil {
-		return Group{}, err
-	}
-	if err := operatorOnlyHere(tenant, p); err != nil {
-		return Group{}, err
-	}
-	g := Group{ID: "g_" + RandomToken(6), Tenant: tenant, Name: name, Description: strings.TrimSpace(desc), Perms: p, Created: time.Now().UTC()}
-	c, cancel := ctx()
-	defer cancel()
-	if err := s.b.Create(c, collGroups, g.ID, g); err != nil {
-		return Group{}, err
-	}
-	s.invalidate()
-	return g, nil
-}
-
-func (s *Store) UpdateGroup(tenant, id, name, desc string, perms map[string]string) (Group, error) {
-	g, ok := s.GetGroup(tenant, id)
-	if !ok {
-		return Group{}, errors.New("no such group")
-	}
-	if g.Builtin {
-		return Group{}, errors.New("the built-in groups cannot be changed; create a custom group instead")
-	}
-	name, err := s.checkGroupName(tenant, name, id)
-	if err != nil {
-		return Group{}, err
-	}
-	p, err := perm.Normalize(perms)
-	if err != nil {
-		return Group{}, err
-	}
-	if err := operatorOnlyHere(tenant, p); err != nil {
-		return Group{}, err
-	}
-	g.Name, g.Description, g.Perms = name, strings.TrimSpace(desc), p
-	c, cancel := ctx()
-	defer cancel()
-	if err := s.b.Put(c, collGroups, id, g, ""); err != nil {
-		return Group{}, err
-	}
-	s.invalidate()
-	return g, nil
-}
-
-// DeleteGroup refuses built-in groups and groups that still have members.
-func (s *Store) DeleteGroup(tenant, id string) error {
-	g, ok := s.GetGroup(tenant, id)
-	if !ok {
-		return errors.New("no such group")
-	}
-	if g.Builtin {
-		return errors.New("the built-in groups cannot be deleted")
-	}
-	for _, u := range s.ListUsersIn(tenant) {
-		if u.Group == id {
-			return errors.New("the group still has members (" + u.Name + "...); move them to another group first")
-		}
-	}
-	c, cancel := ctx()
-	defer cancel()
-	err := s.b.Delete(c, collGroups, id)
-	s.invalidate()
-	return err
-}
-
 // EffectiveGroup is the group id a user is in; users created before groups existed count as admins.
 func EffectiveGroup(u User) string {
 	if u.Group == "" {
@@ -189,15 +104,6 @@ func (s *Store) PermsFor(u User) map[string]string {
 		return perm.ForTenant(g.Perms, u.Tenant)
 	}
 	return perm.Normalize2None()
-}
-
-// operatorOnlyHere refuses to give the operator console to a group of an ordinary tenant: a customer must never be
-// able to manage other customers, whatever an administrator of that customer does.
-func operatorOnlyHere(tenant string, p map[string]string) error {
-	if tenant != perm.OperatorTenant && p[perm.Operator] != perm.None && p[perm.Operator] != "" {
-		return errors.New("the operator console can only be given to groups in the operator tenant")
-	}
-	return nil
 }
 
 // IsBuiltinGroup tells whether id is one of the groups that always exist (Admin and User).

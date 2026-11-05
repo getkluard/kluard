@@ -23,9 +23,10 @@ The repository is public, so this comes first.
 
 - [x] **Decide** the product name: **Kluard**, domain kluard.com (repository `getkluard/kluard`)
 - [ ] Check **Kluard** for trademark conflicts in the markets that matter (EU and the US), and register the domain's mail address for security and licensing contacts
-- [ ] **Decide** the licence of the core (the code says Apache-2.0; the charter has it open)
-- [ ] **Decide** DCO or CLA for contributions
-- [ ] **Decide** the trademark policy for name and logo
+- [x] **Decide** the licence of the core: Apache-2.0
+- [x] **Decide** DCO or CLA for contributions: DCO
+- [x] **Decide** the trademark policy for name and logo: written in `TRADEMARKS.md`, still needs legal review
+- [ ] Fill in the licensor name, address, city for disputes and licensing contact in `ee/LICENSE` and `TRADEMARKS.md`, and have a lawyer read both
 - [ ] **Decide** the final edition names
 - [ ] **Decide** the contact address for licensing questions
 - [ ] Legal review of the promises in `docs/EDITIONS.md` and the licence terms

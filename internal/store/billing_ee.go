@@ -1,3 +1,6 @@
+// Kluard Enterprise Edition. NOT covered by the Apache-2.0 licence of the rest of this repository.
+// Use in production needs a valid Kluard licence. Terms: see /ee/LICENSE.
+
 package store
 
 import (
@@ -6,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/getkluard/kluard/internal/billing"
+	"github.com/getkluard/kluard/ee/billing"
 )
 
 // instanceUsageSQL is the highest value of each day of what every Nextcloud instance reports about its size: the users (from

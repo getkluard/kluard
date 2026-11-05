@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
+	"github.com/getkluard/kluard/ee/oidc"
 	"github.com/getkluard/kluard/internal/health"
-	"github.com/getkluard/kluard/internal/oidc"
 	"log/slog"
 	"net/http"
 	"os"
@@ -11,11 +11,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/getkluard/kluard/ee/billing"
+	"github.com/getkluard/kluard/ee/tenants"
 	"github.com/getkluard/kluard/internal/alerts"
 	"github.com/getkluard/kluard/internal/audit"
 	"github.com/getkluard/kluard/internal/auth"
 	"github.com/getkluard/kluard/internal/backup"
-	"github.com/getkluard/kluard/internal/billing"
 	"github.com/getkluard/kluard/internal/branding"
 	"github.com/getkluard/kluard/internal/buildinfo"
 	"github.com/getkluard/kluard/internal/config"
@@ -28,7 +29,6 @@ import (
 	"github.com/getkluard/kluard/internal/secretbox"
 	"github.com/getkluard/kluard/internal/server"
 	"github.com/getkluard/kluard/internal/store"
-	"github.com/getkluard/kluard/internal/tenants"
 )
 
 func main() {

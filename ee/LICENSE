@@ -1,2 +1,54 @@
-Kluard Enterprise Edition (ee/) is proprietary and NOT covered by the Apache-2.0 license
-that applies to the rest of this repository. Replace this file with your commercial terms.
+Kluard Enterprise Edition License (the "EE License")
+
+DRAFT. This text has not been reviewed by a lawyer. Fill in the bracketed items and have it
+reviewed before the first customer relies on it.
+
+Copyright (c) 2026 [LICENSOR NAME, ORGANISATION NUMBER, ADDRESS] ("Licensor"). All rights reserved.
+
+This license applies to (a) every file in the "ee/" directory of this repository, (b) every file whose
+name ends in "_ee.go" or "_ee_test.go", and (c) any other file that says it is covered by this license
+(together the "Enterprise Software"). Everything else in this repository is licensed under the Apache
+License, Version 2.0 (see the LICENSE file in the repository root).
+
+1. Development and testing. You may copy and modify the Enterprise Software, and use it, for
+   development and testing purposes only, including to evaluate it, to write patches for it and to
+   run its test suite. This does not include use with real data or for real users.
+
+2. Production use. To use the Enterprise Software in production you must have a valid Kluard
+   licence file ("Licence") issued by Licensor, for the edition and period it names, and you must
+   comply with its terms. A trial Licence permits production use for the period it names.
+
+3. What you may not do. You may not (a) remove, bypass or alter the Licence checks, limits or
+   notices in the Enterprise Software, or use any feature that requires a Licence without a valid
+   Licence; (b) sell, sublicense, rent or host the Enterprise Software for others as a product or
+   service on its own, except as permitted by an Operator Licence; (c) remove or change copyright,
+   trademark or licence notices.
+
+4. Contributions. Contributions to the Enterprise Software are accepted only from the maintainers
+   or under a written agreement with Licensor. By submitting a contribution you grant Licensor a
+   perpetual, worldwide, royalty-free licence to use, modify and distribute it as part of Kluard,
+   under this License or any other licence.
+
+5. Ownership. Licensor and its licensors own all rights, title and interest in the Enterprise
+   Software. This License gives you no rights to the Kluard name or logo, which are not covered by
+   this License or by the Apache License.
+
+6. No warranty. THE ENTERPRISE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED, INCLUDING THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+   NON-INFRINGEMENT.
+
+7. Limitation of liability. TO THE EXTENT PERMITTED BY LAW, LICENSOR IS NOT LIABLE FOR ANY INDIRECT
+   OR CONSEQUENTIAL DAMAGES, LOSS OF PROFIT OR DATA, AND LICENSOR'S TOTAL LIABILITY UNDER THIS
+   LICENSE IS LIMITED TO THE FEES YOU PAID FOR THE LICENCE IN THE 12 MONTHS BEFORE THE CLAIM.
+   [Check with a lawyer: this clause may not be enforceable for intent or gross negligence.]
+
+8. No lock-out. If a Licence ends, Licensor does not require you to delete data, and the
+   Community features and your data stay available, as described in docs/EDITIONS.md.
+
+9. Termination. This License ends automatically if you breach it. On termination you must stop
+   using the Enterprise Software in production.
+
+10. Governing law. Swedish law applies. Disputes are settled by the courts of [CITY], Sweden.
+    [Confirm this with a lawyer.]
+
+Questions about licensing: [LICENSING CONTACT E-MAIL, for example info@kluard.com]

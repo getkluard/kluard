@@ -76,10 +76,10 @@ Agents; the API and data export; tenant isolation and every authorisation check;
 
 ## 7. Contributions and licences
 
-- The core is licensed under [Apache-2.0 — to be confirmed]. The `ee/` directory has its own commercial licence.
-- Contributions to the core are accepted under [DCO or CLA — decide before the first outside contribution is accepted].
+- The core is licensed under **Apache-2.0** (decided). The Enterprise Edition has its own commercial licence, [ee/LICENSE](../ee/LICENSE): the `ee/` directory and the files named `*_ee.go` and `*_ee_test.go`. Billing, single sign-on, the tenant console and custom groups are there.
+- Contributions are accepted under the **Developer Certificate of Origin** (DCO, decided): every commit carries a `Signed-off-by` line, see [CONTRIBUTING.md](../CONTRIBUTING.md). There is no contributor licence agreement.
 - Enterprise code is written by the maintainers or under contract.
-- The name and logo are protected by a trademark policy [to be written].
+- The name and logo are protected by the [trademark policy](../TRADEMARKS.md).
 
 ## 8. How this charter changes
 
@@ -88,9 +88,9 @@ Changes are proposed in a public issue or pull request and announced in the chan
 ## 9. Open items before this is published
 
 - [ ] Legal review of the promises and the licence terms
-- [ ] Decide the licence of the core
-- [ ] Decide between DCO and CLA
-- [ ] Trademark policy for the name and logo
+- [x] Decided: the core is Apache-2.0
+- [x] Decided: DCO, no CLA
+- [x] Trademark policy for the name and logo written ([TRADEMARKS.md](../TRADEMARKS.md)); needs legal review
 - [ ] Final edition names
 - [ ] Contact address for licensing questions
 - [x] Decided: OIDC, groups with their own permissions, per-person alert tracking and billing are Enterprise; any number of users with the built-in Admin and User roles stays Community

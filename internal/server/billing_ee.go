@@ -1,3 +1,6 @@
+// Kluard Enterprise Edition. NOT covered by the Apache-2.0 licence of the rest of this repository.
+// Use in production needs a valid Kluard licence. Terms: see /ee/LICENSE.
+
 package server
 
 import (
@@ -6,7 +9,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/getkluard/kluard/internal/billing"
+	"github.com/getkluard/kluard/ee/billing"
 	"github.com/getkluard/kluard/internal/docstore"
 	"github.com/getkluard/kluard/internal/edition"
 	"github.com/getkluard/kluard/internal/perm"

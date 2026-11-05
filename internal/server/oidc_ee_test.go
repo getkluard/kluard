@@ -1,3 +1,6 @@
+// Kluard Enterprise Edition. NOT covered by the Apache-2.0 licence of the rest of this repository.
+// Use in production needs a valid Kluard licence. Terms: see /ee/LICENSE.
+
 package server
 
 import (
@@ -19,11 +22,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/getkluard/kluard/ee/oidc"
 	"github.com/getkluard/kluard/internal/audit"
 	"github.com/getkluard/kluard/internal/auth"
 	"github.com/getkluard/kluard/internal/dashboards"
 	"github.com/getkluard/kluard/internal/docstore"
-	"github.com/getkluard/kluard/internal/oidc"
 	"github.com/getkluard/kluard/internal/secretbox"
 )
 

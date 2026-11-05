@@ -1,0 +1,31 @@
+# Every commit in a pull request must carry a "Signed-off-by: Name <email>" line (git commit -s).
+# The text people agree to is in the DCO file at the root of the repository.
+name: DCO
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  signoff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check Signed-off-by on every commit
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          missing=0
+          for c in $(git rev-list --no-merges "$BASE..$HEAD"); do
+            if ! git show -s --format=%B "$c" | grep -qiE '^Signed-off-by: .+ <.+@.+>$'; then
+              echo "Missing Signed-off-by: $(git show -s --format='%h %s' "$c")"
+              missing=1
+            fi
+          done
+          if [ "$missing" = 1 ]; then
+            echo
+            echo "Add the sign-off with: git commit --amend -s   (or: git rebase --signoff main)"
+            exit 1
+          fi
