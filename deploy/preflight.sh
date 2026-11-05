@@ -55,10 +55,34 @@ if have docker; then
 else { have podman && warn "podman found: docker-ce install needs --allow-podman-removal (see install script)"; fail "docker not installed (run deploy/install-rhel-family.sh or deploy/install-debian-family.sh)"; }; fi
 
 echo "Network"
+# Who holds a port? Prints a short description: "own" when it is a container of this very Kluard stack (an upgrade),
+# otherwise the container or process that has it, so a fresh install never mistakes someone else's service for Kluard.
+port_owner() {
+  local p="$1" envf="" own other
+  [ -f "$HERE/.env" ] && envf="--env-file $HERE/.env"
+  if have docker && docker info >/dev/null 2>&1; then
+    # containers of this compose project (orphans of an older name included) that publish the port
+    own="$(docker compose -f "$HERE/docker-compose.yml" $envf ps -a --format '{{.Name}} {{.Ports}}' 2>/dev/null | grep -E "[:.]$p->" | awk '{print $1}' | head -n1)"
+    [ -n "$own" ] && { echo "own:$own"; return; }
+    other="$(docker ps --filter "publish=$p" --format '{{.Names}} ({{.Image}})' 2>/dev/null | head -n1)"
+    [ -n "$other" ] && { echo "container:$other"; return; }
+  fi
+  other="$(ss -ltnp "( sport = :$p )" 2>/dev/null | awk 'NR>1{print $NF}' | head -n1)"
+  echo "process:${other:-unknown}"
+}
 if have ss; then
   for p in "$PORT" 8123; do
     if ss -ltn "( sport = :$p )" 2>/dev/null | grep -q LISTEN; then
-      [ "$p" = 8123 ] && warn "port $p in use (ClickHouse is not published to the host by default, so this is fine unless you changed that)" || fail "port $p already in use"
+      if [ "$p" = 8123 ]; then
+        warn "port $p in use (ClickHouse is not published to the host by default, so this is fine unless you changed that)"
+      else
+        who="$(port_owner "$p")"
+        case "$who" in
+          own:*) ok "port $p is held by the running Kluard (${who#own:}): this is an upgrade, the installer rebuilds it";;
+          container:*) fail "port $p is already used by another container: ${who#container:}. Stop it, or Kluard cannot start";;
+          *) fail "port $p is already used by another program: ${who#process:}. Stop it, or Kluard cannot start";;
+        esac
+      fi
     else ok "port $p free"; fi
   done
 else warn "ss not found, skipped port checks"; fi
