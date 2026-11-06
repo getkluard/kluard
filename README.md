@@ -170,7 +170,7 @@ All of this is in the Community edition: it is what an administrator needs to kn
 One agent can watch several Nextcloud instances from anywhere that can reach their URL. Per instance it collects:
 
 - availability and response time (`status.php`), maintenance mode, pending DB upgrade, version;
-- with a token: active users (5 min / 1 h / 24 h), user / file / storage counts, shares by type, installed apps and available updates, database size, PHP memory limit, OPcache hit rate and usage, free data space;
+- with a token: active users (5 min / 1 h / 24 h), user / file / storage counts, shares by type (including federated shares sent and received), installed apps and available updates, database size, the PHP version and the PHP limits set in php.ini (memory limit, maximum run time, upload limit), OPcache hit rate and usage, free data space;
 - **Nextcloud updates:** whether a newer Nextcloud version exists (and which), next to the app updates above;
 - **background jobs:** how long ago Nextcloud's cron last ran, the cron mode and any cron errors Nextcloud recorded. This is the value Nextcloud's own admin overview checks (it complains after an hour). It needs an **administrator user with an app password** (the Provisioning API), because a serverinfo token cannot read it. Without one the instance page says so;
 - **TLS certificate:** days until an https instance's certificate expires, and whether it is trusted and for this name. It is read even when the instance is down, since an expired certificate is a common reason for that;
@@ -606,6 +606,7 @@ Kluard is open core: a free **Community** edition, **Enterprise** for governance
 |---|---|---|
 | Edition charter | [docs/EDITIONS.md](docs/EDITIONS.md) | [docs/EDITIONS.sv.md](docs/EDITIONS.sv.md) |
 | **Operating several tenants** (set-up, limits, suspension, support access, usage, removal) | [docs/OPERATING.md](docs/OPERATING.md) | [docs/OPERATING.sv.md](docs/OPERATING.sv.md) |
+| **Troubleshooting Nextcloud monitoring** (every message on the instance page, with the commands) | [docs/TROUBLESHOOTING-NEXTCLOUD.md](docs/TROUBLESHOOTING-NEXTCLOUD.md) | [docs/TROUBLESHOOTING-NEXTCLOUD.sv.md](docs/TROUBLESHOOTING-NEXTCLOUD.sv.md) |
 | **Licensing** (how a licence is issued, installed and what happens when it ends) | [docs/LICENSING.md](docs/LICENSING.md) | [docs/LICENSING.sv.md](docs/LICENSING.sv.md) |
 | Design: tenancy (operator layer, quotas, metering, per-tenant retention and branding) | [docs/design/tenancy.md](docs/design/tenancy.md) | [docs/design/tenancy.sv.md](docs/design/tenancy.sv.md) |
 | Design: alerting (rules, notifications, Jira and email, on-call) | [docs/design/alerting.md](docs/design/alerting.md) | [docs/design/alerting.sv.md](docs/design/alerting.sv.md) |
