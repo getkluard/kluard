@@ -1,5 +1,7 @@
 # Felsökning av Nextcloud-övervakning
 
+Se även [Nextcloud-mått, paneler och larm](NEXTCLOUD-METRICS.sv.md) för varje mått och de larm du bör sätta upp.
+
 Hitta meddelandet du ser i Kluard, läs vad det betyder och kör kontrollen. Allt nedan har setts på riktiga installationer.
 
 ## Innan du börjar
@@ -155,6 +157,7 @@ Nextcloud fördröjer eller blockerar en adress efter upprepade nekade inloggnin
 | Det du ser | Åtgärd |
 |---|---|
 | "last report" är gammal, eller värden saknas | Agenten är stoppad eller når inte Kluard. På maskinen: `systemctl status NAMN`, sedan `journalctl -u NAMN -n 30`. Kontrollera att maskinen når `url` i `/etc/kluard-agent/config.json` (port 4318 som standard, eller din https-adress): `curl -s -o /dev/null -w '%{http_code}\n' http://KLUARD:4318/healthz` ska skriva `200`. |
+| `kluard rejected /v1/metrics: 401 Unauthorized` | Servern känner inte igen agentens API-nyckel. Kluard listar sådana agenter på sidan **Hosts** ("An agent is being refused", med nyckelns första 8 tecken och varifrån den kom) och skriver `agent key refused` i sin egen logg. Lägg en giltig nyckel i `/etc/kluard-agent/config.json` och starta om agenten. Nycklar skapas under **Add a machine**; nycklarna i `KLUARD_API_KEYS` (eller gamla `LUMEN_API_KEYS`) i `deploy/.env` fungerar alltid. |
 | "The agent that checks this instance is older than Kluard" | Uppdatera agenten till Kluards version. Nyare funktioner kräver det. |
 | `This machine refused ... log paths` | Av säkerhetsskäl läser en agent bara filer under `/var/log`, `/var/lib/docker`, `/var/www`, `/srv`, `/mnt` och `/opt`. Ändra `allowed_log_dirs` i `/etc/kluard-agent/config.json`, eller flytta filen. |
 | Loggfilen visar ingenting | Kontrollera sökvägen, att agenten kan läsa filen (`ls -l`) och att agenten startades om efter ändringen. |

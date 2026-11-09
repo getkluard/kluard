@@ -607,6 +607,7 @@ Kluard is open core: a free **Community** edition, **Enterprise** for governance
 | Edition charter | [docs/EDITIONS.md](docs/EDITIONS.md) | [docs/EDITIONS.sv.md](docs/EDITIONS.sv.md) |
 | **Operating several tenants** (set-up, limits, suspension, support access, usage, removal) | [docs/OPERATING.md](docs/OPERATING.md) | [docs/OPERATING.sv.md](docs/OPERATING.sv.md) |
 | **Troubleshooting Nextcloud monitoring** (every message on the instance page, with the commands) | [docs/TROUBLESHOOTING-NEXTCLOUD.md](docs/TROUBLESHOOTING-NEXTCLOUD.md) | [docs/TROUBLESHOOTING-NEXTCLOUD.sv.md](docs/TROUBLESHOOTING-NEXTCLOUD.sv.md) |
+| **Nextcloud metrics, panels and alerts** (every metric, panels that turn yellow and red, the first alerts to set) | [docs/NEXTCLOUD-METRICS.md](docs/NEXTCLOUD-METRICS.md) | [docs/NEXTCLOUD-METRICS.sv.md](docs/NEXTCLOUD-METRICS.sv.md) |
 | **Licensing** (how a licence is issued, installed and what happens when it ends) | [docs/LICENSING.md](docs/LICENSING.md) | [docs/LICENSING.sv.md](docs/LICENSING.sv.md) |
 | Design: tenancy (operator layer, quotas, metering, per-tenant retention and branding) | [docs/design/tenancy.md](docs/design/tenancy.md) | [docs/design/tenancy.sv.md](docs/design/tenancy.sv.md) |
 | Design: alerting (rules, notifications, Jira and email, on-call) | [docs/design/alerting.md](docs/design/alerting.md) | [docs/design/alerting.sv.md](docs/design/alerting.sv.md) |

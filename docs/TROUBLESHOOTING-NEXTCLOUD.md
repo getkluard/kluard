@@ -1,5 +1,7 @@
 # Troubleshooting Nextcloud monitoring
 
+See also [Nextcloud metrics, panels and alerts](NEXTCLOUD-METRICS.md) for every metric and the alerts to set up.
+
 Find the message you see in Kluard, read what it means, and run the check. Everything below has been seen on real installations.
 
 ## Before you start
@@ -155,6 +157,7 @@ Nextcloud delays or blocks an address after repeated refused logins. The agent's
 | What you see | Fix |
 |---|---|
 | "last report" is old, or the host is missing | The agent is stopped or cannot reach Kluard. On the machine: `systemctl status NAME`, then `journalctl -u NAME -n 30`. Check that the machine reaches the `url` in `/etc/kluard-agent/config.json` (port 4318 by default, or your HTTPS address): `curl -s -o /dev/null -w '%{http_code}\n' http://KLUARD:4318/healthz` must print `200`. |
+| `kluard rejected /v1/metrics: 401 Unauthorized` | The server does not know the agent's API key. Kluard now lists such agents on the **Hosts** page ("An agent is being refused", with the first 8 characters of the key and where it came from) and writes `agent key refused` to its own log. Put a valid key in `/etc/kluard-agent/config.json` and restart the agent. Keys are created under **Add a machine**; the keys in `KLUARD_API_KEYS` (or the old `LUMEN_API_KEYS`) in `deploy/.env` always work. |
 | "The agent that checks this instance is older than Kluard" | Update the agent to the version of Kluard. Newer features need it. |
 | `This machine refused ... log paths` | For safety an agent only reads files under `/var/log`, `/var/lib/docker`, `/var/www`, `/srv`, `/mnt` and `/opt`. Change `allowed_log_dirs` in `/etc/kluard-agent/config.json`, or move the file. |
 | The log file shows nothing | Check the path, that the agent can read it (`ls -l`), and that the agent was restarted after the change. |
