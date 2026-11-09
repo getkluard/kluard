@@ -65,7 +65,7 @@ pre.code{background:var(--bg);border:1px solid var(--line);border-radius:8px;pad
 .login input{width:100%;margin-bottom:10px}
 .pwwrap{position:relative;display:inline-flex;align-items:center;max-width:100%}.pwwrap input{padding-right:34px}.pwwrap button{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:none;border:0;padding:4px;cursor:pointer;color:var(--mut,#888);line-height:0;border-radius:6px}.pwwrap button:hover,.pwwrap button:focus-visible{color:var(--fg)}.login .pwwrap{display:flex;width:100%;margin-bottom:10px}.login .pwwrap input{margin-bottom:0}
 .dot.bad{background:var(--err)}
-.stat .v.ok{color:var(--ok)}.stat .v.err{color:var(--err)}.stat .v.mut{color:var(--mut)}.stat .names{white-space:pre-line;font-size:12px;margin-top:4px;color:var(--mut);max-width:280px;line-height:1.35}.stat.click{cursor:pointer}
+.stat .v.ok{color:var(--ok)}.stat .v.warn{color:var(--warn)}.stat .v.err{color:var(--err)}.stat .v.mut{color:var(--mut)}.stat .names{white-space:pre-line;font-size:12px;margin-top:4px;color:var(--mut);max-width:280px;line-height:1.35}.stat.click{cursor:pointer}
 #arcbar{background:#fff7ed;color:#9a3412;padding:8px 24px;border-bottom:1px solid #fed7aa;font-size:13px;display:flex;gap:10px;align-items:center}[data-theme=dark] #arcbar{background:#3a2412;color:#fdba74;border-color:#5b3416}
 .matrix{display:grid;grid-template-columns:1fr repeat(3,64px);gap:0 8px;align-items:center}.matrix .h{color:var(--mut);font-size:12px;text-align:center;padding-bottom:4px}.matrix .a{padding:7px 0;border-bottom:1px solid var(--line)}.matrix .a small{display:block;color:var(--mut)}.matrix .c{text-align:center;border-bottom:1px solid var(--line);padding:7px 0}
 .chip{display:inline-block;padding:1px 9px;border-radius:99px;font-size:12px;border:1px solid var(--line);margin:2px 4px 2px 0;cursor:pointer;background:var(--panel)}.chip:hover{border-color:var(--acc);background:var(--acc2)}.chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
@@ -254,6 +254,17 @@ function spark(points,w=110,h=34){if(points.length<2)return null;const xs=points
 const PANEL_TYPES={line:'Line chart',area:'Area chart',bar:'Bar chart (stacked)',stat:'Single value',table:'Table of series',logs:'Log lines',traces:'Trace list'};
 const UNITS={none:'Number',bytes:'Bytes',bytesps:'Bytes per second',percent:'Percent (0-100)',percent01:'Percent (0-1)',seconds:'Seconds',uptime:'Duration (d h m)',ms:'Milliseconds',rate:'Per second'};
 const HEIGHTS={1:150,2:240,3:340};
+// Colour thresholds of a stat panel: p.warn and p.crit are numbers, p.dir says whether the value is bad when it is at or above them ('above', the default) or at or below them ('below').
+const thClass=(p,v)=>{const w=p.warn,c=p.crit;if(v==null||(w==null&&c==null))return '';const lo=p.dir==='below',hit=x=>x!=null&&(lo?v<=x:v>=x);return hit(c)?'err':hit(w)?'warn':'ok'};
+const T=(p,warn,crit,dir)=>{if(warn!=null)p.warn=warn;if(crit!=null)p.crit=crit;p.dir=dir||'above';return p};
+const TIMEU=['seconds','uptime','limitsecs'],SIZEU=['bytes','limitbytes'];
+const parseTh=(s,unit)=>{s=String(s==null?'':s).trim().toLowerCase();if(!s)return null;const m=s.match(/^(-?[\d.]+)\s*([a-z]*)$/);if(!m)return NaN;const n=parseFloat(m[1]),u=m[2];if(!u)return n;
+  if(TIMEU.includes(unit)){const f={s:1,m:60,h:3600,d:86400,w:604800}[u];return f?n*f:NaN}
+  if(SIZEU.includes(unit)){const f={kb:1e3,mb:1e6,gb:1e9,tb:1e12,kib:1024,mib:1048576,gib:1073741824,tib:1099511627776}[u];return f?n*f:NaN}return NaN};
+const thText=(v,unit)=>{if(v==null)return '';if(TIMEU.includes(unit)&&v>0)for(const [u,f] of [['d',86400],['h',3600],['m',60]])if(v%f===0)return v/f+u;
+  if(SIZEU.includes(unit)&&v>0)for(const [u,f] of [['GB',1e9],['MB',1e6]])if(v%f===0)return v/f+u;return String(v)};
+// What the Nextcloud metrics mean: [description, unit]. The Metrics page shows it and picks the unit.
+const METRIC_INFO={"nextcloud_up": ["1 when status.php answers, 0 when it does not. The availability signal.", "none"], "nextcloud_status_response_seconds": ["How long status.php took to answer.", "seconds"], "nextcloud_maintenance_mode": ["1 while the instance is in maintenance mode.", "none"], "nextcloud_needs_db_upgrade": ["1 when Nextcloud waits for a database upgrade (occ upgrade).", "none"], "nextcloud_installed": ["1 when Nextcloud reports that it is installed.", "none"], "nextcloud_info": ["Always 1. Carries the versions as labels, which is what the Instances page shows.", "none"], "nextcloud_users": ["Number of accounts.", "none"], "nextcloud_files": ["Number of files.", "none"], "nextcloud_active_users": ["Users active in the last 5 minutes, hour and 24 hours.", "none"], "nextcloud_storages": ["Number of storages by kind.", "none"], "nextcloud_shares": ["Number of shares by kind, including federated shares sent and received.", "none"], "nextcloud_apps_installed": ["Number of installed apps.", "none"], "nextcloud_apps_updates_available": ["Number of apps that have an update waiting.", "none"], "nextcloud_update_available": ["1 when a newer Nextcloud version exists.", "none"], "nextcloud_update_checked_timestamp_seconds": ["When Nextcloud last checked for updates (Unix time).", "none"], "nextcloud_data_free_bytes": ["Free space where the data directory lives.", "bytes"], "nextcloud_database_size_bytes": ["Size of the database.", "bytes"], "nextcloud_php_memory_limit_bytes": ["PHP memory_limit. -1 means unlimited and is shown as ∞.", "limitbytes"], "nextcloud_php_max_execution_time_seconds": ["PHP max_execution_time. 0 means unlimited and is shown as ∞.", "limitsecs"], "nextcloud_php_upload_max_filesize_bytes": ["PHP upload_max_filesize, the largest file one upload may carry.", "bytes"], "nextcloud_php_opcache_hit_rate": ["Share of PHP requests served from the OPcache, in percent.", "percent"], "nextcloud_php_opcache_used_bytes": ["Memory the OPcache uses.", "bytes"], "nextcloud_php_opcache_wasted_percent": ["Share of the OPcache that is wasted; a high value means it should be reset or made larger.", "percent"], "nextcloud_cron_age_seconds": ["Seconds since the last background job run. Very large if cron has never run. The one to alert on.", "seconds"], "nextcloud_cron_last_run_timestamp_seconds": ["When the background jobs last ran (Unix time).", "none"], "nextcloud_cron_errors": ["Number of cron errors Nextcloud reports.", "none"], "nextcloud_cron_mode": ["Always 1. The mode is in the label.", "none"], "nextcloud_webdav_ok": ["1 when logging in over WebDAV works, 0 when it does not.", "none"], "nextcloud_webdav_response_seconds": ["How long the WebDAV login took (only while it works).", "seconds"], "nextcloud_storage_used_bytes": ["What all accounts' files take together, as Nextcloud counts them against quota. What billing uses.", "bytes"], "nextcloud_accounts": ["Number of enabled and disabled accounts.", "none"], "nextcloud_tls_cert_expiry_seconds": ["Seconds until the TLS certificate expires. Negative once it has expired.", "uptime"], "nextcloud_tls_cert_not_after_timestamp_seconds": ["When the certificate expires (Unix time).", "none"], "nextcloud_tls_cert_valid": ["1 when the certificate is trusted and made for this name.", "none"]};
 // Status panels (up/down counts) do not depend on the time range: they show the situation right now.
 const STATUS_KINDS={alerts_firing:['Alerts firing','#/alerts'],nc_down:['Nextcloud instances DOWN','#/instances'],nc_up:['Nextcloud instances up','#/instances'],host_down:['Hosts DOWN','#/hosts'],host_up:['Hosts up','#/hosts'],svc_down:['Services DOWN','#/hosts'],svc_up:['Services up','#/hosts'],container_down:['Containers DOWN','#/hosts'],container_up:['Containers up','#/hosts']};
 function statusValue(s,k){
@@ -300,7 +311,7 @@ async function loadPanel(p,body,w){
     if(p.type==='stat'){
       const items=series.map(s=>({l:seriesLabel(s,''),v:lastV(s),s}));
       if(!items.length||items.every(i=>i.v==null)){body.replaceChildren(el('div',{class:'empty'},'No data'));return}
-      body.replaceChildren(el('div',{class:'stat'},items.slice(0,6).map(i=>el('div',{},el('div',{class:'v'},fmtVal(i.v,p.unit)),el('div',{class:'l'},i.l||p.title),items.length===1?spark(i.s.points):null))));return}
+      body.replaceChildren(el('div',{class:'stat'},items.slice(0,6).map(i=>el('div',{},el('div',{class:'v'+(thClass(p,i.v)?' '+thClass(p,i.v):'')},fmtVal(i.v,p.unit)),el('div',{class:'l'},i.l||p.title),items.length===1?spark(i.s.points):null))));return}
     if(p.type==='table'){
       body.replaceChildren(series.length?el('table',{},el('tr',{},['Series','Last','Average','Max'].map(x=>el('th',{},x))),series.map(s=>{const v=s.points.map(x=>x[1]);
         return el('tr',{},el('td',{},seriesLabel(s,p.title)),el('td',{},fmtVal(lastV(s),p.unit)),el('td',{},fmtVal(v.reduce((a,b)=>a+b,0)/(v.length||1),p.unit)),el('td',{},fmtVal(Math.max(...v),p.unit)))})):el('div',{class:'empty'},'No data'));return}
@@ -329,15 +340,33 @@ const TEMPLATES=[
   newPanel('Instances DOWN','stat',3,1,{src:'status',status:'nc_down'}),
   newPanel('Users','stat',3,1,M('nextcloud_users','last',{groupBy:'instance'})),
   newPanel('Files','stat',3,1,M('nextcloud_files','last',{groupBy:'instance'})),
-  newPanel('App updates available','stat',3,1,M('nextcloud_apps_updates_available','last',{groupBy:'instance'})),
+  T(newPanel('App updates available','stat',3,1,M('nextcloud_apps_updates_available','last',{groupBy:'instance'})),1),
   newPanel('Response time','line',6,2,M('nextcloud_status_response_seconds','avg',{groupBy:'instance'}),'seconds'),
   newPanel('Active users','line',6,2,M('nextcloud_active_users','sum',{groupBy:'period'})),
   newPanel('Database size','line',4,2,M('nextcloud_database_size_bytes','avg',{groupBy:'instance'}),'bytes'),
   newPanel('PHP OPcache hit rate','line',4,2,M('nextcloud_php_opcache_hit_rate','avg',{groupBy:'instance'}),'percent'),
   newPanel('Shares','line',4,2,M('nextcloud_shares','avg',{groupBy:'type',filters:[]})),
-  newPanel('Maintenance mode','stat',3,1,M('nextcloud_maintenance_mode','last',{groupBy:'instance'})),
+  T(newPanel('Maintenance mode','stat',3,1,M('nextcloud_maintenance_mode','last',{groupBy:'instance'})),1),
   newPanel('Availability over time (1 = up)','line',6,2,M('nextcloud_up','min',{groupBy:'instance'})),
   newPanel('Recent errors','logs',9,2,{src:'logs',severity:'ERROR'})]},
+ {name:'Nextcloud health',desc:'Warns when background jobs stop, the login check fails, the certificate runs out, updates wait or the disk fills. Tiles turn yellow and red. Needs an admin login (app password) on the instance.',panels:()=>{const S=(title,metric,unit,agg)=>newPanel(title,'stat',3,1,M(metric,agg||'last',{groupBy:'instance'}),unit);return[
+  newPanel('Instances up','stat',3,1,{src:'status',status:'nc_up'}),
+  newPanel('Instances DOWN','stat',3,1,{src:'status',status:'nc_down'}),
+  newPanel('Alerts firing','stat',3,1,{src:'status',status:'alerts_firing'}),
+  T(S('Maintenance mode','nextcloud_maintenance_mode','none'),1),
+  T(S('Last background job','nextcloud_cron_age_seconds','uptime'),900,3600),
+  T(S('Background job errors','nextcloud_cron_errors','none'),1,10),
+  T(S('Login check (1 = ok)','nextcloud_webdav_ok','none'),null,0,'below'),
+  T(S('Certificate valid for','nextcloud_tls_cert_expiry_seconds','uptime'),1814400,604800,'below'),
+  T(S('Nextcloud update (1 = waiting)','nextcloud_update_available','none'),1),
+  T(S('App updates waiting','nextcloud_apps_updates_available','none'),1,10),
+  T(S('Free data space','nextcloud_data_free_bytes','bytes'),20e9,5e9,'below'),
+  T(S('Response time','nextcloud_status_response_seconds','seconds'),2,5),
+  newPanel('Time since the last background job','line',6,2,M('nextcloud_cron_age_seconds','max',{groupBy:'instance'}),'seconds'),
+  newPanel('Login check response time','line',6,2,M('nextcloud_webdav_response_seconds','avg',{groupBy:'instance'}),'seconds'),
+  newPanel('Availability over time (1 = up)','line',6,2,M('nextcloud_up','min',{groupBy:'instance'})),
+  newPanel('Certificate valid for','line',6,2,M('nextcloud_tls_cert_expiry_seconds','min',{groupBy:'instance'}),'uptime'),
+  newPanel('Recent errors','logs',12,2,{src:'logs',severity:'ERROR'})]}},
  {name:'Services (traces)',desc:'Request rate, error rate and latency per service from your traces.',panels:()=>[
   newPanel('Requests','bar',6,2,{src:'traces',metric:'requests',groupBy:'service'}),
   newPanel('Error rate','line',6,2,{src:'traces',metric:'error_rate',groupBy:'service'},'percent'),
@@ -439,7 +468,12 @@ async function panelEditor(existing,onSave){
       if(p.q.src==='metric'){const fl=p.q.filters=p.q.filters||[];
         row('Only where',...fl.map((f,i)=>el('span',{style:'display:inline-flex;gap:4px'},el('input',{value:f.k,placeholder:'label',size:10,onchange:e=>{f.k=e.target.value;refreshPreview()}}),'=',el('input',{value:f.v,placeholder:'value',size:10,onchange:e=>{f.v=e.target.value;refreshPreview()}}),el('button',{class:'btn ghost sm',onclick:()=>{fl.splice(i,1);drawForm();refreshPreview()}},'✕'))),
           fl.length<5?el('button',{class:'btn ghost sm',onclick:()=>{fl.push({k:'',v:''});drawForm()}},'+ label filter'):null)}
-      row('Unit',sel(Object.entries(UNITS),p.unit,v=>{p.unit=v;refreshPreview()}));
+      row('Unit',sel(Object.entries(UNITS),p.unit,v=>{p.unit=v;drawForm();refreshPreview()}));
+      if(p.type==='stat'&&p.q.src==='metric'){
+        const tin=k=>el('input',{value:thText(p[k],p.unit),size:8,placeholder:'none',onchange:e=>{const v=parseTh(e.target.value,p.unit);if(Number.isNaN(v)){e.target.value=thText(p[k],p.unit);return}if(v==null)delete p[k];else p[k]=v;refreshPreview()}});
+        row('Colour',sel([['above','Warn when the value is at or above'],['below','Warn when the value is at or below']],p.dir||'above',v=>{p.dir=v;refreshPreview()}),'yellow at',tin('warn'),'red at',tin('crit'));
+        row('',el('span',{class:'help'},'Leave both empty for no colour. Times take 15m, 2h or 14d, sizes take 500MB or 10GB.'));
+      }
     }
     row('Width',sel([[3,'¼'],[4,'⅓'],[6,'½'],[8,'⅔'],[9,'¾'],[12,'Full']],p.w,v=>{p.w=+v}),sel([[1,'Short'],[2,'Medium'],[3,'Tall']],p.h,v=>{p.h=+v;refreshPreview()}));
   }
@@ -742,9 +776,10 @@ async function metricsPage(){
   const q={src:'metric',name:'',agg:'avg'},p=newPanel('Metric','line',12,3,q,'none');
   const chart=el('div',{class:'card',style:'min-height:300px'},el('div',{class:'empty'},'Pick a metric to chart it.'));
   const draw=()=>{if(q.name)loadPanel(p,chart,win())};
-  const pick=async name=>{q.name=name;q.filters=[];q.groupBy='';grp.value='';const m=names.find(n=>n.name===q.name);q.agg=m&&m.mtype==='sum'?'rate':'avg';aggSel.value=q.agg;if(q.agg==='rate')p.unit='rate';draw();drawLabels()};
-  const nameSel=el('select',{style:'min-width:300px',onchange:e=>pick(e.target.value)}),nameFilter=el('input',{placeholder:'filter '+names.length+' metrics…',size:22,oninput:()=>fillNames()});
-  const fillNames=()=>{const f=nameFilter.value.toLowerCase(),cur=q.name;nameSel.replaceChildren(opt('',names.length?'Choose a metric… ('+names.length+')':'No metrics received yet'),names.filter(n=>!f||n.name.toLowerCase().includes(f)||n.name===cur).map(n=>opt(n.name,n.name+'  ·  '+n.mtype)));nameSel.value=cur||''};
+  const about=el('div',{class:'help',style:'margin:8px 2px'});
+  const pick=async name=>{q.name=name;q.filters=[];q.groupBy='';grp.value='';const m=names.find(n=>n.name===q.name),mi=METRIC_INFO[name];q.agg=m&&m.mtype==='sum'?'rate':'avg';aggSel.value=q.agg;p.unit=q.agg==='rate'?'rate':(mi?mi[1]:'none');unit.value=p.unit;about.textContent=mi?mi[0]:'';draw();drawLabels()};
+  const nameSel=el('select',{style:'min-width:300px;max-width:440px',onchange:e=>pick(e.target.value)}),nameFilter=el('input',{placeholder:'filter '+names.length+' metrics…',size:22,oninput:()=>fillNames()});
+  const fillNames=()=>{const f=nameFilter.value.toLowerCase(),cur=q.name;nameSel.replaceChildren(opt('',names.length?'Choose a metric… ('+names.length+')':'No metrics received yet'),names.filter(n=>!f||n.name.toLowerCase().includes(f)||n.name===cur).map(n=>opt(n.name,n.name+'  ·  '+n.mtype+(METRIC_INFO[n.name]?'  ·  '+METRIC_INFO[n.name][0]:''))));nameSel.value=cur||''};
   const aggSel=el('select',{onchange:e=>{q.agg=e.target.value;draw()}},[['avg','Average'],['sum','Sum'],['min','Min'],['max','Max'],['last','Latest'],['rate','Rate/s']].map(([v,t])=>el('option',{value:v},t)));
   await loadGroups();const gsel=groupSelect(e=>{q.group=e.target.value;draw()});
   const grp=el('input',{placeholder:'split by label (e.g. host)',size:20,onchange:e=>{q.groupBy=e.target.value.trim();draw();drawLabels()}});
@@ -765,7 +800,7 @@ async function metricsPage(){
   const msg=el('span',{class:'mut'});
   dsel.onchange=async()=>{if(!dsel.value||!q.name)return;try{const d=await api('/api/v1/dashboards/'+dsel.value);const panels=(d.body&&d.body.panels)||[];panels.push(Object.assign(JSON.parse(JSON.stringify(p)),{id:uid(),title:q.name,w:6,h:2}));
     await api('/api/v1/dashboards/'+dsel.value,{},{method:'PUT',body:{name:d.name,description:d.description,body:{panels},version:d.version}});msg.textContent='Added to “'+d.name+'”.'}catch(e){msg.textContent=e.message}dsel.value=''};
-  view.replaceChildren(el('div',{class:'bar'},nameFilter,nameSel,aggSel,gsel,grp,unit,el('span',{class:'sp'}),can('dashboards',true)?dsel:null,msg),chart,labelBox);fillNames();drawLabels();
+  view.replaceChildren(el('div',{class:'bar'},nameFilter,nameSel,aggSel,gsel,grp,unit,el('span',{class:'sp'}),can('dashboards',true)?dsel:null,msg),about,chart,labelBox);fillNames();drawLabels();
   S.onRangeChange=()=>{draw();drawLabels()};
 }
 
@@ -867,6 +902,11 @@ async function hostsPage(){
     try{const r=await api('/api/v1/hosts-update-all',{},{method:'POST',body:{}});
       if((r.manual||[]).length)alert('Asked '+r.requested.length+' agent'+(r.requested.length===1?'':'s')+' to update.\n\nThese cannot update themselves and need the install command (click their update label): '+r.manual.join(', '));
       hostsPage()}catch(e){alert(e.message)}};
+  // agent keys the server refused in the last day: an agent that cannot report says so only in its own log, so say it here too
+  let rej=[];if(!S.me.via_key&&can('keys')){try{rej=(await api('/api/v1/rejected-keys')).rejected||[]}catch(_){}}
+  const rejCard=()=>rej.length?el('div',{class:'card',style:'border-color:var(--warn,#c98a00);margin:0 0 12px'},el('b',{},'An agent is being refused'),
+    el('p',{class:'help',style:'margin:4px 0 6px'},'The server does not know the key these agents use, so nothing they send is kept. Put a valid key in the agent\'s config.json (/etc/kluard-agent/config.json) and restart it. Create a key under ',el('a',{href:'#/machines'},'Add a machine'),'.'),
+    el('table',{},el('tr',{},['Key starts with','From','Refused','Last'].map(x=>el('th',{},x))),rej.map(r=>el('tr',{},el('td',{},el('code',{},r.prefix+'…')),el('td',{},r.from),el('td',{},String(r.count)),el('td',{class:'mut'},new Date(r.last).toLocaleString()))))):null;
   // host groups: names on hosts. Filter by one, show them as sections, select several and add them to a group
   const gmap={};hs.forEach(h=>(h.config.groups||[]).forEach(g=>{const k=g.toLowerCase();(gmap[k]=gmap[k]||{name:g,hosts:[]}).hosts.push(h.name)}));
   const glist=Object.values(gmap).sort((a,b)=>a.name.toLowerCase()<b.name.toLowerCase()?-1:1);S.groups=glist;
@@ -892,7 +932,7 @@ async function hostsPage(){
     return sections.filter(x=>x[1].length).flatMap(([name,hl])=>[el('tr',{class:'grouphead'},el('td',{colSpan:10,style:'background:var(--acc2);font-weight:600;padding:6px 12px'},name,el('span',{class:'mut',style:'font-weight:400'},'  '+hl.length+' host'+(hl.length===1?'':'s')))),...hl.map(rowFn)])};
   const render=()=>{const shown=S.hostGroup?hs.filter(h=>has(h,S.hostGroup)):hs;
   view.replaceChildren(
-    groupBar(),
+    rejCard(),groupBar(),
     el('div',{class:'bar'},el('span',{class:'mut'},'A machine appears here as soon as its agent reports. Open one to see its services and containers, or to choose which log files its agent ships.'),el('span',{class:'sp'}),w&&oneClick.length?el('button',{class:'btn ghost',title:'Update every agent that has another version than this server',onclick:updateAll},'Update '+oneClick.length+' agent'+(oneClick.length===1?'':'s')):null,(can('keys')||can('hosts',true))?el('a',{class:'btn',href:'#/machines'},'+ Add a machine'):null),
     shown.length?el('div',{class:'card',style:'padding:0'},el('table',{},el('tr',{},['','Host','IP address','Agent','System','Last seen','Services','Containers','Log paths',''].map(x=>el('th',{},x))),rowsOf(shown,h=>
       el('tr',{class:'row',onclick:()=>{location.hash='#/h/'+encodeURIComponent(h.name)}},el('td',{onclick:ev=>ev.stopPropagation(),style:'white-space:nowrap'},w?el('input',{type:'checkbox',title:'Select this host',checked:sel.has(h.name),onchange:ev=>{ev.target.checked?sel.add(h.name):sel.delete(h.name);render()}}):null,w?' ':null,dot(h.status)),
@@ -1141,11 +1181,11 @@ async function instancePage(raw){
     m('Federated shares sent','stat',2,1,'nextcloud_shares','last',{f:[{k:'type',v:'federated_sent'}]},'none'),m('Federated shares received','stat',2,1,'nextcloud_shares','last',{f:[{k:'type',v:'federated_received'}]},'none'),
     m('PHP memory limit','stat',2,1,'nextcloud_php_memory_limit_bytes','last',null,'limitbytes'),m('PHP max run time','stat',2,1,'nextcloud_php_max_execution_time_seconds','last',null,'limitsecs'),
     m('PHP upload limit','stat',2,1,'nextcloud_php_upload_max_filesize_bytes','last',null,'bytes'),
-    m('Database size','stat',2,1,'nextcloud_database_size_bytes','last',null,'bytes'),m('Free data space','stat',2,1,'nextcloud_data_free_bytes','last',null,'bytes'),
-    m('Apps installed','stat',2,1,'nextcloud_apps_installed','last',null,'none'),m('App updates','stat',2,1,'nextcloud_apps_updates_available','last',null,'none'),
-    m('OPcache hit rate','stat',2,1,'nextcloud_php_opcache_hit_rate','last',null,'percent'),m('Maintenance mode','stat',2,1,'nextcloud_maintenance_mode','last',null,'none'),
-    m('Last background job','stat',2,1,'nextcloud_cron_age_seconds','last',null,'uptime'),m('Certificate valid for','stat',2,1,'nextcloud_tls_cert_expiry_seconds','last',null,'uptime'),
-    m('Login check (1 = ok)','stat',2,1,'nextcloud_webdav_ok','last',null,'none'),m('Update available (1 = yes)','stat',2,1,'nextcloud_update_available','last',null,'none')];
+    m('Database size','stat',2,1,'nextcloud_database_size_bytes','last',null,'bytes'),T(m('Free data space','stat',2,1,'nextcloud_data_free_bytes','last',null,'bytes'),20e9,5e9,'below'),
+    m('Apps installed','stat',2,1,'nextcloud_apps_installed','last',null,'none'),T(m('App updates','stat',2,1,'nextcloud_apps_updates_available','last',null,'none'),1,10),
+    m('OPcache hit rate','stat',2,1,'nextcloud_php_opcache_hit_rate','last',null,'percent'),T(m('Maintenance mode','stat',2,1,'nextcloud_maintenance_mode','last',null,'none'),1),
+    T(m('Last background job','stat',2,1,'nextcloud_cron_age_seconds','last',null,'uptime'),900,3600),T(m('Certificate valid for','stat',2,1,'nextcloud_tls_cert_expiry_seconds','last',null,'uptime'),1814400,604800,'below'),
+    T(m('Login check (1 = ok)','stat',2,1,'nextcloud_webdav_ok','last',null,'none'),null,0,'below'),T(m('Update available (1 = yes)','stat',2,1,'nextcloud_update_available','last',null,'none'),1)];
   const charts=[
     m('Availability (1 = up)','line',6,2,'nextcloud_up','min',null,'none'),m('Response time','line',6,2,'nextcloud_status_response_seconds','avg',null,'seconds'),
     m('Active users','line',6,2,'nextcloud_active_users','avg',{g:'period'},'none'),m('Shares by type','line',6,2,'nextcloud_shares','avg',{g:'type'},'none'),
@@ -1253,14 +1293,17 @@ async function billingPage(tab){
 async function billingReport(body,info){
   const today=info.today,def=defaultBillRange(today);
   const fromI=el('input',{type:'date',value:S.billFrom||def[0],max:'9999-12-31'}),toI=el('input',{type:'date',value:S.billTo||def[1],max:'9999-12-31'});
-  const sv=el('input',{type:'checkbox',checked:store.get('kluard.billsv','0')==='1',onchange:()=>{store.set('kluard.billsv',sv.checked?'1':'0');links()}});
+  // CSV format: automatic follows the browser (a decimal comma means semicolons between columns, which is what Excel expects there).
+  const autoEU=(()=>{try{return (1.5).toLocaleString(navigator.language).includes(',')}catch{return false}})();
+  const fmtSel=el('select',{onchange:()=>{store.set('kluard.billcsv',fmtSel.value);links()}},[['auto','Automatic ('+(autoEU?'semicolon, decimal comma':'comma, decimal point')+')'],['eu','Semicolon, decimal comma (Excel in Europe)'],['intl','Comma, decimal point (international)']].map(([v,t])=>el('option',{value:v,selected:store.get('kluard.billcsv','auto')===v?'':null},t)));
+  const sv={get checked(){const v=fmtSel.value;return v==='eu'||(v==='auto'&&autoEU)}};
   const out=el('div'),dl=el('span'),printAll=el('button',{class:'btn ghost sm'},'Print all');
   const set=(f,t)=>{fromI.value=f;toI.value=t;draw()};
   const quick=el('span',{style:'display:inline-flex;gap:6px;flex-wrap:wrap'},
     el('button',{class:'btn ghost sm',onclick:()=>{const r=monthRange(today,0);set(r[0],r[1])}},'This month'),
     el('button',{class:'btn ghost sm',onclick:()=>{const r=monthRange(today,1);set(r[0],r[1])}},'Last month'),
     el('button',{class:'btn ghost sm',onclick:()=>set(addDays(today,-29),today)},'Last 30 days'));
-  const links=()=>{const q=v=>'/api/v1/billing/report?'+new URLSearchParams({from:fromI.value,to:toI.value,format:'csv',view:v,locale:sv.checked?'sv':''}).toString();
+  const links=()=>{const q=v=>'/api/v1/billing/report?'+new URLSearchParams({from:fromI.value,to:toI.value,format:'csv',view:v,locale:sv.checked?'eu':''}).toString();
     dl.replaceChildren(el('a',{class:'btn ghost sm',href:q('invoices')},'Per customer (CSV)'),' ',el('a',{class:'btn ghost sm',href:q('lines')},'Per instance (CSV)'))};
   const draw=async()=>{S.billFrom=fromI.value;S.billTo=toI.value;links();
     if(!fromI.value||!toI.value){out.replaceChildren(el('div',{class:'warnbox'},'Pick the first and the last day.'));return}
@@ -1268,7 +1311,7 @@ async function billingReport(body,info){
     printAll.onclick=()=>printBasis(rep,rep.invoices);out.replaceChildren(billingReportView(rep,info))};
   fromI.onchange=toI.onchange=draw;
   body.replaceChildren(el('p',{class:'help',style:'margin-top:0'},'What each customer owes for a period you choose, from one day to another (both included): users and stored data (or network traffic) of every Nextcloud instance, priced as set under ',el('a',{href:'#/billing/prices'},'Prices & customers'),'. The prices are for the whole period, so pick the days you invoice, for example the 1st to the last day of the month. Users are counted on the last day of the period. This is the basis for an invoice, not an invoice: copy it into your invoicing program, or export it.'),
-    el('div',{class:'bar',style:'flex-wrap:wrap'},el('label',{},'From '),fromI,el('label',{},' to '),toI,quick,el('span',{class:'sp'}),el('label',{class:'mut',title:'Semicolons between columns and a decimal comma, which is what a Swedish Excel expects'},sv,' Swedish spreadsheet format'),dl,printAll),out);
+    el('div',{class:'bar',style:'flex-wrap:wrap'},el('label',{},'From '),fromI,el('label',{},' to '),toI,quick,el('span',{class:'sp'}),el('label',{class:'mut',title:'How the CSV files are written. Excel in many European countries expects semicolons between columns and a decimal comma.'},'CSV format '),fmtSel,dl,printAll),out);
   await draw();
 }
 function billingReportView(rep,info){
