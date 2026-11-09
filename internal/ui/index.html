@@ -775,18 +775,20 @@ async function logsPage(){
 
 async function metricsPage(){
   setTitle('Metrics');const view=$('#view');
-  const wide=(S.archive||S.range==='custom')?win():{from:new Date(Date.now()-7*864e5).toISOString(),to:new Date().toISOString()};
-  const got=await rows('/api/v1/metrics/names',{from:wide.from,to:wide.to}).catch(()=>[]);
-  // Every metric Kluard knows is listed, also those that have not arrived yet, so you can see what exists and what it means.
-  const names=got.concat(Object.keys(METRIC_INFO).filter(k=>!got.some(n=>n.name===k)).map(k=>({name:k,mtype:/_total$|^container_network_bytes$/.test(k)?'sum':'gauge',pending:true}))).sort((a,b)=>a.name<b.name?-1:a.name>b.name?1:0);
+  // The list follows the time range chosen at the top, so "no data" means none in the range the chart shows.
+  let got=[],names=[];
+  const loadNames=async()=>{got=await rows('/api/v1/metrics/names',{from:win().from,to:win().to}).catch(()=>[]);
+    // Every metric Kluard knows is listed, also those without data in this range, so you can see what exists and what it means.
+    names=got.concat(Object.keys(METRIC_INFO).filter(k=>!got.some(n=>n.name===k)).map(k=>({name:k,mtype:/_total$|^container_network_bytes$/.test(k)?'sum':'gauge',pending:true}))).sort((a,b)=>a.name<b.name?-1:a.name>b.name?1:0)};
+  await loadNames();
   const q={src:'metric',name:'',agg:'avg'},p=newPanel('Metric','line',12,3,q,'none');
   const chart=el('div',{class:'card',style:'min-height:300px'},el('div',{class:'empty'},'Pick a metric to chart it.'));
   const draw=()=>{if(q.name)loadPanel(p,chart,win())};
   const about=el('div',{class:'help',style:'margin:8px 2px'});
-  const pick=async name=>{q.name=name;q.filters=[];q.groupBy='';grp.value='';const m=names.find(n=>n.name===q.name),mi=METRIC_INFO[name];q.agg=m&&m.mtype==='sum'?'rate':'avg';aggSel.value=q.agg;p.unit=q.agg==='rate'?'rate':(mi?mi[1]:'none');unit.value=p.unit;about.textContent=mi?mi[0]+(m&&m.pending?' No data has arrived for this metric in the selected time range. Check that the machine has an agent and, for Nextcloud metrics, the token or login the metrics guide lists under Needs.':''):'';draw();drawLabels()};
+  const pick=async name=>{q.name=name;q.filters=[];q.groupBy='';grp.value='';const m=names.find(n=>n.name===q.name),mi=METRIC_INFO[name];q.agg=m&&m.mtype==='sum'?'rate':'avg';aggSel.value=q.agg;p.unit=q.agg==='rate'?'rate':(mi?mi[1]:'none');unit.value=p.unit;about.textContent=mi?mi[0]+(m&&m.pending?' No data in the selected time range. Try a longer range, and check that the machine has an agent and, for Nextcloud metrics, the token or login the metrics guide lists under Needs.':''):'';draw();drawLabels()};
   const nameSel=el('select',{style:'min-width:300px;max-width:440px',onchange:e=>pick(e.target.value)}),nameFilter=el('input',{placeholder:'filter '+names.length+' metrics…',size:22,oninput:()=>fillNames()});
   const fillNames=()=>{const f=nameFilter.value.toLowerCase(),cur=q.name,shown=names.filter(n=>!f||n.name.toLowerCase().includes(f)||n.name===cur);
-    const lab=n=>n.name+'  ·  '+(n.pending?'no data yet':n.mtype)+(METRIC_INFO[n.name]?'  ·  '+METRIC_INFO[n.name][0]:'');
+    const lab=n=>n.name+'  ·  '+(n.pending?'no data in this range':n.mtype)+(METRIC_INFO[n.name]?'  ·  '+METRIC_INFO[n.name][0]:'');
     // inside a group the metrics that have data come first
     const groups=GROUP_ORDER.map(g=>[g,shown.filter(n=>metricGroup(n.name)===g).sort((a,b)=>(a.pending?1:0)-(b.pending?1:0)||(a.name<b.name?-1:a.name>b.name?1:0))]).filter(([,l])=>l.length);
     nameSel.replaceChildren(opt('','Choose a metric… ('+got.length+' with data'+(names.length>got.length?', '+(names.length-got.length)+' more known':'')+')'),groups.map(([g,l])=>el('optgroup',{label:g+' ('+l.filter(n=>!n.pending).length+' with data of '+l.length+')'},l.map(n=>opt(n.name,lab(n))))));nameSel.value=cur||''};
@@ -811,7 +813,7 @@ async function metricsPage(){
   dsel.onchange=async()=>{if(!dsel.value||!q.name)return;try{const d=await api('/api/v1/dashboards/'+dsel.value);const panels=(d.body&&d.body.panels)||[];panels.push(Object.assign(JSON.parse(JSON.stringify(p)),{id:uid(),title:q.name,w:6,h:2}));
     await api('/api/v1/dashboards/'+dsel.value,{},{method:'PUT',body:{name:d.name,description:d.description,body:{panels},version:d.version}});msg.textContent='Added to “'+d.name+'”.'}catch(e){msg.textContent=e.message}dsel.value=''};
   view.replaceChildren(el('div',{class:'bar'},nameFilter,nameSel,aggSel,gsel,grp,unit,el('span',{class:'sp'}),can('dashboards',true)?dsel:null,msg),about,chart,labelBox);fillNames();drawLabels();
-  S.onRangeChange=()=>{draw();drawLabels()};
+  S.onRangeChange=async()=>{await loadNames();fillNames();draw();drawLabels()};
 }
 
 // ---- add a machine ----
