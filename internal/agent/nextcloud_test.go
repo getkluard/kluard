@@ -14,13 +14,17 @@ import (
 const serverinfoJSON = `{"ocs":{"meta":{"status":"ok","statuscode":200},"data":{
  "nextcloud":{"system":{"version":"33.0.0.1","freespace":123456789,"apps":{"num_installed":42,"num_updates_available":3}},
   "storage":{"num_users":17,"num_files":"98765","num_storages":30,"num_storages_local":1,"num_storages_home":17,"num_storages_other":12},
-  "shares":{"num_shares":11,"num_shares_user":4,"num_shares_groups":2,"num_shares_link":5,"num_shares_link_no_password":1,"num_fed_shares_sent":0,"num_fed_shares_received":0}},
- "server":{"webserver":"Apache","php":{"version":"8.3.1","memory_limit":536870912,"max_execution_time":3600,
+  "shares":{"num_shares":11,"num_shares_user":4,"num_shares_groups":2,"num_shares_link":5,"num_shares_link_no_password":1,"num_fed_shares_sent":3,"num_fed_shares_received":7}},
+ "server":{"webserver":"Apache","php":{"version":"8.3.1","memory_limit":536870912,"max_execution_time":3600,"upload_max_filesize":536870912,
    "opcache":{"opcache_statistics":{"opcache_hit_rate":99.5},"memory_usage":{"used_memory":50000000,"current_wasted_percentage":0.4}}},
   "database":{"type":"pgsql","version":"18.0","size":73400320}},
  "activeUsers":{"last5minutes":2,"last1hour":5,"last24hours":9}}}}`
 
 func fakeNextcloud(t *testing.T, token string) *httptest.Server {
+	return fakeNextcloudWith(t, token, serverinfoJSON)
+}
+
+func fakeNextcloudWith(t *testing.T, token, info string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/status.php":
@@ -30,7 +34,7 @@ func fakeNextcloud(t *testing.T, token string) *httptest.Server {
 				w.WriteHeader(401)
 				return
 			}
-			w.Write([]byte(serverinfoJSON))
+			w.Write([]byte(info))
 		default:
 			w.WriteHeader(404)
 		}
@@ -70,7 +74,9 @@ func TestNextcloudCollect(t *testing.T) {
 		{"nextcloud_active_users", []string{"period", "24h"}, 9}, {"nextcloud_shares", []string{"type", "link"}, 5},
 		{"nextcloud_storages", []string{"type", "home"}, 17}, {"nextcloud_apps_updates_available", nil, 3},
 		{"nextcloud_database_size_bytes", nil, 73400320}, {"nextcloud_php_opcache_hit_rate", nil, 99.5},
-		{"nextcloud_php_memory_limit_bytes", nil, 536870912},
+		{"nextcloud_php_memory_limit_bytes", nil, 536870912}, {"nextcloud_php_max_execution_time_seconds", nil, 3600},
+		{"nextcloud_php_upload_max_filesize_bytes", nil, 536870912},
+		{"nextcloud_shares", []string{"type", "federated_sent"}, 3}, {"nextcloud_shares", []string{"type", "federated_received"}, 7},
 	}
 	for _, c := range checks {
 		p, ok := find(pts, c.name, c.kv...)
@@ -175,5 +181,17 @@ func TestLoadConfigEnv(t *testing.T) {
 	os.WriteFile(bad, []byte("{nope"), 0o644)
 	if _, err := LoadConfig(bad, func(string) string { return "" }); err == nil {
 		t.Fatal("invalid JSON config must fail")
+	}
+}
+
+func TestUnlimitedPHPMemoryIsKeptAsMinusOne(t *testing.T) {
+	ts := fakeNextcloudWith(t, "tok", strings.Replace(serverinfoJSON, `"memory_limit":536870912`, `"memory_limit":-1`, 1))
+	defer ts.Close()
+	pts, err := CollectNextcloud(context.Background(), NextcloudTarget{URL: ts.URL, Token: "tok"}, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if p, ok := find(pts, "nextcloud_php_memory_limit_bytes"); !ok || p.Value != -1 {
+		t.Fatalf("unlimited must be reported as -1: %+v %v", p, ok)
 	}
 }

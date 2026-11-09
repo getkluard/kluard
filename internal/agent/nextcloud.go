@@ -129,6 +129,7 @@ var ncMetrics = []ncMetric{
 	{[]string{"ocs", "data", "server", "database", "size"}, "nextcloud_database_size_bytes", nil},
 	{[]string{"ocs", "data", "server", "php", "memory_limit"}, "nextcloud_php_memory_limit_bytes", nil},
 	{[]string{"ocs", "data", "server", "php", "max_execution_time"}, "nextcloud_php_max_execution_time_seconds", nil},
+	{[]string{"ocs", "data", "server", "php", "upload_max_filesize"}, "nextcloud_php_upload_max_filesize_bytes", nil},
 	{[]string{"ocs", "data", "server", "php", "opcache", "opcache_statistics", "opcache_hit_rate"}, "nextcloud_php_opcache_hit_rate", nil},
 	{[]string{"ocs", "data", "server", "php", "opcache", "memory_usage", "used_memory"}, "nextcloud_php_opcache_used_bytes", nil},
 	{[]string{"ocs", "data", "server", "php", "opcache", "memory_usage", "current_wasted_percentage"}, "nextcloud_php_opcache_wasted_percent", nil},
@@ -292,7 +293,9 @@ func collectCore(ctx context.Context, t NextcloudTarget, now int64) ([]Point, er
 	pts = append(pts, pt("nextcloud_info", 1, info))
 	for _, m := range ncMetrics {
 		v, ok := num(si, m.path...)
-		if !ok || (v < 0 && strings.HasSuffix(m.name, "_bytes")) { // -1 means unlimited
+		// -1 means unlimited. The PHP memory limit keeps it (the interface shows an infinity sign); for the other byte counts
+		// a negative number is meaningless and is left out.
+		if !ok || (v < 0 && strings.HasSuffix(m.name, "_bytes") && m.name != "nextcloud_php_memory_limit_bytes") {
 			continue
 		}
 		pts = append(pts, pt(m.name, v, with(m.attrs)))

@@ -1293,14 +1293,17 @@ async function billingPage(tab){
 async function billingReport(body,info){
   const today=info.today,def=defaultBillRange(today);
   const fromI=el('input',{type:'date',value:S.billFrom||def[0],max:'9999-12-31'}),toI=el('input',{type:'date',value:S.billTo||def[1],max:'9999-12-31'});
-  const sv=el('input',{type:'checkbox',checked:store.get('kluard.billsv','0')==='1',onchange:()=>{store.set('kluard.billsv',sv.checked?'1':'0');links()}});
+  // CSV format: automatic follows the browser (a decimal comma means semicolons between columns, which is what Excel expects there).
+  const autoEU=(()=>{try{return (1.5).toLocaleString(navigator.language).includes(',')}catch{return false}})();
+  const fmtSel=el('select',{onchange:()=>{store.set('kluard.billcsv',fmtSel.value);links()}},[['auto','Automatic ('+(autoEU?'semicolon, decimal comma':'comma, decimal point')+')'],['eu','Semicolon, decimal comma (Excel in Europe)'],['intl','Comma, decimal point (international)']].map(([v,t])=>el('option',{value:v,selected:store.get('kluard.billcsv','auto')===v?'':null},t)));
+  const sv={get checked(){const v=fmtSel.value;return v==='eu'||(v==='auto'&&autoEU)}};
   const out=el('div'),dl=el('span'),printAll=el('button',{class:'btn ghost sm'},'Print all');
   const set=(f,t)=>{fromI.value=f;toI.value=t;draw()};
   const quick=el('span',{style:'display:inline-flex;gap:6px;flex-wrap:wrap'},
     el('button',{class:'btn ghost sm',onclick:()=>{const r=monthRange(today,0);set(r[0],r[1])}},'This month'),
     el('button',{class:'btn ghost sm',onclick:()=>{const r=monthRange(today,1);set(r[0],r[1])}},'Last month'),
     el('button',{class:'btn ghost sm',onclick:()=>set(addDays(today,-29),today)},'Last 30 days'));
-  const links=()=>{const q=v=>'/api/v1/billing/report?'+new URLSearchParams({from:fromI.value,to:toI.value,format:'csv',view:v,locale:sv.checked?'sv':''}).toString();
+  const links=()=>{const q=v=>'/api/v1/billing/report?'+new URLSearchParams({from:fromI.value,to:toI.value,format:'csv',view:v,locale:sv.checked?'eu':''}).toString();
     dl.replaceChildren(el('a',{class:'btn ghost sm',href:q('invoices')},'Per customer (CSV)'),' ',el('a',{class:'btn ghost sm',href:q('lines')},'Per instance (CSV)'))};
   const draw=async()=>{S.billFrom=fromI.value;S.billTo=toI.value;links();
     if(!fromI.value||!toI.value){out.replaceChildren(el('div',{class:'warnbox'},'Pick the first and the last day.'));return}
@@ -1308,7 +1311,7 @@ async function billingReport(body,info){
     printAll.onclick=()=>printBasis(rep,rep.invoices);out.replaceChildren(billingReportView(rep,info))};
   fromI.onchange=toI.onchange=draw;
   body.replaceChildren(el('p',{class:'help',style:'margin-top:0'},'What each customer owes for a period you choose, from one day to another (both included): users and stored data (or network traffic) of every Nextcloud instance, priced as set under ',el('a',{href:'#/billing/prices'},'Prices & customers'),'. The prices are for the whole period, so pick the days you invoice, for example the 1st to the last day of the month. Users are counted on the last day of the period. This is the basis for an invoice, not an invoice: copy it into your invoicing program, or export it.'),
-    el('div',{class:'bar',style:'flex-wrap:wrap'},el('label',{},'From '),fromI,el('label',{},' to '),toI,quick,el('span',{class:'sp'}),el('label',{class:'mut',title:'Semicolons between columns and a decimal comma, which is what a Swedish Excel expects'},sv,' Swedish spreadsheet format'),dl,printAll),out);
+    el('div',{class:'bar',style:'flex-wrap:wrap'},el('label',{},'From '),fromI,el('label',{},' to '),toI,quick,el('span',{class:'sp'}),el('label',{class:'mut',title:'How the CSV files are written. Excel in many European countries expects semicolons between columns and a decimal comma.'},'CSV format '),fmtSel,dl,printAll),out);
   await draw();
 }
 function billingReportView(rep,info){

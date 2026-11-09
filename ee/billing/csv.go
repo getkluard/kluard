@@ -11,10 +11,10 @@ import (
 )
 
 // WriteCSV writes the report as a file for a spreadsheet or an invoicing program. view is "lines" (one row per instance) or
-// "invoices" (one row per customer and currency). With locale "sv" the file is made for Swedish spreadsheet programs:
+// "invoices" (one row per customer and currency). With locale "eu" (or "sv", the old name) the file is made for spreadsheet programs in European locales:
 // semicolons between columns, a decimal comma, and a byte order mark so that å, ä and ö survive.
 func WriteCSV(w io.Writer, r Report, view, locale string) error {
-	sv := locale == "sv"
+	sv := locale == "sv" || locale == "eu"
 	if sv {
 		if _, err := io.WriteString(w, "\xef\xbb\xbf"); err != nil {
 			return err

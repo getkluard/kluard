@@ -139,7 +139,7 @@ func TestBillingPricesAndInvoiceBasis(t *testing.T) {
 		t.Fatalf("%d %s", r.StatusCode, b)
 	}
 	// files for a spreadsheet
-	r, b = do(ad, "GET", u+"/report?period=2026-10&format=csv&view=invoices&locale=sv", "")
+	r, b = do(ad, "GET", u+"/report?period=2026-10&format=csv&view=invoices&locale=eu", "")
 	if r.Header.Get("Content-Type") != "text/csv; charset=utf-8" || !strings.Contains(r.Header.Get("Content-Disposition"), "kluard-billing-2026-10-invoices.csv") ||
 		!strings.Contains(string(b), "666,67") || !strings.Contains(string(b), "Kund Holding AB") {
 		t.Fatalf("%v %q", r.Header, b)
