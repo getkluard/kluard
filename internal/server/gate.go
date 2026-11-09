@@ -48,6 +48,9 @@ func (s *Server) authed(action string, h handler) http.Handler {
 		}
 		id, ok := who(w, r)
 		if !ok {
+			if action == "ingest" {
+				s.noteRejectedKey(r)
+			}
 			return
 		}
 		if action == "ingest" && id.Session {

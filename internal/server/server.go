@@ -58,6 +58,7 @@ type Server struct {
 	store              store.Store
 	auth               edition.Authenticator
 	log                *slog.Logger
+	rejected           rejectLog // agent keys the server refused recently
 }
 
 func New(s store.Store, a edition.Authenticator, l *slog.Logger) *Server {

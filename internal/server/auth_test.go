@@ -314,3 +314,43 @@ func TestPickStep(t *testing.T) {
 		}
 	}
 }
+
+func TestRefusedAgentKeysAreRemembered(t *testing.T) {
+	ts, _, _ := authServer(t)
+	anon := client()
+	// an agent with a key the server does not know: refused, and remembered with only the first 8 characters
+	for i := 0; i < 3; i++ {
+		if r := post(anon, ts.URL+"/v1/metrics", `{}`, "Authorization", "Bearer lmn_dbf8e4d8SECRETSECRETSECRET"); r.StatusCode != 401 {
+			t.Fatalf("an unknown key must be refused, got %d", r.StatusCode)
+		}
+	}
+	// a request without any key is not an agent with a wrong key: it is not listed
+	post(anon, ts.URL+"/v1/metrics", `{}`)
+
+	// nobody without a login can read the list
+	if get(anon, ts.URL+"/api/v1/rejected-keys").StatusCode != 401 {
+		t.Fatal("the list needs a login")
+	}
+	c := client()
+	if login(t, c, ts, "alice", "alices-long-password") != 200 {
+		t.Fatal("login")
+	}
+	resp := get(c, ts.URL+"/api/v1/rejected-keys")
+	body, _ := io.ReadAll(resp.Body)
+	var out struct {
+		Rejected []struct {
+			Prefix string `json:"prefix"`
+			From   string `json:"from"`
+			Count  int    `json:"count"`
+		} `json:"rejected"`
+	}
+	if err := json.Unmarshal(body, &out); err != nil || resp.StatusCode != 200 {
+		t.Fatalf("%d %s", resp.StatusCode, body)
+	}
+	if len(out.Rejected) != 1 || out.Rejected[0].Prefix != "lmn_dbf8" || out.Rejected[0].Count != 3 || out.Rejected[0].From == "" {
+		t.Fatalf("%+v", out.Rejected)
+	}
+	if strings.Contains(string(body), "SECRET") {
+		t.Fatal("more than the first 8 characters of a key must never be shown")
+	}
+}

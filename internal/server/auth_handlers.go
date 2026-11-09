@@ -28,6 +28,7 @@ func (s *Server) authRoutes(mux *http.ServeMux) {
 	mux.Handle("GET /api/v1/me", s.authed("any", s.me))
 	mux.Handle("GET /api/v1/keys", s.sessionOnly(perm.Keys, false, s.listKeys))
 	mux.Handle("POST /api/v1/keys", s.sessionOnly(perm.Keys, true, s.createKey))
+	mux.Handle("GET /api/v1/rejected-keys", s.sessionOnly(perm.Keys, false, s.listRejectedKeys))
 	mux.Handle("DELETE /api/v1/keys/{id}", s.sessionOnly(perm.Keys, true, s.deleteKey))
 	mux.Handle("POST /api/v1/password", s.sessionOnly("", false, s.changePassword))
 }
