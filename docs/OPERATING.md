@@ -18,6 +18,8 @@ For the people who run an installation for customers or teams. The design behind
 | Set limits | Open the tenant, fill in the limits, tick **Refuse** to enforce them, Save. Without Refuse they only warn, on your page and on the customer's Settings page. |
 | Stop a customer who has not paid | Open the tenant, Suspend, give a reason. Choose in the tenant's details whether incoming data is *refused* (agents keep trying) or *thrown away* (agents think all is well). Resume restores everything at once. |
 | Help a customer | Ask them to allow support access (Settings, Support access, Allow access). Then open the tenant and **Go into tenant**: read-only unless you tick changes, 30 minutes to 4 hours. A banner shows you are inside; **Leave tenant** ends it. |
+| Show a customer whether their service works | Sign in to the customer's tenant (or go into it), open **Status pages**, + Add status page, tick the customer's instances and website checks, name them as the customer knows them, and send the link. No login is needed to read it; anyone with the link can see the page, and **Remove** closes it. |
+| Watch a customer's backups and jobs | In the tenant, **Heartbeats**: one address per job, called with one curl line when the job is done. |
 | Invoice | Tenants, Usage: per tenant and day, or **Download CSV** (the period and tenant you chose). |
 | Give a customer their data | Open the tenant, **Export** (a zip of settings and documents without secrets). Telemetry is in the daily backups. |
 | Remove a customer | Open the tenant, **Remove...**, type its id. Everything of the tenant is deleted, also the archive and the daily backups, and Kluard checks that nothing is left. Usage records and the access log are kept. |
@@ -27,6 +29,10 @@ For the people who run an installation for customers or teams. The design behind
 Under **Settings**: their usage against their limits (and a warning near a limit), **Support access** (off, only when they allow it, any time) and an **Access log** that lists every time an operator came in and everything that was changed.
 
 ## Good to know
+
+- **Status pages and heartbeats are public addresses.** Each holds a long random id and needs no login, so the id is the only protection. Send a status page link only to the customer it belongs to. A status page shows just the names you chose and *Operational* or *Down*, never addresses, machines or error texts.
+- **Removing a tenant** also removes its status pages, heartbeats, website checks and the settings of its databases, nginx and MinIO, so their addresses stop working at once.
+- **Menus** can be hidden per browser under *Settings, Menu* (databases, websites, heartbeats and status pages, for someone who does not use them). Home, Alerts, Traces, Logs, Metrics, Hosts, Instances, Billing, Add a machine, Users & groups, Backups & archive, Audit log, Settings and Account are always shown.
 
 - **Limits** apply to a customer's own users and keys, not to an operator inside the tenant, who can always fix things.
 - **Hosts** are counted as those that sent metrics in the last 24 hours. A host already reporting is never turned away by the host limit.

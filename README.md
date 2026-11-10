@@ -46,6 +46,8 @@ Kluard is an open-source, self-hosted observability platform. It collects OpenTe
 | **Dropdowns of everything that comes in** | Traces, Logs and Metrics list every service, operation, log source, host and metric Kluard has received, so you pick instead of typing. |
 | **Your company name and logo** | Add them under **Settings**. They show beneath Kluard in the menu and on the login page. Kluard itself is always shown at the top. |
 | **PromQL and Grafana** | A Prometheus-compatible read API under `/prom` with a PromQL subset (selectors, `rate`, aggregations, operators). Connect Grafana with a read-only key; see [docs/PROMQL.md](docs/PROMQL.md). |
+| **More than Nextcloud** | Redis, PostgreSQL, MySQL/MariaDB, nginx and MinIO are found in Docker and monitored with a one-button alert pack each. **Website and certificate checks** for any address, **heartbeats** for backups and cron jobs, and **server errors counted from web server logs**. |
+| **Status pages for customers** | A public page per customer that shows whether their Nextcloud and websites work, under names you choose, with no addresses or internal details. |
 | **Everything about a host** | Open a host to see CPU (also by state: user, system, iowait, steal), load, memory (used, cached, buffers, free), swap, usage of every local disk, **disk I/O** (throughput, IOPS, busy time per device), **network** traffic and errors, processes and uptime, as charts over the chosen time range. |
 | **Services on your machines** | systemd units and Docker containers are reported automatically (`system_service_up`, `container_up`). |
 | **Users and groups** | Any number of users in *Admin* (everything) or *User* (read-only). With an Enterprise licence also *custom* groups with none / read / write per area. Enforced by the server. |
@@ -319,6 +321,10 @@ A status page is a public address that tells a customer whether their service wo
 The page shows only those names and "Operational" or "Down", with a banner on top (everything works, some services have problems, services are down). It never shows addresses, machine names or error texts. It refreshes by itself every minute and follows the browser's light or dark setting. `/status/<id>/json` gives the same facts for use on your own website.
 
 The id in the address is long and random and is the only protection: anyone who has the link can read the page, so send it to the people who should see it. **Remove** stops the address at once. Set `KLUARD_PUBLIC_URL` so that the link shown in Kluard is the full address.
+
+## Choose which menus you see
+
+Everything is shown when Kluard is installed. Under **Settings, Menu** you can hide the menus you do not use: Dashboards, Redis, PostgreSQL, MinIO, MySQL, nginx, Websites, Heartbeats and Status pages. Home, Alerts, Traces, Logs, Metrics, Hosts, Instances, Billing, Add a machine, Users & groups, Backups & archive, Audit log, Settings and Account are always shown. The choice is kept in the browser, and a hidden page still opens if you go to its address.
 
 ## What the agent reports about a host
 

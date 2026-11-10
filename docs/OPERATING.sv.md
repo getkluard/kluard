@@ -18,6 +18,8 @@ För dig som driver en installation åt kunder eller team. Designen bakom finns 
 | Sätta gränser | Öppna tenanten, fyll i gränserna, kryssa **Refuse** för att upprätthålla dem, Spara. Utan Refuse varnar de bara, på din sida och på kundens Settings-sida. |
 | Stoppa en kund som inte betalat | Öppna tenanten, Suspend, ange en orsak. Välj i tenantens detaljer om inkommande data *avvisas* (agenterna försöker igen) eller *kastas* (agenterna tror att allt är bra). Resume återställer allt direkt. |
 | Hjälpa en kund | Be dem tillåta supportåtkomst (Settings, Support access, Allow access). Öppna sedan tenanten och **Go into tenant**: skrivskyddat om du inte kryssar för ändringar, 30 minuter till 4 timmar. En banner visar att du är inne, och **Leave tenant** avslutar. |
+| Visa en kund om deras tjänst fungerar | Logga in i kundens tenant (eller gå in i den), öppna **Status pages**, + Add status page, kryssa för kundens instanser och webbplatskontroller, ge dem de namn kunden känner igen och skicka länken. Ingen inloggning behövs för att läsa den; den som har länken kan se sidan, och **Remove** stänger den. |
+| Bevaka en kunds backuper och jobb | I tenanten, **Heartbeats**: en adress per jobb, som anropas med en rad curl när jobbet är klart. |
 | Fakturera | Tenants, Usage: per tenant och dag, eller **Download CSV** (för vald period och tenant). |
 | Ge en kund deras data | Öppna tenanten, **Export** (en zip med inställningar och dokument utan hemligheter). Telemetrin finns i de dagliga backuperna. |
 | Ta bort en kund | Öppna tenanten, **Remove...**, skriv dess id. Allt som tillhör tenanten raderas, också arkiv och dagliga backuper, och Kluard kontrollerar att inget finns kvar. Användningsposter och åtkomstloggen behålls. |
@@ -27,6 +29,10 @@ För dig som driver en installation åt kunder eller team. Designen bakom finns 
 Under **Settings**: sin användning mot sina gränser (och en varning nära en gräns), **Support access** (av, bara när de tillåter det, när som helst) och en **Access log** som listar varje gång en operatör varit inne och allt som ändrats.
 
 ## Bra att veta
+
+- **Statussidor och heartbeats är publika adresser.** Var och en har ett långt slumpmässigt id och kräver ingen inloggning, så id:t är det enda skyddet. Skicka en statussidas länk bara till den kund den hör till. En statussida visar bara de namn du valt och *Operational* eller *Down*, aldrig adresser, maskiner eller felmeddelanden.
+- **Att ta bort en tenant** tar också bort dess statussidor, heartbeats, webbplatskontroller och inställningarna för dess databaser, nginx och MinIO, så adresserna slutar fungera direkt.
+- **Menyer** kan döljas per webbläsare under *Settings, Menu* (databaser, webbplatser, heartbeats och statussidor, för den som inte använder dem). Home, Alerts, Traces, Logs, Metrics, Hosts, Instances, Billing, Add a machine, Users & groups, Backups & archive, Audit log, Settings och Account visas alltid.
 
 - **Gränserna** gäller kundens egna användare och nycklar, inte en operatör inne i tenanten, som alltid kan rätta till saker.
 - **Hostar** räknas som de som skickat mätvärden de senaste 24 timmarna. En host som redan rapporterar nekas aldrig av hostgränsen.

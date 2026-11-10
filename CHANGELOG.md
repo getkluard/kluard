@@ -21,6 +21,7 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 - **The release has a server bundle with the agents inside.** `kluard-server-linux-amd64.tar.gz` and `-arm64.tar.gz` hold the server and a `dist/` folder with the Linux and Windows agents and their checksums, so a server started from a release file (`KLUARD_DIST_DIR` pointing at `dist/`) can hand out agents under *Add a machine*. Before, only the Docker image had them.
 
 ### Changed
+- **Removing a tenant now also removes** its status pages, heartbeats, website checks and the settings of its PostgreSQL, MySQL, MinIO and nginx (before, they stayed, and a status page stayed public). Daily configuration backups include them too.
 - **The menu scrolls when it is longer than the window,** and the account part stays at the bottom (before, a long menu ran over it). Redis, PostgreSQL, MinIO, MySQL, nginx, Websites, Heartbeats and Status pages now have icons of their own.
 
 ## [0.1.0] - 2026-11-10
