@@ -5,13 +5,20 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-11-10
+
+### Added
+- **S3 storage monitoring for any S3-compatible storage** (AWS S3, Ceph, Garage, SeaweedFS, Wasabi, Backblaze B2, MinIO...). An agent signs in with an access key (AWS Signature Version 4) and reports whether the storage answers, how fast and how many buckets it has; optionally it measures each bucket by listing its objects (at most once an hour, up to 100,000 objects per bucket, then shown as "at least"). The secret key is stored encrypted and goes only to the agent of the chosen machine. New *S3 storage* page (can be hidden under *Settings, Menu*), metrics `s3_*` and alert pack *S3 storage*. The agent needs updating.
+- **MySQL and MariaDB show "no databases"** instead of a dash in the Size column when the server holds no databases of its own (new metric `mysql_databases`). The agent needs updating.
+
+### Changed
+- **The menu shows the release.** A server built from a release shows *release v0.1.3* under your name; a server built from source still shows *build* and the source hash, so you can see which build you are running. MinIO no longer has a menu entry of its own (S3 storage covers it; the MinIO page still opens at `#/minio` and its metrics and alert pack stay).
+
 ## [0.1.2] - 2026-11-10
 
 Includes everything since 0.1.0. Agents need updating to use the new checks (run the install command under *Add a machine* again on each machine).
 
 ### Added
-- **S3 storage monitoring for any S3-compatible storage** (AWS S3, Ceph, Garage, SeaweedFS, Wasabi, Backblaze B2, MinIO...). An agent signs in with an access key (AWS Signature Version 4) and reports whether the storage answers, how fast and how many buckets it has; optionally it measures each bucket by listing its objects (at most once an hour, up to 100,000 objects per bucket, then shown as "at least"). The secret key is stored encrypted and goes only to the agent of the chosen machine. New *S3 storage* page (can be hidden under *Settings, Menu*), metrics `s3_*` and alert pack *S3 storage*. The agent needs updating.
-- **MySQL and MariaDB show "no databases"** instead of a dash in the Size column when the server holds no databases of its own (new metric `mysql_databases`). The agent needs updating.
 - **Choose which menus you see.** *Settings, Menu* has a tick box for each optional menu (Dashboards, Redis, PostgreSQL, MinIO, MySQL, nginx, Websites, S3 storage, Heartbeats, Status pages). Everything is shown from the start. Home, Alerts, Traces, Logs, Metrics, Hosts, Instances, Billing, Add a machine, Users & groups, Backups & archive, Audit log, Settings and Account are always shown. The choice is kept per browser.
 - **Status pages for your customers.** A public address, `/status/<id>`, that shows whether a customer's services work: pick Nextcloud instances and website checks, give each the name the customer should see, and send the link. The page shows names and "Operational" or "Down", nothing else (no addresses, machines or error texts), needs no login, refreshes itself and follows the light or dark setting of the browser. `/status/<id>/json` gives the same for your own website. New *Status pages* page. The long random id is the secret, so anyone with the link can read it and nobody can guess it.
 - **MinIO monitoring.** The agent finds MinIO in Docker by itself and reads its Prometheus address: usable storage and how full it is, objects, buckets, drives and servers offline, cluster health, S3 requests, errors and traffic. A MinIO that wants a token for its metrics is shown as TOKEN and the token is set with **Set token** (stored encrypted). New MinIO page, metrics `minio_*`, dashboard template *MinIO* and alert pack *MinIO*. The agent needs updating.
@@ -27,7 +34,6 @@ Includes everything since 0.1.0. Agents need updating to use the new checks (run
 - **The release has a server bundle with the agents inside.** `kluard-server-linux-amd64.tar.gz` and `-arm64.tar.gz` hold the server and a `dist/` folder with the Linux and Windows agents and their checksums, so a server started from a release file (`KLUARD_DIST_DIR` pointing at `dist/`) can hand out agents under *Add a machine*. Before, only the Docker image had them.
 
 ### Changed
-- **The menu shows the release.** A server built from a release shows *release v0.1.3* under your name; a server built from source still shows *build* and the source hash, so you can see which build you are running. MinIO no longer has a menu entry of its own (S3 storage covers it; the MinIO page still opens at `#/minio` and its metrics and alert pack stay).
 - **Removing a tenant now also removes** its status pages, heartbeats, website checks and the settings of its PostgreSQL, MySQL, MinIO and nginx (before, they stayed, and a status page stayed public). Daily configuration backups include them too.
 - **The menu scrolls when it is longer than the window,** and the account part stays at the bottom (before, a long menu ran over it). Redis, PostgreSQL, MinIO, MySQL, nginx, Websites, Heartbeats and Status pages now have icons of their own.
 
