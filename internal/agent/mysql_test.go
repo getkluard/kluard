@@ -12,6 +12,7 @@ import (
 	"io"
 	"net"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -24,7 +25,11 @@ type fakeMysql struct {
 	key      *rsa.PrivateKey
 	answers  map[string][2]interface{} // sql prefix -> columns []string, rows [][]string
 	notMySQL bool
+	start    chan struct{} // closed when the test has finished setting the server up (gives the race detector an edge)
+	once     sync.Once
 }
+
+func (f *fakeMysql) begin() { f.once.Do(func() { close(f.start) }) }
 
 func newFakeMysql(t *testing.T, plugin, password string) *fakeMysql {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
@@ -32,9 +37,10 @@ func newFakeMysql(t *testing.T, plugin, password string) *fakeMysql {
 		t.Fatal(err)
 	}
 	key, _ := rsa.GenerateKey(rand.Reader, 2048)
-	f := &fakeMysql{ln: ln, plugin: plugin, password: password, key: key, answers: map[string][2]interface{}{}}
-	t.Cleanup(func() { ln.Close() })
+	f := &fakeMysql{ln: ln, plugin: plugin, password: password, key: key, answers: map[string][2]interface{}{}, start: make(chan struct{})}
+	t.Cleanup(func() { ln.Close(); f.begin() })
 	go func() {
+		<-f.start
 		for {
 			c, err := ln.Accept()
 			if err != nil {
@@ -46,7 +52,7 @@ func newFakeMysql(t *testing.T, plugin, password string) *fakeMysql {
 	return f
 }
 
-func (f *fakeMysql) addr() string { return f.ln.Addr().String() }
+func (f *fakeMysql) addr() string { f.begin(); return f.ln.Addr().String() }
 
 func fmWrite(c net.Conn, seq byte, body []byte) {
 	c.Write(append([]byte{byte(len(body)), byte(len(body) >> 8), byte(len(body) >> 16), seq}, body...))
