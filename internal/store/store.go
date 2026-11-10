@@ -26,6 +26,9 @@ type Store interface {
 	MetricNames(ctx context.Context, tenant, service string, from, to time.Time) ([]json.RawMessage, error)
 	MetricLabels(ctx context.Context, tenant, name string, from, to time.Time) ([]json.RawMessage, error)
 
+	// Samples returns raw samples of one metric ordered by time, at most q.Limit; the Prometheus API builds on it.
+	Samples(ctx context.Context, tenant string, q model.SampleQuery) ([]model.Sample, error)
+
 	Facets(ctx context.Context, tenant, source, service string, from, to time.Time) (model.Facets, error)
 	Latest(ctx context.Context, tenant string, names []string, from time.Time) ([]model.Latest, error)
 

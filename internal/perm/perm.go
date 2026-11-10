@@ -95,6 +95,16 @@ func Key() map[string]string {
 	})
 }
 
+// ReadKey is what a read key may do: read metrics, nothing else.
+func ReadKey() map[string]string {
+	return filled(func(a Area) string {
+		if a.ID == Metrics {
+			return Read
+		}
+		return None
+	})
+}
+
 // Normalize2None is a permission map with every area set to none.
 func Normalize2None() map[string]string { return filled(func(Area) string { return None }) }
 

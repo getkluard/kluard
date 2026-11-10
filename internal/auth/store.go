@@ -43,7 +43,8 @@ type APIKey struct {
 	ID      string    `json:"id"`
 	Name    string    `json:"name"`
 	Tenant  string    `json:"tenant"`
-	Prefix  string    `json:"prefix"` // first characters, to recognise a key in a list
+	Prefix  string    `json:"prefix"`         // first characters, to recognise a key in a list
+	Kind    string    `json:"kind,omitempty"` // "" = agent key (sends telemetry); "read" = read-only key for the Prometheus API
 	Hash    string    `json:"hash,omitempty"`
 	Created time.Time `json:"created"`
 }
@@ -333,6 +334,18 @@ func hashKey(k string) string { h := sha256.Sum256([]byte(k)); return hex.Encode
 
 // CreateKey makes a new agent key for a tenant and returns the plain key. It cannot be recovered later.
 func (s *Store) CreateKey(tenant, name string) (string, APIKey, error) {
+	return s.createKey(tenant, name, "")
+}
+
+// KindRead marks a key that can only read metrics through the Prometheus-compatible API (for Grafana and scripts).
+const KindRead = "read"
+
+// CreateReadKey makes a read-only key. It cannot send telemetry and cannot open a browser session.
+func (s *Store) CreateReadKey(tenant, name string) (string, APIKey, error) {
+	return s.createKey(tenant, name, KindRead)
+}
+
+func (s *Store) createKey(tenant, name, kind string) (string, APIKey, error) {
 	if !tenantRe.MatchString(tenant) {
 		return "", APIKey{}, errors.New("invalid tenant")
 	}
@@ -340,9 +353,13 @@ func (s *Store) CreateKey(tenant, name string) (string, APIKey, error) {
 	if len(name) > 80 {
 		name = name[:80]
 	}
-	plain := "klu_" + RandomToken(24)
+	pre := "klu_"
+	if kind == KindRead {
+		pre = "klr_"
+	}
+	plain := pre + RandomToken(24)
 	h := hashKey(plain)
-	k := APIKey{ID: h[:12], Name: name, Tenant: tenant, Prefix: plain[:8], Hash: h, Created: time.Now().UTC()}
+	k := APIKey{ID: h[:12], Name: name, Tenant: tenant, Prefix: plain[:8], Kind: kind, Hash: h, Created: time.Now().UTC()}
 	c, cancel := ctx()
 	defer cancel()
 	if err := s.b.Create(c, collKeys, h, k); err != nil {
@@ -382,6 +399,12 @@ func (s *Store) KeyByHash(h string) (APIKey, bool) {
 func (s *Store) LookupKey(plain string) (string, bool) {
 	k, ok := s.KeyByHash(hashKey(plain))
 	return k.Tenant, ok
+}
+
+// LookupKeyKind is LookupKey that also says what kind of key it is.
+func (s *Store) LookupKeyKind(plain string) (tenant, kind string, ok bool) {
+	k, ok := s.KeyByHash(hashKey(plain))
+	return k.Tenant, k.Kind, ok
 }
 
 func (s *Store) ListKeys(tenant string) []APIKey {

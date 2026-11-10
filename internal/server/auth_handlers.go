@@ -168,17 +168,24 @@ func (s *Server) createKey(w http.ResponseWriter, r *http.Request, id edition.Id
 	if !s.quotaOK(w, id, "keys") {
 		return
 	}
-	var in struct{ Name string }
+	var in struct{ Name, Kind string }
 	if !readJSON(w, r, &in) {
 		return
 	}
-	plain, k, err := s.a.Store.CreateKey(id.Tenant, in.Name)
+	create := s.a.Store.CreateKey
+	if in.Kind == auth.KindRead {
+		create = s.a.Store.CreateReadKey
+	} else if in.Kind != "" && in.Kind != "agent" {
+		writeErr(w, http.StatusBadRequest, "kind must be agent or read")
+		return
+	}
+	plain, k, err := create(id.Tenant, in.Name)
 	if err != nil {
 		writeErr(w, http.StatusInternalServerError, "could not create key")
 		return
 	}
 	s.log.Info("api key created", "user", id.User, "tenant", id.Tenant, "id", k.ID)
-	writeJSON(w, map[string]any{"key": plain, "id": k.ID, "name": k.Name, "prefix": k.Prefix})
+	writeJSON(w, map[string]any{"key": plain, "id": k.ID, "name": k.Name, "prefix": k.Prefix, "kind": k.Kind})
 }
 
 func (s *Server) deleteKey(w http.ResponseWriter, r *http.Request, id edition.Identity) {

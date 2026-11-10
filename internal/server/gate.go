@@ -53,6 +53,10 @@ func (s *Server) authed(action string, h handler) http.Handler {
 			}
 			return
 		}
+		if action == "ingest" && id.ReadOnly {
+			writeErr(w, http.StatusForbidden, "this is a read key; sending telemetry needs an agent key")
+			return
+		}
 		if action == "ingest" && id.Session {
 			writeErr(w, http.StatusForbidden, "sending telemetry requires an API key, not a browser login")
 			return

@@ -7,13 +7,13 @@ Traces, logs and metrics, dashboards you build yourself, host / service / Docker
 
 Kluard is an open-source, self-hosted observability platform. It collects OpenTelemetry traces, logs and metrics, stores them in ClickHouse and Elasticsearch, and gives you dashboards, alerting, billing reports and monitoring of Nextcloud instances, hosts, Docker containers and services. It runs as a single Go binary with no runtime dependencies, under the Apache-2.0 licence.
 
-[Website](https://kluard.com) · [Documentation](docs/OPERATING.md) · [Nextcloud metrics](docs/NEXTCLOUD-METRICS.md) · [Troubleshooting](docs/TROUBLESHOOTING-NEXTCLOUD.md) · [Discussions](https://github.com/getkluard/kluard/discussions)
+[Website](https://kluard.com) · [Documentation](docs/OPERATING.md) · [Nextcloud metrics](docs/NEXTCLOUD-METRICS.md) · [PromQL and Grafana](docs/PROMQL.md) · [Troubleshooting](docs/TROUBLESHOOTING-NEXTCLOUD.md) · [Discussions](https://github.com/getkluard/kluard/discussions)
 
 [![CI](https://github.com/getkluard/kluard/actions/workflows/ci.yml/badge.svg)](https://github.com/getkluard/kluard/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 ![Go](https://img.shields.io/badge/go-1.22%2B-00ADD8.svg)
 ![Dependencies](https://img.shields.io/badge/dependencies-stdlib%20only-brightgreen.svg)
-![Status](https://img.shields.io/badge/status-early%20MVP-orange.svg)
+![Status](https://img.shields.io/badge/status-early%20release-orange.svg)
 
 <img src="docs/screenshots/dashboard-nextcloud.png" alt="Nextcloud dashboard with up and down boxes" width="900">
 
@@ -21,7 +21,7 @@ Kluard is an open-source, self-hosted observability platform. It collects OpenTe
 
 </div>
 
-> **Status: early MVP.** Ingest, search, charts, dashboards, agents, status (up/down), users and groups, remote agent configuration, retention and backup all work. There is **no alerting and no PromQL yet** (see the [roadmap](#roadmap)). The Elasticsearch, Docker, systemd, Windows and Nextcloud integrations are covered by unit and fake-service tests; check them against your own setup first.
+> **Status: early release (0.x).** Ingest, search, charts, dashboards that turn yellow and red, agents, status (up/down), alerting (rules, notifications, silences), billing reports, users and groups, remote agent configuration, retention and backup all work. A Prometheus-compatible read API with a **PromQL subset** lets Grafana query your metrics ([docs/PROMQL.md](docs/PROMQL.md)). The Elasticsearch, Docker, systemd, Windows and Nextcloud integrations are covered by unit and fake-service tests; check them against your own setup first.
 
 ---
 
@@ -45,6 +45,7 @@ Kluard is an open-source, self-hosted observability platform. It collects OpenTe
 | **Hosts & Instances pages** | See every machine and Nextcloud instance. Rename hosts, remove old ones, add log paths, choose watched services, fix a mistyped Nextcloud URL, **all in the browser**: agents pick up the change within a minute. |
 | **Dropdowns of everything that comes in** | Traces, Logs and Metrics list every service, operation, log source, host and metric Kluard has received, so you pick instead of typing. |
 | **Your company name and logo** | Add them under **Settings**. They show beneath Kluard in the menu and on the login page. Kluard itself is always shown at the top. |
+| **PromQL and Grafana** | A Prometheus-compatible read API under `/prom` with a PromQL subset (selectors, `rate`, aggregations, operators). Connect Grafana with a read-only key; see [docs/PROMQL.md](docs/PROMQL.md). |
 | **Everything about a host** | Open a host to see CPU (also by state: user, system, iowait, steal), load, memory (used, cached, buffers, free), swap, usage of every local disk, **disk I/O** (throughput, IOPS, busy time per device), **network** traffic and errors, processes and uptime, as charts over the chosen time range. |
 | **Services on your machines** | systemd units and Docker containers are reported automatically (`system_service_up`, `container_up`). |
 | **Users and groups** | Any number of users in *Admin* (everything) or *User* (read-only). With an Enterprise licence also *custom* groups with none / read / write per area. Enforced by the server. |
@@ -507,7 +508,8 @@ Two agent settings decide how an agent is listed: `KLUARD_AGENT_ROLE` (`host` or
 | POST | `/v1/traces`, `/v1/logs`, `/v1/metrics` | API key. OTLP/HTTP **JSON** only for now; gzip supported |
 | POST | `/api/v1/login`, `/logout`, `/password` | login with `{"username","password"}` or `{"api_key"}` |
 | GET | `/api/v1/me` | who am I: group, permissions, `via_key` |
-| GET/POST/DELETE | `/api/v1/keys[/{id}]` | keys |
+| GET/POST/DELETE | `/api/v1/keys[/{id}]` | keys (`POST` takes `{"name", "kind": "read"}` for a read key) |
+| GET/POST | `/prom/api/v1/query`, `query_range`, `series`, `labels`, `label/{name}/values`, `metadata` | read key or metrics permission; PromQL subset, see [docs/PROMQL.md](docs/PROMQL.md) |
 | GET/POST/PUT/DELETE | `/api/v1/users[/{name}]`, `/api/v1/groups[/{id}]` | users |
 | GET | `/api/v1/series` | traces / logs / metrics. `source=metric\|traces\|logs`; metric: `name`, `agg=avg\|sum\|min\|max\|last\|rate`, `filter=label:value` (up to 5), `group_by`; traces: `metric=requests\|rps\|errors\|error_rate\|avg\|p50\|p95\|p99`; logs: `severity`, `q`; plus `service`, `from`, `to`, `step` (max 90 days) |
 | GET | `/api/v1/services`, `/metrics/names`, `/metrics/labels?name=` | any of traces, logs, metrics |
@@ -611,6 +613,7 @@ Kluard is open core: a free **Community** edition, **Enterprise** for governance
 | Edition charter | [docs/EDITIONS.md](docs/EDITIONS.md) | [docs/EDITIONS.sv.md](docs/EDITIONS.sv.md) |
 | **Operating several tenants** (set-up, limits, suspension, support access, usage, removal) | [docs/OPERATING.md](docs/OPERATING.md) | [docs/OPERATING.sv.md](docs/OPERATING.sv.md) |
 | **Troubleshooting Nextcloud monitoring** (every message on the instance page, with the commands) | [docs/TROUBLESHOOTING-NEXTCLOUD.md](docs/TROUBLESHOOTING-NEXTCLOUD.md) | [docs/TROUBLESHOOTING-NEXTCLOUD.sv.md](docs/TROUBLESHOOTING-NEXTCLOUD.sv.md) |
+| **PromQL and Grafana** (connect Grafana, names, supported subset, limits) | [docs/PROMQL.md](docs/PROMQL.md) | [docs/PROMQL.sv.md](docs/PROMQL.sv.md) |
 | **Nextcloud metrics, panels and alerts** (every metric, panels that turn yellow and red, the first alerts to set) | [docs/NEXTCLOUD-METRICS.md](docs/NEXTCLOUD-METRICS.md) | [docs/NEXTCLOUD-METRICS.sv.md](docs/NEXTCLOUD-METRICS.sv.md) |
 | **Licensing** (how a licence is issued, installed and what happens when it ends) | [docs/LICENSING.md](docs/LICENSING.md) | [docs/LICENSING.sv.md](docs/LICENSING.sv.md) |
 | Design: tenancy (operator layer, quotas, metering, per-tenant retention and branding) | [docs/design/tenancy.md](docs/design/tenancy.md) | [docs/design/tenancy.sv.md](docs/design/tenancy.sv.md) |
@@ -620,6 +623,7 @@ Kluard is open core: a free **Community** edition, **Enterprise** for governance
 
 0. **Tenancy, next steps:** stored-volume and query limits, retention and branding per tenant, sign-in addresses per tenant, dedicated storage.
 1. **Alerting, next steps:** trace rules, escalation and on-call, maintenance windows, templates, self-monitoring metrics — see the [design](docs/design/alerting.md)
+2. PromQL, next steps: histograms (`histogram_quantile`), subqueries, `group_left`/`group_right`, `label_replace`
 2. Windows services and Windows Event Log in the agent
 3. Protobuf and gRPC OTLP ingest
 4. Dashboard variables and sharing, service map, span details, correlation across traces, logs and deploys

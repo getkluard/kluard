@@ -114,3 +114,21 @@ type Facets struct {
 	Hosts      []Facet `json:"hosts"`
 	Operations []Facet `json:"operations"`
 }
+
+// SampleQuery asks for the raw samples of one metric, for the Prometheus-compatible API.
+// Name is the Prometheus form of the name (dots and other characters turned into underscores).
+type SampleQuery struct {
+	Name     string
+	Equal    map[string]string // label = value pairs the store may push down (a label "service" is the service column)
+	From, To time.Time
+	Limit    int
+}
+
+// Sample is one stored point with its labels.
+type Sample struct {
+	T       int64 // unix milliseconds
+	Name    string
+	Service string
+	Attrs   map[string]string
+	V       float64
+}

@@ -103,6 +103,7 @@ func (s *Server) Handler() http.Handler {
 	s.routesAudit(mux)
 	s.oidcRoutes(mux)
 	s.billingRoutes(mux)
+	s.promRoutes(mux)
 	mux.Handle("POST /v1/traces", s.authed("ingest", s.ingestTraces))
 	mux.Handle("POST /v1/logs", s.authed("ingest", s.ingestLogs))
 	mux.Handle("POST /v1/metrics", s.authed("ingest", s.ingestMetrics))

@@ -33,7 +33,8 @@ type fakeStore struct {
 	lastLogQ     model.LogQuery
 	lastTraceQ   model.TraceQuery
 	archive      bool
-	metrics      int // metric points stored
+	metrics      int                       // metric points stored
+	samples      map[string][]model.Sample // what Samples answers, by Prometheus metric name
 }
 
 func (f *fakeStore) InsertSpans(_ context.Context, r []model.Span) error {
@@ -69,6 +70,10 @@ func (f *fakeStore) MetricNames(_ context.Context, t, _ string, _, _ time.Time) 
 func (f *fakeStore) MetricLabels(_ context.Context, t, _ string, _, _ time.Time) ([]json.RawMessage, error) {
 	f.tenant = t
 	return nil, nil
+}
+func (f *fakeStore) Samples(_ context.Context, t string, q model.SampleQuery) ([]model.Sample, error) {
+	f.tenant = t
+	return f.samples[q.Name], nil
 }
 func (f *fakeStore) Facets(_ context.Context, t, source, service string, from, to time.Time) (model.Facets, error) {
 	f.tenant = t

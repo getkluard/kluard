@@ -5,7 +5,16 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-10
+
+First tagged release (a pre-release). Everything below came in with it.
+
+### Added
+- **A Prometheus-compatible read API with a PromQL subset, for Grafana.** Point a Grafana Prometheus data source at `https://<server>/prom`. Supported: selectors with `=`, `!=`, `=~`, `!~`, `offset` and range selectors; `rate`, `irate`, `increase`, `delta`, the `*_over_time` functions and the usual maths functions; `sum`, `avg`, `min`, `max`, `count`, `topk`, `bottomk`, `quantile` and more with `by`/`without`; arithmetic, comparison and set operators with `on`/`ignoring`. Endpoints: `query`, `query_range`, `series`, `labels`, `label/<name>/values`, `metadata`, `status/buildinfo`. Metric and label names show dots as underscores (`system.cpu.load` is `system_cpu_load`). Not supported: subqueries, `@`, `group_left`/`group_right`, native histograms, recording rules. See `docs/PROMQL.md` (and `.sv.md`).
+- **Read keys.** A new kind of key (`klr_...`, created under *Add a machine* or with `POST /api/v1/keys {"kind":"read"}`) that can read metrics and nothing else: it cannot send telemetry, cannot open a browser session and cannot see traces, logs, hosts or settings. It is accepted as a bearer token or as the password of HTTP basic auth, so Grafana can use it. It is tied to one tenant like every key.
+
 ### Changed
+- **The screenshots show the Kluard name** (they still said Lumen). The README status line now says what exists.
 - **The Metrics page lists every metric Kluard knows, also those that have not arrived yet.** Machines, containers, services, the agent, Redis and Nextcloud: each has a description and its unit, and one that has no data yet is marked "no data in this range" with a hint about what it needs The list is grouped (Nextcloud has one group per area, then Machine, Containers and services, Agent, Redis and Other), with the metrics that have data first in each group.
 - **The billing CSV format is a choice that follows the browser.** The "Swedish spreadsheet format" box is now "CSV format": Automatic (semicolons and a decimal comma when the browser uses a decimal comma, otherwise commas and a decimal point), or one of the two fixed. The API accepts `locale=eu` (`locale=sv` still works).
 - **Panels can change colour, and there is a ready-made Nextcloud health dashboard.** A stat panel takes a yellow and a red limit ("Colour" in the panel editor; times take `15m`, `2h`, `14d` and sizes `500MB`, `10GB`, and either direction works). The new starter dashboard **Nextcloud health** shows background jobs, the login check, the certificate, updates, free space and response time with such limits, and the instance page uses them too. The Metrics page now says what each Nextcloud metric means and picks its unit. Every Nextcloud metric is documented in `docs/NEXTCLOUD-METRICS.md` (and `.sv.md`), with the first alerts to set up.

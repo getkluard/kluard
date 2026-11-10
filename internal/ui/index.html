@@ -856,7 +856,15 @@ async function machinesPage(){
     if(!canKeys){keyPanel.append(el('p',{class:'mut'},S.me.via_key?'You are signed in with an API key. Paste that key into the commands below, or sign in with a username and password to create keys here.':'Your account may not create agent keys. Ask an administrator for a key and paste it into the commands below.'));return}
     if(window._agentKey)keyPanel.append(el('p',{},'New key (shown only once, copy it now): ',el('code',{},window._agentKey)),el('p',{class:'mut'},'The commands below already contain it.'));
     else{const n=el('input',{placeholder:'Name, e.g. web-server-1',size:26});keyPanel.append(el('p',{},n,' ',el('button',{class:'btn',onclick:async()=>{try{const r=await api('/api/v1/keys',{},{method:'POST',body:{name:n.value}});window._agentKey=r.key;drawKeys();drawKind()}catch(e){alert(e.message)}}},'Create key')),el('p',{class:'mut'},'Create a key first so the commands below contain it.'))}
-    try{const ks=await rows('/api/v1/keys');if(ks.length)keyPanel.append(el('table',{},el('tr',{},['Name','Key','Created',''].map(x=>el('th',{},x))),ks.map(k=>el('tr',{},el('td',{},k.name),el('td',{class:'mono mut'},k.prefix+'…'),el('td',{class:'mut'},k.created.slice(0,10)),el('td',{},el('a',{href:'#',onclick:async e=>{e.preventDefault();if(confirm('Delete this key? Agents using it will stop reporting.')){await api('/api/v1/keys/'+k.id,{},{method:'DELETE'});drawKeys()}}},'Delete'))))))}catch{}
+    try{const ks=await rows('/api/v1/keys');if(ks.length)keyPanel.append(el('table',{},el('tr',{},['Name','Key','Created',''].map(x=>el('th',{},x))),ks.map(k=>el('tr',{},el('td',{},k.name,k.kind==='read'?el('span',{class:'mut'},' · read key'):null),el('td',{class:'mono mut'},k.prefix+'…'),el('td',{class:'mut'},k.created.slice(0,10)),el('td',{},el('a',{href:'#',onclick:async e=>{e.preventDefault();if(confirm('Delete this key? Agents using it will stop reporting.')){await api('/api/v1/keys/'+k.id,{},{method:'DELETE'});drawKeys()}}},'Delete'))))))}catch{}
+  }
+  const readPanel=el('div',{class:'card',style:'margin-bottom:16px'});
+  function drawRead(){
+    readPanel.replaceChildren(el('b',{},'Read key for Grafana'),' ',el('span',{class:'mut'},'Lets Grafana (or any Prometheus client) read your metrics with PromQL. It cannot send data and cannot sign in.'));
+    if(!canKeys){readPanel.append(el('p',{class:'mut'},'Your account may not create keys.'));return}
+    if(window._readKey)readPanel.append(el('p',{},'New read key (shown only once, copy it now): ',el('code',{},window._readKey)));
+    else{const n=el('input',{placeholder:'Name, e.g. grafana',size:26});readPanel.append(el('p',{},n,' ',el('button',{class:'btn',onclick:async()=>{try{const r=await api('/api/v1/keys',{},{method:'POST',body:{name:n.value||'grafana',kind:'read'}});window._readKey=r.key;drawRead();drawKeys()}catch(e){alert(e.message)}}},'Create read key')))}
+    readPanel.append(el('p',{class:'mut'},'In Grafana: Connections, Data sources, Prometheus. URL: ',el('code',{},o+'/prom'),'. Authentication: ',el('b',{},'Basic auth'),' with any user name and the read key as password (or add the header ',el('code',{},'Authorization: Bearer <key>'),'). Metric names use underscores: ',el('code',{},'system.cpu.load'),' is ',el('code',{},'system_cpu_load'),'.'))
   }
   function drawKind(){
     const kinds=[['linux','Linux server','Service (systemd)'],['windows','Windows','Scheduled task'],['docker','Docker host','Agent as a container'],['files','Download files','Binaries + checksums']];
@@ -878,7 +886,7 @@ async function machinesPage(){
           cmdBox('Download on Linux',`wget ${o}/download/kluard-agent-linux-amd64 && chmod +x kluard-agent-linux-amd64`),cmdBox('Download on Windows (PowerShell)',`Invoke-WebRequest ${o}/download/kluard-agent-windows-amd64.exe -OutFile kluard-agent.exe`),
           cmdBox('Run it by hand',`KLUARD_AGENT_URL=${shq(o)} KLUARD_AGENT_API_KEY=${shq(K())} ./kluard-agent-linux-amd64`,'No config file needed. Verify the download against the SHA-256 above first.'))}).catch(()=>box.replaceChildren(el('p',{class:'err'},'Downloads are not available on this server.')))}
   }
-  view.replaceChildren(el('div',{class:'msg info'},'Machines that already run an older agent: run the same install command on them once to upgrade. They then report services and containers, and you manage their log files on the Hosts page. Nextcloud instances are added on the Instances page, after the machine is installed.'),keyPanel,out);await drawKeys();drawKind();
+  view.replaceChildren(el('div',{class:'msg info'},'Machines that already run an older agent: run the same install command on them once to upgrade. They then report services and containers, and you manage their log files on the Hosts page. Nextcloud instances are added on the Instances page, after the machine is installed.'),keyPanel,readPanel,out);await drawKeys();drawRead();drawKind();
 }
 
 async function accountPage(){

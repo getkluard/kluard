@@ -20,6 +20,8 @@ type Identity struct {
 	// ViaKey is true for a browser session opened with an API key instead of a username and password.
 	// Such sessions can read data and use dashboards but cannot manage keys or passwords.
 	ViaKey bool
+	// ReadOnly is set for a read key (Prometheus API only): it may never send telemetry or change anything.
+	ReadOnly bool
 	// Perms maps an area (dashboards, traces, logs, metrics, hosts, keys, users, backups) to none|read|write.
 	Perms map[string]string
 	// Operator is set while an operator of the installation is inside a tenant for support: it is the operator's name.

@@ -132,7 +132,10 @@ func (a *Auth) parseSession(tok string) (edition.Identity, bool) {
 // LoginWithKey exchanges a valid API key for a browser session (read access, dashboards; no key or password management).
 func (a *Auth) LoginWithKey(plain string) (token, tenant string, ok bool) {
 	var hash string
-	if t, found := a.Store.LookupKey(plain); found {
+	if t, kind, found := a.Store.LookupKeyKind(plain); found {
+		if kind == KindRead {
+			return "", "", false // a read key opens no browser session
+		}
 		tenant, hash = t, hashKey(plain)
 	} else if t, found := a.EnvKeys[plain]; found {
 		tenant, hash = t, "env:"+hashKey(plain)
@@ -148,13 +151,24 @@ func bearer(r *http.Request) string {
 	if h := r.Header.Get("Authorization"); len(h) > 7 && strings.EqualFold(h[:7], "bearer ") {
 		return strings.TrimSpace(h[7:])
 	}
+	// Grafana and other Prometheus clients can send the key as the password of HTTP basic auth
+	if h := r.Header.Get("Authorization"); len(h) > 6 && strings.EqualFold(h[:6], "basic ") {
+		if raw, err := base64.StdEncoding.DecodeString(strings.TrimSpace(h[6:])); err == nil {
+			if _, pw, ok := strings.Cut(string(raw), ":"); ok && pw != "" {
+				return pw
+			}
+		}
+	}
 	return r.Header.Get("X-API-Key")
 }
 
 // Authenticate implements edition.Authenticator.
 func (a *Auth) Authenticate(r *http.Request) (edition.Identity, error) {
 	if key := bearer(r); key != "" {
-		if t, ok := a.Store.LookupKey(key); ok {
+		if t, kind, ok := a.Store.LookupKeyKind(key); ok {
+			if kind == KindRead {
+				return edition.Identity{Tenant: t, ReadOnly: true, Perms: perm.ReadKey()}, nil
+			}
 			return edition.Identity{Tenant: t, Perms: perm.Key()}, nil
 		}
 		if len(a.EnvKeys) > 0 {
