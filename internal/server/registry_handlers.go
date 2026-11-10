@@ -50,6 +50,7 @@ func (s *Server) snapshot(ctx context.Context, tenant string) (snapshot, error) 
 	rows = status.CanonRows(rows)
 	sn := snapshot{at: now, rows: rows, sum: status.ComputeWith(now, rows, s.reg.ListHosts(tenant), s.reg.ListInstances(tenant), s.reg.GoneInstances(tenant))}
 	sn.sum.Redis = status.RedisList(now, rows, s.reg.ListRedis(tenant))
+	sn.sum.Postgres = status.PostgresList(now, rows, s.reg.ListPostgres(tenant))
 	s.snaps.mu.Lock()
 	if s.snaps.m == nil {
 		s.snaps.m = map[string]snapshot{}
@@ -87,6 +88,10 @@ func (s *Server) regRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /api/v1/redis", s.need(perm.Hosts, true, s.createRedis))
 	mux.Handle("PUT /api/v1/redis/{id}", s.need(perm.Hosts, true, s.updateRedis))
 	mux.Handle("DELETE /api/v1/redis/{id}", s.need(perm.Hosts, true, s.deleteRedis))
+	mux.Handle("GET /api/v1/postgres", s.need(perm.Hosts, false, s.listPostgres))
+	mux.Handle("POST /api/v1/postgres", s.need(perm.Hosts, true, s.createPostgres))
+	mux.Handle("PUT /api/v1/postgres/{id}", s.need(perm.Hosts, true, s.updatePostgres))
+	mux.Handle("DELETE /api/v1/postgres/{id}", s.need(perm.Hosts, true, s.deletePostgres))
 	mux.Handle("POST /api/v1/instance-keys/{key}/remove", s.need(perm.Hosts, true, s.removeUnmanaged))
 	// agents (API keys only, never a browser session: the response contains instance credentials)
 	mux.Handle("GET /api/v1/agent/config", s.authed("ingest", s.agentConfig))
@@ -533,5 +538,84 @@ func (s *Server) deleteRedis(w http.ResponseWriter, r *http.Request, id edition.
 	}
 	s.forget(id.Tenant)
 	s.auditOp(id, id.Tenant, "redis.remove", r.PathValue("id"), "")
+	writeJSON(w, map[string]bool{"ok": true})
+}
+
+// ---- PostgreSQL: logins and addresses (the agent finds PostgreSQL in Docker by itself) ----
+
+type postgresIn struct {
+	Name          string `json:"name"`
+	Host          string `json:"host"`
+	Container     string `json:"container"`
+	Addr          string `json:"addr"`
+	Username      string `json:"username"`
+	Database      string `json:"database"`
+	SSLMode       string `json:"sslmode"`
+	Password      string `json:"password"`
+	ClearPassword bool   `json:"clear_password"`
+}
+
+func (in postgresIn) reg() registry.PostgresIn {
+	return registry.PostgresIn{Name: in.Name, Host: in.Host, Container: in.Container, Addr: in.Addr, Username: in.Username, Database: in.Database, SSLMode: in.SSLMode, Password: in.Password, ClearPassword: in.ClearPassword}
+}
+
+func (s *Server) listPostgres(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	sn, err := s.snapshot(r.Context(), id.Tenant)
+	if err != nil {
+		writeErr(w, http.StatusServiceUnavailable, "cannot check the status right now: "+err.Error())
+		return
+	}
+	list := sn.sum.Postgres
+	if list == nil {
+		list = []status.Postgres{}
+	}
+	hosts := []string{}
+	for _, h := range allAgents(sn.sum) {
+		hosts = append(hosts, h.Name)
+	}
+	writeJSON(w, map[string]any{"data": list, "hosts": hosts})
+}
+
+func (s *Server) createPostgres(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	if len(s.reg.ListPostgres(id.Tenant)) >= 500 {
+		writeErr(w, http.StatusBadRequest, "too many PostgreSQL servers are set up here (max 500)")
+		return
+	}
+	var in postgresIn
+	if !readJSON(w, r, &in) {
+		return
+	}
+	rec, err := s.reg.CreatePostgres(id.Tenant, in.reg())
+	if err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "postgres.add", rec.ID, rec.Name)
+	writeJSON(w, rec.Out())
+}
+
+func (s *Server) updatePostgres(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	var in postgresIn
+	if !readJSON(w, r, &in) {
+		return
+	}
+	rec, err := s.reg.UpdatePostgres(id.Tenant, r.PathValue("id"), in.reg())
+	if err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "postgres.change", rec.ID, rec.Name)
+	writeJSON(w, rec.Out())
+}
+
+func (s *Server) deletePostgres(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	if err := s.reg.DeletePostgres(id.Tenant, r.PathValue("id")); err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "postgres.remove", r.PathValue("id"), "")
 	writeJSON(w, map[string]bool{"ok": true})
 }

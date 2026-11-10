@@ -25,6 +25,7 @@ const (
 	collServicesHidden = "services_hidden" // rows the user took off the Home list; they come back if they report again
 	collInst           = "instances"
 	collRedis          = "redis"          // Redis servers that have a password or an address set here
+	collPostgres       = "postgres"       // PostgreSQL servers that have a login or an address set here
 	collUpd            = "agent_updates"  // updates that someone asked for in the UI, per host
 	collGone           = "instances_gone" // instances that were removed, so that their last metrics do not bring them back
 )
@@ -131,6 +132,7 @@ type AgentConfig struct {
 	WatchServices []string        `json:"watch_services"`
 	Instances     []AgentInstance `json:"instances"`
 	Redis         []AgentRedis    `json:"redis"`
+	Postgres      []AgentPostgres `json:"postgres"`
 	UpdateTo      string          `json:"update_to,omitempty"` // set by the server when an update was asked for; not part of the revision
 }
 
@@ -387,7 +389,7 @@ func (s *Service) DeleteInstance(tenant, id string) error {
 // agent only restarts its collectors when something actually changed.
 func (s *Service) AgentConfig(tenant, host string) (AgentConfig, error) {
 	h := s.GetHost(tenant, host)
-	cfg := AgentConfig{LogPaths: h.LogPaths, DockerLogs: h.DockerLogs, Systemd: h.Systemd, Containers: h.Containers, WatchServices: h.WatchServices, Instances: []AgentInstance{}, Redis: []AgentRedis{}}
+	cfg := AgentConfig{LogPaths: h.LogPaths, DockerLogs: h.DockerLogs, Systemd: h.Systemd, Containers: h.Containers, WatchServices: h.WatchServices, Instances: []AgentInstance{}, Redis: []AgentRedis{}, Postgres: []AgentPostgres{}}
 	for _, i := range s.ListInstances(tenant) {
 		if i.Host != host {
 			continue
@@ -408,6 +410,16 @@ func (s *Service) AgentConfig(tenant, host string) (AgentConfig, error) {
 			pw = ""
 		}
 		cfg.Redis = append(cfg.Redis, AgentRedis{Name: r.Name, Container: r.Container, Addr: r.Addr, Username: r.Username, Password: pw})
+	}
+	for _, r := range s.ListPostgres(tenant) {
+		if r.Host != host {
+			continue
+		}
+		pw, err := s.box.Open(r.PasswordEnc)
+		if err != nil {
+			pw = ""
+		}
+		cfg.Postgres = append(cfg.Postgres, AgentPostgres{Name: r.Name, Container: r.Container, Addr: r.Addr, Username: r.Username, Password: pw, Database: r.Database, SSLMode: r.SSLMode})
 	}
 	b, _ := json.Marshal(cfg)
 	sum := sha256.Sum256(b)

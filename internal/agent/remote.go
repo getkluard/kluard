@@ -31,6 +31,7 @@ type RemoteConfig struct {
 	WatchServices []string         `json:"watch_services"`
 	Instances     []RemoteInstance `json:"instances"`
 	Redis         []RedisTarget    `json:"redis"`
+	Postgres      []PostgresTarget `json:"postgres"`
 	UpdateTo      string           `json:"update_to,omitempty"` // set when someone asked in the UI for this agent to be updated
 }
 
@@ -113,5 +114,7 @@ func (c Config) Merge(r RemoteConfig) Config {
 	out.WatchServices = r.WatchServices
 	out.Redis = append([]RedisTarget(nil), c.Redis...)
 	out.Redis = append(out.Redis, r.Redis...)
+	out.Postgres = append([]PostgresTarget(nil), c.Postgres...)
+	out.Postgres = append(out.Postgres, r.Postgres...)
 	return out
 }

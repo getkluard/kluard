@@ -6,6 +6,7 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 ## [Unreleased]
 
 ### Added
+- **PostgreSQL monitoring.** The agent finds PostgreSQL in Docker by itself (or by address) and reads connections, longest transaction, locks, replication lag and per-database size, commits, rollbacks, deadlocks and cache hit ratio over the PostgreSQL protocol, with trust, password, MD5 and SCRAM-SHA-256 login and optional TLS. A login is set with **Set login** on the new PostgreSQL page and stored encrypted. New metrics `postgres_*`, dashboard template *PostgreSQL*, alert pack *PostgreSQL* (down, connections almost used up, long transaction, replica behind). The agent needs updating.
 - **Starter packs of alerts, one button each.** *Alerts, Rules, Starter rules* now starts with packs for Linux and Windows machines, Docker, Redis and Nextcloud. A pack adds the rules you do not have yet and never makes a second copy (`GET /api/v1/alerts/packs`, `POST /api/v1/alerts/packs/{id}`). New starter rule: *Redis cannot save to disk*.
 - **Kluard suggests the packs that fit.** The Hosts page shows "Standard alerts are ready" when your agents report Docker containers, a Redis or a Nextcloud that has no alerts yet, with a *Turn on alerts* button and *Not now* (`GET /api/v1/alerts/suggestions`).
 - **Dashboard templates Docker host and Redis.** Container state and traffic with the machine's CPU, memory and disk; Redis memory, clients, keys, hit rate, evictions and refused connections, with tiles that turn yellow and red.

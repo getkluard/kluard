@@ -57,6 +57,7 @@ var mappings = map[string]string{
 	"hosts":           `{"dynamic":false,"properties":{"tenant":{"type":"keyword"},"host":{"type":"keyword"},"updated":{"type":"date"}}}`,
 	"instances":       `{"dynamic":false,"properties":{"id":{"type":"keyword"},"tenant":{"type":"keyword"},"name":{"type":"keyword"},"host":{"type":"keyword"},"updated":{"type":"date"}}}`,
 	"redis":           `{"dynamic":false,"properties":{"id":{"type":"keyword"},"tenant":{"type":"keyword"},"name":{"type":"keyword"},"host":{"type":"keyword"},"updated":{"type":"date"}}}`,
+	"postgres":        `{"dynamic":false,"properties":{"id":{"type":"keyword"},"tenant":{"type":"keyword"},"name":{"type":"keyword"},"host":{"type":"keyword"},"updated":{"type":"date"}}}`,
 	"instances_gone":  `{"dynamic":false,"properties":{"tenant":{"type":"keyword"},"key":{"type":"keyword"},"at":{"type":"date"}}}`,
 	"services_hidden": `{"dynamic":false,"properties":{"tenant":{"type":"keyword"},"name":{"type":"keyword"}}}`,
 	"agent_updates":   `{"dynamic":false,"properties":{"tenant":{"type":"keyword"},"host":{"type":"keyword"},"at":{"type":"date"}}}`,

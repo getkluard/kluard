@@ -39,7 +39,7 @@ Kluard is an open-source, self-hosted observability platform. It collects OpenTe
 
 | | |
 |---|---|
-| **Dashboards you build** | Line, area, stacked bar, single value, table, log and trace panels. Pick metric, aggregation, *split by* label, label filters, unit and size; drag to reorder; live preview. Starter dashboards: **Hosts**, **Nextcloud**, **Nextcloud health**, **Docker host**, **Redis**, **Services (traces)**, **Logs**. |
+| **Dashboards you build** | Line, area, stacked bar, single value, table, log and trace panels. Pick metric, aggregation, *split by* label, label filters, unit and size; drag to reorder; live preview. Starter dashboards: **Hosts**, **Nextcloud**, **Nextcloud health**, **Docker host**, **Redis**, **PostgreSQL**, **Services (traces)**, **Logs**. |
 | **Up / Down at a glance** | Boxes for Nextcloud instances, hosts, systemd services and Docker containers. A *Down* box shows a green **0** when all is well and turns red, with names and reasons, when something is not. |
 | **Alerts that reach people** | Rules on metrics, up/down status and log counts; notifications by **email, webhook, Slack, Teams**, and in Enterprise **Jira, ServiceNow, PagerDuty, Opsgenie**. Grouping, retries, acknowledge, silences, a replay of the last 24 hours before you save a rule. |
 | **Hosts & Instances pages** | See every machine and Nextcloud instance. Rename hosts, remove old ones, add log paths, choose watched services, fix a mistyped Nextcloud URL, **all in the browser**: agents pick up the change within a minute. |
@@ -221,6 +221,24 @@ Kluard checks Redis (also Valkey and KeyDB) that runs in Docker, with or without
 - **What is reported:** `redis_up`, `redis_auth_required`, memory used, `maxmemory` and `redis_memory_utilization` (only when a limit is set), clients, keys, uptime, hits and misses, evicted keys, commands, rejected connections, replicas, role and whether the last background save succeeded. The Redis page shows the main ones; all of them can be used on dashboards and in alert rules. Starter rules: **Redis down** and **Redis memory almost full**.
 - The agent only sends `AUTH` and `INFO`. It never reads or changes data.
 
+## PostgreSQL monitoring
+
+Kluard checks PostgreSQL that runs in Docker, any number per machine and across machines. The agent speaks the PostgreSQL protocol itself (no exporter, no extra software); it only reads statistics views.
+
+- **Found by itself.** The agent looks at the running containers on its machine (install it with Docker access). A container whose image is `postgres`, `postgis`, `timescaledb`, `bitnami/postgresql`, `supabase/postgres` or similar is checked; exporters, pgadmin and pgbouncer are skipped. Put the label `kluard.postgres=false` on a container to leave it out, or `kluard.postgres.port=<port>` if it listens on another port than 5432.
+- **Login.** Create a read-only user once:
+
+  ```sql
+  CREATE USER kluard WITH PASSWORD 'choose-a-password';
+  GRANT pg_monitor TO kluard;
+  ```
+
+  `pg_monitor` (PostgreSQL 10+) only allows reading statistics, nothing else. If the server allows the connection without a password it shows up as working straight away; otherwise it is shown as **PASSWORD**: press **Set login** on the row and enter the user and password. The password is stored encrypted on the server and sent only to the agent on that machine, never back to the browser. If the connection is refused, check `pg_hba.conf` allows the agent's address for that user.
+- **TLS.** `prefer` (default) uses TLS when the server offers it, `require` insists, `disable` never. Certificates are not verified, since only statistics are sent.
+- **Not in Docker, or not found:** **+ Add PostgreSQL** with the machine that should connect and `host:port`.
+- **Many agents or one shared password:** `KLUARD_AGENT_POSTGRES_PASSWORD` on an agent is tried on every PostgreSQL that has no password of its own.
+- **What is reported:** `postgres_up`, `postgres_auth_required`, connections (total, active, idle in transaction, max and `postgres_connection_utilization`), longest open transaction, waiting locks, uptime, replication lag (on a standby), number of replicas (on a primary), and per database the size, commits, rollbacks, deadlocks, temporary file bytes and cache hit ratio. Starter rules: **PostgreSQL down**, **connections almost used up**, **transaction open for too long** and **replica is behind** (pack *PostgreSQL*, one button under *Alerts, Rules, Starter rules*).
+
 ## What the agent reports about a host
 
 Reported every collection interval (15 s by default); rates are calculated by the agent from the difference between two samples. Linux agents report everything below; Windows agents report CPU, memory and disk usage.
@@ -277,7 +295,7 @@ Kluard can tell people when something is wrong. **Alerts** in the menu has five 
 **Set it up in three steps**
 
 1. **Channels, then Add channel.** Choose where messages go (email, webhook, Slack, Teams; Enterprise adds Jira, ServiceNow, PagerDuty and Opsgenie), fill in the form, save, and press **Test**. Secrets (passwords, tokens, webhook URLs) are encrypted and never shown again.
-2. **Rules, then Starter rules.** At the top are **starter packs**: one button turns on the usual alerts for a kind of service (Linux and Windows machines, Docker, Redis, Nextcloud). Rules you already have are left alone and every rule can be edited or switched off afterwards. The Hosts page also offers a pack by itself when your agents report that service ("Docker found: turn on alerts?"); *Not now* hides the offer. Below the packs you can add single ready-made rules, for example (host down, Nextcloud instance down, service failed, container down, disk almost full, high CPU, slow Nextcloud, many errors in the logs), or **+ Add rule** to make your own.
+2. **Rules, then Starter rules.** At the top are **starter packs**: one button turns on the usual alerts for a kind of service (Linux and Windows machines, Docker, Redis, PostgreSQL, Nextcloud). Rules you already have are left alone and every rule can be edited or switched off afterwards. The Hosts page also offers a pack by itself when your agents report that service ("Docker found: turn on alerts?"); *Not now* hides the offer. Below the packs you can add single ready-made rules, for example (host down, Nextcloud instance down, service failed, container down, disk almost full, high CPU, slow Nextcloud, many errors in the logs), or **+ Add rule** to make your own.
 3. Done. When a rule's condition holds for long enough, an alert fires and every channel that wants it is told.
 
 **Rules** can be of three kinds: a **metric** (for example the highest disk use over 5 minutes above 90 percent, one alert per mount point), the **up/down status** of hosts, services, containers or Nextcloud instances, or the **number of log lines** (for example more than 20 errors in 5 minutes). A rule has an importance (critical, warning, info), a time the condition must last before it fires, how often to check, what to do when there is no data, a message and extra labels. **Preview on the last 24 hours** replays a metric or log rule over history and shows when it would have fired, so you can choose a threshold before you save.
