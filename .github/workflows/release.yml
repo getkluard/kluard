@@ -43,4 +43,11 @@ jobs:
         with:
           files: dist/*
           generate_release_notes: true
+          body: |
+            ## Which file do I download?
+
+            - **Server and agents together: `kluard-server-linux-amd64.tar.gz`** (or `-arm64`). It holds the server and the Linux and Windows agents that *Add a machine* hands out to new machines. Unpack it and start `kluard` with `KLUARD_DIST_DIR` pointing at its `dist/` folder (see the README, "Server from a release file").
+            - **With Docker:** use the source and `./install.sh`; it builds the server and the agents for you.
+            - **Only an agent, on one machine:** `kluard-agent-linux-*` or `kluard-agent-windows-*`. Normally you use the install command under *Add a machine* instead.
+            - `kluard-linux-*` is the server alone, without agents. Check any file against `SHA256SUMS`.
           prerelease: true

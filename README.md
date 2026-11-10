@@ -94,6 +94,8 @@ Telemetry lives in **ClickHouse**. Small, frequently changing records (users, gr
 
 ## Quick start
 
+> **Download from a release instead of the source?** Take **`kluard-server-linux-amd64.tar.gz`** (or `-arm64`): it holds the server *and* the agents. See [Server from a release file](#server-from-a-release-file-without-docker).
+
 ```bash
 git clone https://github.com/getkluard/kluard.git
 cd kluard
