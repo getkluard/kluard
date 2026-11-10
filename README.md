@@ -312,6 +312,14 @@ The address needs no login: the long random id in it is the secret, so keep it o
 - **What is reported:** `web_up`, `web_response_seconds`, `web_status_code` and, for https, `web_tls_expiry_seconds` and `web_tls_valid`. Redirects are followed (at most 5) and a check gives up after 15 seconds.
 - **Starter rules (pack *Websites*):** **Website down**, **Website is slow** (over 5 seconds) and **Website certificate expires soon** (under 14 days). The dashboard template *Websites* shows them.
 
+## Status pages for customers
+
+A status page is a public address that tells a customer whether their service works, without a login. Open **Status pages**, choose **Add status page**, tick the Nextcloud instances and website checks the customer should see, and give each the name the customer knows it by. Copy the link and send it.
+
+The page shows only those names and "Operational" or "Down", with a banner on top (everything works, some services have problems, services are down). It never shows addresses, machine names or error texts. It refreshes by itself every minute and follows the browser's light or dark setting. `/status/<id>/json` gives the same facts for use on your own website.
+
+The id in the address is long and random and is the only protection: anyone who has the link can read the page, so send it to the people who should see it. **Remove** stops the address at once. Set `KLUARD_PUBLIC_URL` so that the link shown in Kluard is the full address.
+
 ## What the agent reports about a host
 
 Reported every collection interval (15 s by default); rates are calculated by the agent from the difference between two samples. Linux agents report everything below; Windows agents report CPU, memory and disk usage.

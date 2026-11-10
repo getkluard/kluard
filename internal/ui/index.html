@@ -576,7 +576,7 @@ const ICON={home:'<path d="M3 11l9-8 9 8M5 10v10h14V10"/>',dash:'<rect x="3" y="
  audit:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',cog:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>'};
 // each entry: href, label, icon, who may see it (hidden pages are also refused by the server)
 const NAV=[['#/','Home','home',()=>true],['#/dashboards','Dashboards','dash',()=>can('dashboards')],['#/traces','Traces','trace',()=>can('traces')],['#/logs','Logs','logs',()=>can('logs')],['#/metrics','Metrics','metric',()=>can('metrics')],
- ['#/hosts','Hosts','host',()=>can('hosts')],['#/instances','Instances','cloud',()=>can('hosts')],['#/redis','Redis','db',()=>can('hosts')],['#/postgres','PostgreSQL','db',()=>can('hosts')],['#/minio','MinIO','db',()=>can('hosts')],['#/mysql','MySQL','db',()=>can('hosts')],['#/nginx','nginx','db',()=>can('hosts')],['#/web','Websites','cloud',()=>can('hosts')],['#/heartbeats','Heartbeats','bell',()=>can('hosts')],['#/alerts','Alerts','bell',()=>can('alerts')],['#/billing','Billing','billing',()=>can('billing')],['#/tenants','Tenants','building',()=>can('operator')],['#/machines','Add a machine','machine',()=>can('keys')||can('hosts',true)],
+ ['#/hosts','Hosts','host',()=>can('hosts')],['#/instances','Instances','cloud',()=>can('hosts')],['#/redis','Redis','db',()=>can('hosts')],['#/postgres','PostgreSQL','db',()=>can('hosts')],['#/minio','MinIO','db',()=>can('hosts')],['#/mysql','MySQL','db',()=>can('hosts')],['#/nginx','nginx','db',()=>can('hosts')],['#/web','Websites','cloud',()=>can('hosts')],['#/heartbeats','Heartbeats','bell',()=>can('hosts')],['#/statuspages','Status pages','cloud',()=>can('hosts')],['#/alerts','Alerts','bell',()=>can('alerts')],['#/billing','Billing','billing',()=>can('billing')],['#/tenants','Tenants','building',()=>can('operator')],['#/machines','Add a machine','machine',()=>can('keys')||can('hosts',true)],
  ['#/users','Users & groups','users',()=>can('users')],['#/backups','Backups & archive','archive',()=>can('backups')],['#/audit','Audit log','audit',()=>can('settings')],['#/settings','Settings','cog',()=>can('settings')],['#/account','Account','user',()=>true]];
 const iconEl=k=>{const s=svg('svg',{viewBox:'0 0 24 24'});s.innerHTML=ICON[k];return s};
 function setTitle(t){const h=$('#top h1');if(h)h.textContent=t;document.title=t+' · '+((S.brand&&S.brand.name)?S.brand.name+' · ':'')+'Kluard'}
@@ -654,7 +654,7 @@ function shell(){
 
 // ---- router ----
 const ROUTES=[[/^#\/$/,homePage],[/^#\/dashboards$/,dashboardsPage,'dashboards'],[/^#\/d\/([\w-]+)$/,dashboardPage,'dashboards'],[/^#\/traces$/,tracesPage,'traces'],[/^#\/t\/([\w-]+)$/,tracePage,'traces'],[/^#\/logs$/,logsPage,'logs'],[/^#\/metrics$/,metricsPage,'metrics'],
- [/^#\/hosts$/,hostsPage,'hosts'],[/^#\/h\/([^\/?]+)$/,hostPage,'hosts'],[/^#\/instances$/,instancesPage,'hosts'],[/^#\/redis$/,redisPage,'hosts'],[/^#\/postgres$/,postgresPage,'hosts'],[/^#\/minio$/,minioPage,'hosts'],[/^#\/mysql$/,mysqlPage,'hosts'],[/^#\/nginx$/,nginxPage,'hosts'],[/^#\/web$/,webPage,'hosts'],[/^#\/heartbeats$/,heartbeatsPage,'hosts'],[/^#\/alerts(?:\/(rules|channels|silences|history))?$/,alertsPage,'alerts'],[/^#\/tenants(?:\/(usage|audit))?$/,tenantsPage,'operator'],[/^#\/tenant\/([^\/?]+)$/,tenantPage,'operator'],[/^#\/n\/([^\/?]+)$/,instancePage,'hosts'],[/^#\/users$/,usersPage,'users'],[/^#\/backups$/,backupsPage,'backups'],[/^#\/settings$/,settingsPage,'settings'],[/^#\/audit$/,auditPage,'settings'],[/^#\/billing(?:\/(prices))?$/,billingPage,'billing'],[/^#\/machines$/,machinesPage],[/^#\/account$/,accountPage]];
+ [/^#\/hosts$/,hostsPage,'hosts'],[/^#\/h\/([^\/?]+)$/,hostPage,'hosts'],[/^#\/instances$/,instancesPage,'hosts'],[/^#\/redis$/,redisPage,'hosts'],[/^#\/postgres$/,postgresPage,'hosts'],[/^#\/minio$/,minioPage,'hosts'],[/^#\/mysql$/,mysqlPage,'hosts'],[/^#\/nginx$/,nginxPage,'hosts'],[/^#\/web$/,webPage,'hosts'],[/^#\/heartbeats$/,heartbeatsPage,'hosts'],[/^#\/statuspages$/,statusPagesPage,'hosts'],[/^#\/alerts(?:\/(rules|channels|silences|history))?$/,alertsPage,'alerts'],[/^#\/tenants(?:\/(usage|audit))?$/,tenantsPage,'operator'],[/^#\/tenant\/([^\/?]+)$/,tenantPage,'operator'],[/^#\/n\/([^\/?]+)$/,instancePage,'hosts'],[/^#\/users$/,usersPage,'users'],[/^#\/backups$/,backupsPage,'backups'],[/^#\/settings$/,settingsPage,'settings'],[/^#\/audit$/,auditPage,'settings'],[/^#\/billing(?:\/(prices))?$/,billingPage,'billing'],[/^#\/machines$/,machinesPage],[/^#\/account$/,accountPage]];
 async function route(){
   if(S.me&&Date.now()-(S.alertAt||0)>30000){S.alertAt=Date.now();refreshAlertBadge()} // the menu's alert count, at most every 30 s
   if(!S.me)return;clearTimers();S.onRangeChange=null;
@@ -1287,111 +1287,6 @@ function postgresForm(x,hosts,done){
   dialog(edit?'Edit PostgreSQL':(x.container?'Login for '+x.name:'Add PostgreSQL'),body,[['Cancel',()=>{},'ghost'],['Save',async()=>{
     const b={name:f.name.value.trim(),host:f.host.value.trim(),container:f.cont.value.trim(),addr:f.addr.value.trim(),username:f.user.value.trim(),database:f.db.value.trim(),sslmode:f.ssl.value,password:f.pw.value,clear_password:cp.checked};
     await api(edit?'/api/v1/postgres/'+x.record_id:'/api/v1/postgres',{},{method:edit?'PUT':'POST',body:b});done()}]])}
-function hbEvery(s){return s%86400===0?(s/86400)+' day'+(s/86400===1?'':'s'):s%3600===0?(s/3600)+' hour'+(s/3600===1?'':'s'):Math.round(s/60)+' min'}
-function hbAddress(x){return x.url||(location.origin+x.path)}
-function webForm(x,hosts,done){
-  const edit=!!x.id,hl=hosts.slice();if(x.host&&!hl.includes(x.host))hl.push(x.host);
-  const f={name:el('input',{value:x.name||'',placeholder:'e.g. Company website',size:30,autocomplete:'off'}),
-    host:el('select',{},el('option',{value:''},'— choose a machine —'),hl.map(h=>el('option',{value:h},h))),
-    url:el('input',{value:x.url||'',placeholder:'https://example.com/',size:46,autocomplete:'off'}),
-    st:el('input',{type:'number',min:'100',max:'599',value:x.expect_status?String(x.expect_status):'',placeholder:'any below 400',style:'width:130px'}),
-    ct:el('input',{value:x.contains||'',placeholder:'optional text the page must contain',size:36,autocomplete:'off'})};
-  f.host.value=x.host||'';
-  const row=(l,...c)=>[el('label',{},l),el('div',{style:'display:flex;gap:8px;flex-wrap:wrap;align-items:center'},c)];
-  const body=el('div',{},el('div',{class:'form'},row('Address',f.url),row('Checked by',f.host),row('Name',f.name),row('Expected status',f.st),row('Page contains',f.ct)),
-    el('p',{class:'help'},'The agent on that machine fetches the address once a minute. Pick a machine that can reach it the way your visitors do. For https addresses Kluard also reads the certificate and shows the days it has left.'));
-  dialog(edit?'Edit website check':'Add website check',body,[['Cancel',()=>{},'ghost'],['Save',async()=>{
-    const b={name:f.name.value.trim(),host:f.host.value.trim(),url:f.url.value.trim(),expect_status:f.st.value===''?0:Number(f.st.value),contains:f.ct.value.trim()};
-    await api(edit?'/api/v1/web/'+x.id:'/api/v1/web',{},{method:edit?'PUT':'POST',body:b});done()}]])}
-async function webPage(){
-  setTitle('Websites');const view=$('#view'),w=can('hosts',true);
-  const r=await api('/api/v1/web'),list=r.data||[],hosts=r.hosts||[];
-  const badge=x=>el('span',{class:'badge '+(x.state==='up'?'up':x.state==='pending'?'pending':'down')},x.state==='up'?'UP':x.state==='pending'?'STARTING':'DOWN');
-  const del=async x=>{if(!confirm('Remove the check of '+x.name+'?'))return;try{await api('/api/v1/web/'+x.id,{},{method:'DELETE'});webPage()}catch(e){alert(e.message)}};
-  const act=x=>w?[el('button',{class:'btn ghost sm',onclick:()=>webForm(x,hosts,webPage)},'Edit'),' ',el('button',{class:'btn danger sm',onclick:()=>del(x)},'Remove')]:null;
-  const cert=x=>{if(x.cert_days==null)return el('span',{class:'mut'},'–');const d=Math.floor(x.cert_days);
-    return el('span',{class:(d<0||x.cert_ok===false)?'err':d<14?'err':'mut'},d<0?'expired':d+' days',x.cert_ok===false&&d>=0?' (not trusted)':'')};
-  view.replaceChildren(
-    el('div',{class:'bar'},el('span',{class:'mut'},'Websites and other web addresses that an agent fetches once a minute. Kluard shows whether they answer, how fast, and when their certificates run out.'),el('span',{class:'sp'}),w?el('button',{class:'btn',onclick:()=>webForm({},hosts,webPage)},'+ Add website'):null),
-    list.length?el('div',{class:'card',style:'padding:0;overflow-x:auto'},el('table',{},el('tr',{},['Status','Name','Address','Checked by','Answer','Time','Certificate','Last check','Problem',''].map(h=>el('th',{},h))),list.map(x=>el('tr',{},
-      el('td',{},badge(x)),el('td',{},x.name),el('td',{class:'mut'},x.url),el('td',{},hostLabel(x.host)),el('td',{class:'mono'},x.code==null?'–':String(Math.round(x.code))),
-      el('td',{class:'mono'},x.seconds==null?'–':x.seconds<1?Math.round(x.seconds*1000)+' ms':x.seconds.toFixed(1)+' s'),el('td',{},cert(x)),
-      el('td',{class:'mut'},x.last_seen?ago2(x.last_seen):'never'),el('td',{class:x.state==='up'?'mut':'err'},x.reason||''),el('td',{style:'white-space:nowrap'},act(x)))))):
-    el('div',{class:'card empty'},'No websites yet. Add the addresses you want to know about, such as your own site and your customers’ sites.'),
-    el('p',{class:'help'},'Alerts: turn on the Websites pack under Alerts, Rules, Starter rules. Dashboards: the Websites template. The agent needs to be version 0.1.2 or newer.'))}
-
-function heartbeatForm(x,done){
-  const edit=!!x.id;
-  const units=[['3600','hours'],['86400','days'],['60','minutes']];
-  let n=x.period?(x.period%86400===0?x.period/86400:x.period%3600===0?x.period/3600:Math.round(x.period/60)):1,u=x.period?(x.period%86400===0?'86400':x.period%3600===0?'3600':'60'):'86400';
-  const f={name:el('input',{value:x.name||'',placeholder:'e.g. Nightly backup',size:30,autocomplete:'off'}),
-    n:el('input',{type:'number',min:'1',value:String(n),style:'width:80px'}),u:el('select',{},units.map(([v,t])=>el('option',{value:v},t))),
-    grace:el('input',{type:'number',min:'0',value:x.grace!=null?String(Math.round(x.grace/60)):'',placeholder:'automatic',style:'width:100px'})};
-  f.u.value=u;
-  const row=(l,...c)=>[el('label',{},l),el('div',{style:'display:flex;gap:8px;flex-wrap:wrap;align-items:center'},c)];
-  const body=el('div',{},el('div',{class:'form'},row('Name',f.name),row('Runs every',f.n,f.u),row('Extra time (min)',f.grace)),
-    el('p',{class:'help'},'Kluard raises an alarm when the job has not called its address within that time plus the extra time. Leave the extra time empty and Kluard uses a tenth of the interval, at least 5 minutes.'));
-  dialog(edit?'Edit heartbeat':'Add heartbeat',body,[['Cancel',()=>{},'ghost'],['Save',async()=>{
-    const b={name:f.name.value.trim(),period:Math.round(Number(f.n.value)*Number(f.u.value)),grace:f.grace.value===''?0:Math.round(Number(f.grace.value)*60)};
-    await api(edit?'/api/v1/heartbeats/'+x.id:'/api/v1/heartbeats',{},{method:edit?'PUT':'POST',body:b});done()}]])}
-function heartbeatHow(x){
-  const a=hbAddress(x);
-  dialog('How to use '+x.name,el('div',{},
-    cmdBox('At the end of the job',"curl -fsS -m 10 --retry 3 -o /dev/null "+a,'Put this last in the backup script or the cron line (after the job worked). It needs no login. Anyone who has the address can call it, so keep it private.'),
-    cmdBox('Cron example',"0 3 * * * /usr/local/bin/backup.sh && curl -fsS -m 10 --retry 3 -o /dev/null "+a,'The && makes the call only when the backup succeeded.'),
-    cmdBox('When the job fails (optional)',"curl -fsS -m 10 --retry 3 -o /dev/null "+a+"/fail",'Raises the alarm at once instead of waiting for the time to run out.')),[['Close',()=>{},'ghost']])}
-async function heartbeatsPage(){
-  setTitle('Heartbeats');const view=$('#view'),w=can('hosts',true);
-  const r=await api('/api/v1/heartbeats'),list=r.data||[];
-  const badge=x=>el('span',{class:'badge '+(x.state==='up'?'up':x.state==='new'?'pending':'down')},{up:'ON TIME',new:'WAITING',late:'LATE',failed:'FAILED'}[x.state]||x.state);
-  const del=async x=>{if(!confirm('Remove '+x.name+'? The address stops working, and the job will get an error when it calls it.'))return;try{await api('/api/v1/heartbeats/'+x.id,{},{method:'DELETE'});heartbeatsPage()}catch(e){alert(e.message)}};
-  const act=x=>{const b=[el('button',{class:'btn ghost sm',onclick:()=>heartbeatHow(x)},'How to use')];
-    if(w)b.push(' ',el('button',{class:'btn ghost sm',onclick:()=>heartbeatForm(x,heartbeatsPage)},'Edit'),' ',el('button',{class:'btn danger sm',onclick:()=>del(x)},'Remove'));return b};
-  const needsNote=list.some(x=>x.state==='late'||x.state==='failed');
-  view.replaceChildren(
-    el('div',{class:'bar'},el('span',{class:'mut'},'Heartbeats watch jobs that run now and then, such as backups and cron jobs. The job calls an address when it is done, and Kluard raises an alarm when the call does not come.'),el('span',{class:'sp'}),w?el('button',{class:'btn',onclick:()=>heartbeatForm({},heartbeatsPage)},'+ Add heartbeat'):null),
-    needsNote?el('div',{class:'msg warn'},'A job has not reported in time, or said that it failed. Check that it ran.'):null,
-    list.length?el('div',{class:'card',style:'padding:0;overflow-x:auto'},el('table',{},el('tr',{},['Status','Name','Runs every','Last call','Calls',''].map(h=>el('th',{},h))),list.map(x=>el('tr',{},
-      el('td',{},badge(x)),el('td',{},x.name),el('td',{class:'mut'},hbEvery(x.period)),el('td',{class:'mut'},x.last_ping?ago2(x.last_ping):'never'),el('td',{class:'mono'},fmtNum(x.pings)),el('td',{style:'white-space:nowrap'},act(x)))))):
-    el('div',{class:'card empty'},'No heartbeats yet. Add one for each backup or cron job, and put one curl line at the end of the job.'),
-    el('p',{class:'help'},'Alerts: turn on the Backups and jobs pack under Alerts, Rules, Starter rules. All “heartbeat_*” metrics are under Metrics.'))}
-
-function nginxForm(x,hosts,done){
-  const edit=!!x.record_id,hl=hosts.slice();if(x.host&&!hl.includes(x.host))hl.push(x.host);
-  const f={name:el('input',{value:x.name||'',placeholder:'e.g. web proxy',size:24}),
-    host:el('select',{},el('option',{value:''},'— choose a machine —'),hl.map(h=>el('option',{value:h},h))),
-    cont:el('input',{value:x.container||'',placeholder:'Docker container name (if it runs in Docker)',size:34,autocomplete:'off'}),
-    url:el('input',{value:x.url||'',placeholder:'http://10.0.0.5:8080/nginx_status (only if it is not found by itself)',size:46,autocomplete:'off'})};
-  f.host.value=x.host||'';
-  const row=(l,...c)=>[el('label',{},l),el('div',{style:'display:flex;gap:8px;flex-wrap:wrap;align-items:center'},c)];
-  const body=el('div',{},el('div',{class:'form'},row('Checked by',f.host),row('Container',f.cont),row('Status page',f.url),row('Name',f.name)),
-    el('p',{class:'help'},'The agent reads nginx’s status page. Switch it on by adding this inside a server block and reloading nginx:'),
-    el('pre',{},el('code',{},'location = /nginx_status { stub_status; allow 127.0.0.1; allow 172.16.0.0/12; deny all; }')),
-    el('p',{class:'help'},'Allow the address the agent connects from. Use an https:// address for Kluard.'));
-  dialog(edit?'Edit nginx':(x.container?'Settings for '+x.name:'Add nginx'),body,[['Cancel',()=>{},'ghost'],['Save',async()=>{
-    const b={name:f.name.value.trim(),host:f.host.value.trim(),container:f.cont.value.trim(),url:f.url.value.trim()};
-    await api(edit?'/api/v1/nginx/'+x.record_id:'/api/v1/nginx',{},{method:edit?'PUT':'POST',body:b});done()}]])}
-async function nginxPage(){
-  setTitle('nginx');const view=$('#view'),w=can('hosts',true);
-  const r=await api('/api/v1/nginx'),list=r.data||[],hosts=r.hosts||[];
-  const badge=x=>el('span',{class:'badge '+(x.state==='up'?'up':x.state==='pending'?'pending':'down')},x.state==='up'?'UP':x.state==='setup'?'NO STATUS PAGE':x.state==='pending'?'STARTING':'DOWN');
-  const num=v=>v==null?'–':fmtNum(v);
-  const del=async x=>{if(!confirm('Remove the settings for '+x.name+'? The nginx itself is not touched, and is still found if it runs in Docker.'))return;try{await api('/api/v1/nginx/'+x.record_id,{},{method:'DELETE'});nginxPage()}catch(e){alert(e.message)}};
-  const act=x=>{if(!w)return null;const b=[];
-    if(x.record_id)b.push(el('button',{class:'btn ghost sm',onclick:()=>nginxForm({...x,record_id:x.record_id},hosts,nginxPage)},'Edit'),' ',el('button',{class:'btn danger sm',onclick:()=>del(x)},'Remove'));
-    else b.push(el('button',{class:'btn '+(x.state==='setup'?'':'ghost')+' sm',onclick:()=>nginxForm({name:x.name,host:x.host,container:x.container,url:x.url},hosts,nginxPage)},x.state==='setup'?'Set status page':'Settings'));
-    return b};
-  const needs=list.filter(x=>x.state==='setup');
-  view.replaceChildren(
-    el('div',{class:'bar'},el('span',{class:'mut'},'nginx servers. The agents find the ones that run in Docker by themselves; each needs its status page (stub_status) switched on.'),el('span',{class:'sp'}),w?el('button',{class:'btn',onclick:()=>nginxForm({},hosts,nginxPage)},'+ Add nginx'):null),
-    needs.length?el('div',{class:'msg info'},needs.length+(needs.length===1?' nginx has':' nginx have')+' no status page that Kluard can reach. Add this inside a server block, reload nginx, and it shows up within a minute:',el('pre',{},el('code',{},'location = /nginx_status { stub_status; allow 127.0.0.1; allow 172.16.0.0/12; deny all; }'))):null,
-    list.length?el('div',{class:'card',style:'padding:0;overflow-x:auto'},el('table',{},el('tr',{},['Status','Name','Machine','Version','Open connections','Reading','Writing','Waiting','Last report','Problem',''].map(h=>el('th',{},h))),list.map(x=>el('tr',{},
-      el('td',{},badge(x)),el('td',{},x.name,x.container&&x.container!==x.name?el('span',{class:'pill'},x.container):null),el('td',{},hostLabel(x.host)),
-      el('td',{class:'mut'},x.version||'–'),el('td',{class:'mono'},num(x.active)),el('td',{class:'mono'},num(x.reading)),el('td',{class:'mono'},num(x.writing)),el('td',{class:'mono'},num(x.waiting)),
-      el('td',{class:'mut'},x.last_seen?ago2(x.last_seen):'never'),el('td',{class:x.state==='up'?'mut':'err'},x.state==='up'?'':(x.state==='setup'?'status page is not switched on':(x.reason||''))),el('td',{style:'white-space:nowrap'},act(x)))))):
-    el('div',{class:'card empty'},'No nginx found yet. An agent on a machine where nginx runs in Docker finds it within a minute (the agent needs access to Docker). One that does not run in Docker is added with “Add nginx” and the address of its status page.'),
-    el('p',{class:'help'},'Alerts: turn on the nginx pack under Alerts, Rules, Starter rules. Dashboards: the nginx template. A server the agent finds cannot be removed here while its container runs; put the label kluard.nginx=false on the container to leave it out. If the status page is on another port or path, use the labels kluard.nginx.port and kluard.nginx.status.'))}
-
 async function postgresPage(){
   setTitle('PostgreSQL');const view=$('#view'),w=can('hosts',true);
   const r=await api('/api/v1/postgres'),list=r.data||[],hosts=r.hosts||[];
@@ -1499,6 +1394,35 @@ async function heartbeatsPage(){
       el('td',{},badge(x)),el('td',{},x.name),el('td',{class:'mut'},hbEvery(x.period)),el('td',{class:'mut'},x.last_ping?ago2(x.last_ping):'never'),el('td',{class:'mono'},fmtNum(x.pings)),el('td',{style:'white-space:nowrap'},act(x)))))):
     el('div',{class:'card empty'},'No heartbeats yet. Add one for each backup or cron job, and put one curl line at the end of the job.'),
     el('p',{class:'help'},'Alerts: turn on the Backups and jobs pack under Alerts, Rules, Starter rules. All “heartbeat_*” metrics are under Metrics.'))}
+
+function statusPageForm(x,choices,done){
+  const edit=!!x.id;
+  const opts=[...(choices.instances||[]).map(c=>({kind:'instance',ref:c.id,name:c.name,group:'Nextcloud'})),...(choices.web||[]).map(c=>({kind:'web',ref:c.id,name:c.name,group:'Website'}))];
+  const cur=new Map((x.items||[]).map(i=>[i.kind+'/'+i.ref,i.label]));
+  const f={title:el('input',{value:x.title||'',placeholder:'e.g. Acme cloud status',size:34,autocomplete:'off'}),
+    msg:el('input',{value:x.message||'',placeholder:'optional, e.g. Questions? Write to support@acme.com',size:44,autocomplete:'off'})};
+  const rows=opts.map(o=>{const k=o.kind+'/'+o.ref;
+    return {o,on:el('input',{type:'checkbox',checked:cur.has(k)}),label:el('input',{value:cur.get(k)||o.name,size:26,autocomplete:'off'})}});
+  const body=el('div',{},el('div',{class:'form'},el('label',{},'Title'),f.title,el('label',{},'Message'),f.msg),
+    el('p',{class:'help'},'Pick what customers should see, and the name they see for it. The page shows the name and whether it works, nothing else: no addresses, machines or error texts.'),
+    rows.length?el('div',{class:'card',style:'padding:0'},el('table',{},el('tr',{},['Show','Kind','Kluard name','Name on the page'].map(h=>el('th',{},h))),rows.map(r=>el('tr',{},el('td',{},r.on),el('td',{class:'mut'},r.o.group),el('td',{class:'mut'},r.o.name),el('td',{},r.label))))):
+      el('div',{class:'card empty'},'There is nothing to show yet. Add a Nextcloud instance or a website check first.'));
+  dialog(edit?'Edit status page':'Add status page',body,[['Cancel',()=>{},'ghost'],['Save',async()=>{
+    const b={title:f.title.value.trim(),message:f.msg.value.trim(),items:rows.filter(r=>r.on.checked).map(r=>({kind:r.o.kind,ref:r.o.ref,label:r.label.value.trim()}))};
+    await api(edit?'/api/v1/statuspages/'+x.id:'/api/v1/statuspages',{},{method:edit?'PUT':'POST',body:b});done()}]])}
+async function statusPagesPage(){
+  setTitle('Status pages');const view=$('#view'),w=can('hosts',true);
+  const r=await api('/api/v1/statuspages'),list=r.data||[];
+  const link=x=>x.url||(location.origin+x.path);
+  const del=async x=>{if(!confirm('Remove '+x.title+'? The address stops working for everyone who has it.'))return;try{await api('/api/v1/statuspages/'+x.id,{},{method:'DELETE'});statusPagesPage()}catch(e){alert(e.message)}};
+  const act=x=>{const b=[el('a',{class:'btn ghost sm',href:x.path,target:'_blank',rel:'noopener'},'Open'),' ',el('button',{class:'btn ghost sm',onclick:()=>copyText(link(x))},'Copy link')];
+    if(w)b.push(' ',el('button',{class:'btn ghost sm',onclick:()=>statusPageForm(x,r,statusPagesPage)},'Edit'),' ',el('button',{class:'btn danger sm',onclick:()=>del(x)},'Remove'));return b};
+  view.replaceChildren(
+    el('div',{class:'bar'},el('span',{class:'mut'},'A status page is a public address that shows your customers whether their service works. They need no login. Anyone who has the link can read it, so send it only to those who should see it.'),el('span',{class:'sp'}),w?el('button',{class:'btn',onclick:()=>statusPageForm({},r,statusPagesPage)},'+ Add status page'):null),
+    list.length?el('div',{class:'card',style:'padding:0;overflow-x:auto'},el('table',{},el('tr',{},['Title','Shows','Address',''].map(h=>el('th',{},h))),list.map(x=>el('tr',{},
+      el('td',{},x.title),el('td',{class:'mut'},(x.items||[]).length+' item'+((x.items||[]).length===1?'':'s')),el('td',{class:'mono mut'},link(x)),el('td',{style:'white-space:nowrap'},act(x)))))):
+    el('div',{class:'card empty'},'No status pages yet. Add one for a customer and pick which of their services it shows.'),
+    el('p',{class:'help'},'A machine-readable copy of each page is at the same address with /json added, for example to show the state on your own website.'))}
 
 function nginxForm(x,hosts,done){
   const edit=!!x.record_id,hl=hosts.slice();if(x.host&&!hl.includes(x.host))hl.push(x.host);

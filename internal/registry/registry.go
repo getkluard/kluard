@@ -27,6 +27,7 @@ const (
 	collRedis          = "redis"          // Redis servers that have a password or an address set here
 	collHeartbeat      = "heartbeats"     // addresses that jobs call when they have run
 	collWeb            = "web"            // addresses an agent checks
+	collStatusPage     = "statuspages"    // public pages that show customers whether their service is up
 	collNginx          = "nginx"          // nginx status pages set here
 	collMinio          = "minio"          // MinIO servers that have a token or an address set here
 	collMysql          = "mysql"          // MySQL and MariaDB servers that have a login or an address set here
