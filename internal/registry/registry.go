@@ -25,6 +25,7 @@ const (
 	collServicesHidden = "services_hidden" // rows the user took off the Home list; they come back if they report again
 	collInst           = "instances"
 	collRedis          = "redis"          // Redis servers that have a password or an address set here
+	collNginx          = "nginx"          // nginx status pages set here
 	collPostgres       = "postgres"       // PostgreSQL servers that have a login or an address set here
 	collUpd            = "agent_updates"  // updates that someone asked for in the UI, per host
 	collGone           = "instances_gone" // instances that were removed, so that their last metrics do not bring them back
@@ -133,6 +134,7 @@ type AgentConfig struct {
 	Instances     []AgentInstance `json:"instances"`
 	Redis         []AgentRedis    `json:"redis"`
 	Postgres      []AgentPostgres `json:"postgres"`
+	Nginx         []AgentNginx    `json:"nginx"`
 	UpdateTo      string          `json:"update_to,omitempty"` // set by the server when an update was asked for; not part of the revision
 }
 
@@ -389,7 +391,7 @@ func (s *Service) DeleteInstance(tenant, id string) error {
 // agent only restarts its collectors when something actually changed.
 func (s *Service) AgentConfig(tenant, host string) (AgentConfig, error) {
 	h := s.GetHost(tenant, host)
-	cfg := AgentConfig{LogPaths: h.LogPaths, DockerLogs: h.DockerLogs, Systemd: h.Systemd, Containers: h.Containers, WatchServices: h.WatchServices, Instances: []AgentInstance{}, Redis: []AgentRedis{}, Postgres: []AgentPostgres{}}
+	cfg := AgentConfig{LogPaths: h.LogPaths, DockerLogs: h.DockerLogs, Systemd: h.Systemd, Containers: h.Containers, WatchServices: h.WatchServices, Instances: []AgentInstance{}, Redis: []AgentRedis{}, Postgres: []AgentPostgres{}, Nginx: []AgentNginx{}}
 	for _, i := range s.ListInstances(tenant) {
 		if i.Host != host {
 			continue
@@ -420,6 +422,12 @@ func (s *Service) AgentConfig(tenant, host string) (AgentConfig, error) {
 			pw = ""
 		}
 		cfg.Postgres = append(cfg.Postgres, AgentPostgres{Name: r.Name, Container: r.Container, Addr: r.Addr, Username: r.Username, Password: pw, Database: r.Database, SSLMode: r.SSLMode})
+	}
+	for _, r := range s.ListNginx(tenant) {
+		if r.Host != host {
+			continue
+		}
+		cfg.Nginx = append(cfg.Nginx, AgentNginx{Name: r.Name, Container: r.Container, URL: r.URL})
 	}
 	b, _ := json.Marshal(cfg)
 	sum := sha256.Sum256(b)

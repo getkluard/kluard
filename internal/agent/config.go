@@ -47,6 +47,7 @@ type Config struct {
 	Redis            []RedisTarget     `json:"redis,omitempty"`             // passwords and addresses for Redis (from the Kluard UI); Redis in Docker is found by itself
 	RedisPassword    string            `json:"redis_password,omitempty"`    // one password to try on every Redis that has none of its own
 	Postgres         []PostgresTarget  `json:"postgres,omitempty"`          // logins and addresses for PostgreSQL (from the Kluard UI); PostgreSQL in Docker is found by itself
+	Nginx            []NginxTarget     `json:"nginx,omitempty"`             // status pages for nginx (from the Kluard UI); nginx in Docker is found by itself
 	PostgresPassword string            `json:"postgres_password,omitempty"` // one password to try on every PostgreSQL that has none of its own
 	Containers       *bool             `json:"containers"`                  // report Docker containers (default true)
 	WatchServices    []string          `json:"watch_services"`              // services that must be running

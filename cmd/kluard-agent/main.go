@@ -204,6 +204,14 @@ func start(ctx context.Context, wg *sync.WaitGroup, cfg agent.Config, snd *agent
 					}
 					add(pts)
 				}
+				if cfg.ContainersOn() || len(cfg.Nginx) > 0 {
+					pts, err := agent.CollectNginx(ctx, "", cfg.Nginx, now)
+					warn("nginx", err)
+					for i := range pts {
+						pts[i].Service = cfg.HostService
+					}
+					add(pts)
+				}
 				if cfg.ContainersOn() || len(cfg.Postgres) > 0 {
 					pts, err := agent.CollectPostgres(ctx, "", cfg.Postgres, cfg.PostgresPassword, now)
 					warn("postgres", err)

@@ -42,3 +42,28 @@ func TestPostgresGhostAndMerge(t *testing.T) {
 		t.Log("old row merged away")
 	}
 }
+
+func TestNginxList(t *testing.T) {
+	now := time.Now()
+	rows := []model.Latest{
+		pgRow("nginx_up", 1, now, map[string]string{"host": "h1", "nginx": "web"}),
+		pgRow("nginx_connections_active", 4, now, map[string]string{"host": "h1", "nginx": "web"}),
+		pgRow("nginx_info", 1, now, map[string]string{"host": "h1", "nginx": "web", "container": "web", "version": "nginx/1.27.0"}),
+		pgRow("nginx_up", 0, now, map[string]string{"host": "h1", "nginx": "bare"}),
+		pgRow("nginx_status_missing", 1, now, map[string]string{"host": "h1", "nginx": "bare"}),
+		pgRow("nginx_up", 0, now.Add(-time.Hour), map[string]string{"host": "h2", "nginx": "gone"}),
+	}
+	got := map[string]Nginx{}
+	for _, x := range NginxList(now, rows, []registry.Nginx{{ID: "ng1", Host: "h1", Name: "web", Container: "web"}}) {
+		got[x.Name] = x
+	}
+	if _, ok := got["gone"]; ok {
+		t.Fatal("a long-gone nginx must drop out")
+	}
+	if x := got["web"]; x.State != "up" || x.RecordID != "ng1" || x.Active == nil || *x.Active != 4 || x.Version != "nginx/1.27.0" {
+		t.Fatalf("%+v", x)
+	}
+	if x := got["bare"]; x.State != "setup" || x.Active != nil || x.Reason == "" {
+		t.Fatalf("%+v", x)
+	}
+}

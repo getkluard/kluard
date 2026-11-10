@@ -32,6 +32,7 @@ type RemoteConfig struct {
 	Instances     []RemoteInstance `json:"instances"`
 	Redis         []RedisTarget    `json:"redis"`
 	Postgres      []PostgresTarget `json:"postgres"`
+	Nginx         []NginxTarget    `json:"nginx"`
 	UpdateTo      string           `json:"update_to,omitempty"` // set when someone asked in the UI for this agent to be updated
 }
 
@@ -116,5 +117,7 @@ func (c Config) Merge(r RemoteConfig) Config {
 	out.Redis = append(out.Redis, r.Redis...)
 	out.Postgres = append([]PostgresTarget(nil), c.Postgres...)
 	out.Postgres = append(out.Postgres, r.Postgres...)
+	out.Nginx = append([]NginxTarget(nil), c.Nginx...)
+	out.Nginx = append(out.Nginx, r.Nginx...)
 	return out
 }

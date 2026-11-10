@@ -13,7 +13,7 @@ import (
 
 // Metric names the status view needs.
 var Names = []string{"kluard_agent_info", "kluard_agent_log_paths_rejected", "lumen_agent_info", "lumen_agent_log_paths_rejected", "nextcloud_up", "nextcloud_info", "nextcloud_users", "system_service_up", "container_up",
-	"postgres_up", "postgres_auth_required", "postgres_info", "postgres_connections", "postgres_connections_max", "postgres_connections_active", "postgres_longest_transaction_seconds", "postgres_locks_waiting", "postgres_replication_lag_seconds", "postgres_uptime_seconds", "postgres_database_size_bytes",
+	"nginx_up", "nginx_status_missing", "nginx_info", "nginx_connections_active", "nginx_connections_reading", "nginx_connections_writing", "nginx_connections_waiting", "nginx_connections_accepted_total", "nginx_connections_handled_total", "nginx_http_requests_total", "postgres_up", "postgres_auth_required", "postgres_info", "postgres_connections", "postgres_connections_max", "postgres_connections_active", "postgres_longest_transaction_seconds", "postgres_locks_waiting", "postgres_replication_lag_seconds", "postgres_uptime_seconds", "postgres_database_size_bytes",
 	"redis_up", "redis_auth_required", "redis_info", "redis_memory_used_bytes", "redis_memory_max_bytes", "redis_clients", "redis_evicted_keys_total", "redis_keyspace_hits_total", "redis_keyspace_misses_total", "redis_uptime_seconds", "redis_keys", "redis_master", "redis_save_ok",
 	"nextcloud_cron_age_seconds", "nextcloud_update_available", "nextcloud_webdav_ok", "nextcloud_tls_cert_expiry_seconds", "nextcloud_tls_cert_valid"}
 
@@ -101,6 +101,7 @@ type Summary struct {
 	Instances  []Instance `json:"instances"`
 	Redis      []Redis    `json:"redis"`
 	Postgres   []Postgres `json:"postgres"`
+	Nginx      []Nginx    `json:"nginx"`
 	Down       []Item     `json:"down"` // services and containers that are down, for the "what is broken" list
 }
 

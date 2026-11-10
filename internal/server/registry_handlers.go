@@ -51,6 +51,7 @@ func (s *Server) snapshot(ctx context.Context, tenant string) (snapshot, error) 
 	sn := snapshot{at: now, rows: rows, sum: status.ComputeWith(now, rows, s.reg.ListHosts(tenant), s.reg.ListInstances(tenant), s.reg.GoneInstances(tenant))}
 	sn.sum.Redis = status.RedisList(now, rows, s.reg.ListRedis(tenant))
 	sn.sum.Postgres = status.PostgresList(now, rows, s.reg.ListPostgres(tenant))
+	sn.sum.Nginx = status.NginxList(now, rows, s.reg.ListNginx(tenant))
 	s.snaps.mu.Lock()
 	if s.snaps.m == nil {
 		s.snaps.m = map[string]snapshot{}
@@ -88,6 +89,10 @@ func (s *Server) regRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /api/v1/redis", s.need(perm.Hosts, true, s.createRedis))
 	mux.Handle("PUT /api/v1/redis/{id}", s.need(perm.Hosts, true, s.updateRedis))
 	mux.Handle("DELETE /api/v1/redis/{id}", s.need(perm.Hosts, true, s.deleteRedis))
+	mux.Handle("GET /api/v1/nginx", s.need(perm.Hosts, false, s.listNginx))
+	mux.Handle("POST /api/v1/nginx", s.need(perm.Hosts, true, s.createNginx))
+	mux.Handle("PUT /api/v1/nginx/{id}", s.need(perm.Hosts, true, s.updateNginx))
+	mux.Handle("DELETE /api/v1/nginx/{id}", s.need(perm.Hosts, true, s.deleteNginx))
 	mux.Handle("GET /api/v1/postgres", s.need(perm.Hosts, false, s.listPostgres))
 	mux.Handle("POST /api/v1/postgres", s.need(perm.Hosts, true, s.createPostgres))
 	mux.Handle("PUT /api/v1/postgres/{id}", s.need(perm.Hosts, true, s.updatePostgres))
@@ -617,5 +622,79 @@ func (s *Server) deletePostgres(w http.ResponseWriter, r *http.Request, id editi
 	}
 	s.forget(id.Tenant)
 	s.auditOp(id, id.Tenant, "postgres.remove", r.PathValue("id"), "")
+	writeJSON(w, map[string]bool{"ok": true})
+}
+
+// ---- nginx: status page addresses (the agent finds nginx in Docker by itself) ----
+
+type nginxIn struct {
+	Name      string `json:"name"`
+	Host      string `json:"host"`
+	Container string `json:"container"`
+	URL       string `json:"url"`
+}
+
+func (in nginxIn) reg() registry.NginxIn {
+	return registry.NginxIn{Name: in.Name, Host: in.Host, Container: in.Container, URL: in.URL}
+}
+
+func (s *Server) listNginx(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	sn, err := s.snapshot(r.Context(), id.Tenant)
+	if err != nil {
+		writeErr(w, http.StatusServiceUnavailable, "cannot check the status right now: "+err.Error())
+		return
+	}
+	list := sn.sum.Nginx
+	if list == nil {
+		list = []status.Nginx{}
+	}
+	hosts := []string{}
+	for _, h := range allAgents(sn.sum) {
+		hosts = append(hosts, h.Name)
+	}
+	writeJSON(w, map[string]any{"data": list, "hosts": hosts})
+}
+
+func (s *Server) createNginx(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	if len(s.reg.ListNginx(id.Tenant)) >= 500 {
+		writeErr(w, http.StatusBadRequest, "too many nginx servers are set up here (max 500)")
+		return
+	}
+	var in nginxIn
+	if !readJSON(w, r, &in) {
+		return
+	}
+	rec, err := s.reg.CreateNginx(id.Tenant, in.reg())
+	if err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "nginx.add", rec.ID, rec.Name)
+	writeJSON(w, rec)
+}
+
+func (s *Server) updateNginx(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	var in nginxIn
+	if !readJSON(w, r, &in) {
+		return
+	}
+	rec, err := s.reg.UpdateNginx(id.Tenant, r.PathValue("id"), in.reg())
+	if err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "nginx.change", rec.ID, rec.Name)
+	writeJSON(w, rec)
+}
+
+func (s *Server) deleteNginx(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	if err := s.reg.DeleteNginx(id.Tenant, r.PathValue("id")); err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "nginx.remove", r.PathValue("id"), "")
 	writeJSON(w, map[string]bool{"ok": true})
 }

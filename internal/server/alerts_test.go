@@ -513,7 +513,7 @@ func TestAlertSuggestionsFollowWhatAgentsReport(t *testing.T) {
 	}
 	fs.metricNames = []string{"system.cpu.utilization", "container_up", "redis_up"}
 	got := list()
-	if got["postgres"] != 0 || got["docker"] != 3 || got["redis"] != 3 || got["host"] != 4 || got["nextcloud"] != 0 {
+	if got["postgres"] != 0 || got["nginx"] != 0 || got["docker"] != 3 || got["redis"] != 3 || got["host"] != 4 || got["nextcloud"] != 0 {
 		t.Fatalf("suggestions: %v", got)
 	}
 	do(ad, "POST", v.ts.URL+"/api/v1/alerts/packs/redis", "")

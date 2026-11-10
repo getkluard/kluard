@@ -21,6 +21,8 @@ func Packs() []Pack {
 			Rules: []string{"Redis down", "Redis memory almost full", "Redis cannot save to disk"}},
 		{ID: "postgres", Signal: "postgres_up", Title: "PostgreSQL", Desc: "Warns when PostgreSQL does not answer, connections run out, a transaction stays open for too long or a replica falls behind.",
 			Rules: []string{"PostgreSQL down", "PostgreSQL connections almost used up", "PostgreSQL transaction open for too long", "PostgreSQL replica is behind"}},
+		{ID: "nginx", Signal: "nginx_up", Title: "nginx", Desc: "Warns when nginx does not answer.",
+			Rules: []string{"nginx down"}},
 		{ID: "nextcloud", Signal: "nextcloud_up", Title: "Nextcloud", Desc: "Warns when an instance is down or slow, background jobs stop, the login check fails, the certificate runs out or an update waits.",
 			Rules: []string{"Nextcloud instance down", "Nextcloud response time", "Nextcloud background jobs not running", "Nextcloud login check failing", "TLS certificate expires soon", "TLS certificate not valid", "Nextcloud update available"}},
 	}
