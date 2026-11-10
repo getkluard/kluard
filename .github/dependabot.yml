@@ -1,6 +1,12 @@
 # Proposes updates of what Kluard is built and run with, once a week: the GitHub Actions the workflows use, the Go image
 # in the Dockerfile and the images in the compose file (ClickHouse, Elasticsearch). Each proposal is a pull request whose
-# CI result tells whether it is safe to merge.
+# CI result tells whether it is safe to merge. Dependabot only proposes; nothing is merged without you.
+#
+# The databases are held back on purpose. Their data lives in volumes, and CI does not run them, so a green check says
+# nothing about whether existing data survives:
+#   - Elasticsearch: patch and minor updates are proposed, a new major version (8 to 9) is not.
+#   - ClickHouse: only the version in the compose file is kept (24.8, a long-term support release); moving to the next
+#     long-term release is a decision to take and test on a copy of the data, not a weekly update.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -15,3 +21,8 @@ updates:
     directory: "/deploy"
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: "*elasticsearch*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "*clickhouse*"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
