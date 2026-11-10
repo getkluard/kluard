@@ -1,7 +1,7 @@
 # Secrets come from deploy/.env (create it with ./gen-env.sh). Nothing sensitive is committed.
 services:
   elasticsearch:   # document store for users, API keys and dashboards (telemetry stays in ClickHouse)
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.5.6
     environment:
       discovery.type: single-node
       xpack.security.enabled: "true"
