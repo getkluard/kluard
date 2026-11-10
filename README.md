@@ -5,6 +5,10 @@
 **OpenTelemetry-native observability in one binary.**<br>
 Traces, logs and metrics, dashboards you build yourself, host / service / Docker / Nextcloud monitoring, users and groups, and automatic backups of old data.
 
+Kluard is an open-source, self-hosted observability platform. It collects OpenTelemetry traces, logs and metrics, stores them in ClickHouse and Elasticsearch, and gives you dashboards, alerting, billing reports and monitoring of Nextcloud instances, hosts, Docker containers and services. It runs as a single Go binary with no runtime dependencies, under the Apache-2.0 licence.
+
+[Website](https://kluard.com) · [Documentation](docs/OPERATING.md) · [Nextcloud metrics](docs/NEXTCLOUD-METRICS.md) · [Troubleshooting](docs/TROUBLESHOOTING-NEXTCLOUD.md) · [Discussions](https://github.com/getkluard/kluard/discussions)
+
 [![CI](https://github.com/getkluard/kluard/actions/workflows/ci.yml/badge.svg)](https://github.com/getkluard/kluard/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 ![Go](https://img.shields.io/badge/go-1.22%2B-00ADD8.svg)
