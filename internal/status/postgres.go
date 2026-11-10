@@ -109,11 +109,28 @@ func PostgresList(now time.Time, rows []model.Latest, recs []registry.Postgres) 
 		}
 		_ = k
 	}
+	// a server that was found by itself, has not been set up here and has stopped reporting (the container was removed
+	// or renamed) disappears after a while instead of staying in the list for ever
+	for k, x := range m {
+		if x.Stale && now.Sub(time.Unix(x.LastSeen, 0)) > 10*time.Minute && !configured(recs, k.host, k.name, x.Container) {
+			delete(m, k)
+		}
+	}
 	for _, rec := range recs {
+		// every entry that belongs to this setting (same name, same container, or found under the container's name);
+		// the one that reported last is the real one, the others are leftovers from before it was set up here
 		var x *Postgres
+		var xk key
 		for k, c := range m {
-			if k.host == rec.Host && (k.name == rec.Name || (rec.Container != "" && c.Container == rec.Container)) {
-				x = c
+			if k.host == rec.Host && (k.name == rec.Name || (rec.Container != "" && (c.Container == rec.Container || k.name == rec.Container))) {
+				if x == nil || c.LastSeen > x.LastSeen || (c.LastSeen == x.LastSeen && k.name == rec.Name) {
+					if x != nil {
+						delete(m, xk)
+					}
+					x, xk = c, k
+				} else {
+					delete(m, k)
+				}
 			}
 		}
 		if x == nil {
@@ -133,4 +150,13 @@ func PostgresList(now time.Time, rows []model.Latest, recs []registry.Postgres) 
 		return out[i].Host+"/"+out[i].Name < out[j].Host+"/"+out[j].Name
 	})
 	return out
+}
+
+func configured(recs []registry.Postgres, host, name, container string) bool {
+	for _, r := range recs {
+		if r.Host == host && (r.Name == name || (r.Container != "" && (r.Container == container || r.Container == name))) {
+			return true
+		}
+	}
+	return false
 }

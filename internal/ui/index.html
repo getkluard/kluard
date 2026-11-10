@@ -1227,7 +1227,7 @@ async function postgresPage(){
       el('td',{class:'mut'},x.version||'–'),el('td',{class:'mono'},conns(x)),el('td',{class:'mono'},dur(x.longest_transaction)),el('td',{class:'mono'},num(x.locks_waiting)),el('td',{class:'mono'},x.size==null?'–':fmtBytes(x.size)),
       el('td',{class:'mut'},x.last_seen?ago2(x.last_seen):'never'),el('td',{class:x.state==='up'?'mut':'err'},x.state==='up'?'':(x.reason||'')),el('td',{style:'white-space:nowrap'},act(x)))))):
     el('div',{class:'card empty'},'No PostgreSQL found yet. An agent on a machine where PostgreSQL runs in Docker finds it within a minute (the agent needs access to Docker: install it with Docker access). One that does not run in Docker is added with “Add PostgreSQL” and its address.'),
-    el('p',{class:'help'},'Alerts: turn on the PostgreSQL pack under Alerts, Rules, Starter rules. Dashboards: the PostgreSQL template. All “postgres_*” metrics are under Metrics.'))}
+    el('p',{class:'help'},'Alerts: turn on the PostgreSQL pack under Alerts, Rules, Starter rules. Dashboards: the PostgreSQL template. All “postgres_*” metrics are under Metrics. A server the agent finds by itself cannot be removed here while its container runs; to leave one out, put the label kluard.postgres=false on the container. A found server that stops reporting disappears after about 10 minutes.'))}
 
 // ---- one Nextcloud instance: status, versions, usage, performance and its log ----
 // Take an instance that nobody registered here, and that has stopped answering, out of the list. It comes back only if
