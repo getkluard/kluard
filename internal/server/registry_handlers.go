@@ -51,6 +51,7 @@ func (s *Server) snapshot(ctx context.Context, tenant string) (snapshot, error) 
 	sn := snapshot{at: now, rows: rows, sum: status.ComputeWith(now, rows, s.reg.ListHosts(tenant), s.reg.ListInstances(tenant), s.reg.GoneInstances(tenant))}
 	sn.sum.Redis = status.RedisList(now, rows, s.reg.ListRedis(tenant))
 	sn.sum.Postgres = status.PostgresList(now, rows, s.reg.ListPostgres(tenant))
+	sn.sum.Mysql = status.MysqlList(now, rows, s.reg.ListMysql(tenant))
 	sn.sum.Nginx = status.NginxList(now, rows, s.reg.ListNginx(tenant))
 	sn.sum.Web = status.WebList(now, rows, s.reg.ListWeb(tenant))
 	s.snaps.mu.Lock()
@@ -99,6 +100,10 @@ func (s *Server) regRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /api/v1/nginx", s.need(perm.Hosts, true, s.createNginx))
 	mux.Handle("PUT /api/v1/nginx/{id}", s.need(perm.Hosts, true, s.updateNginx))
 	mux.Handle("DELETE /api/v1/nginx/{id}", s.need(perm.Hosts, true, s.deleteNginx))
+	mux.Handle("GET /api/v1/mysql", s.need(perm.Hosts, false, s.listMysql))
+	mux.Handle("POST /api/v1/mysql", s.need(perm.Hosts, true, s.createMysql))
+	mux.Handle("PUT /api/v1/mysql/{id}", s.need(perm.Hosts, true, s.updateMysql))
+	mux.Handle("DELETE /api/v1/mysql/{id}", s.need(perm.Hosts, true, s.deleteMysql))
 	mux.Handle("GET /api/v1/postgres", s.need(perm.Hosts, false, s.listPostgres))
 	mux.Handle("POST /api/v1/postgres", s.need(perm.Hosts, true, s.createPostgres))
 	mux.Handle("PUT /api/v1/postgres/{id}", s.need(perm.Hosts, true, s.updatePostgres))
@@ -628,6 +633,84 @@ func (s *Server) deletePostgres(w http.ResponseWriter, r *http.Request, id editi
 	}
 	s.forget(id.Tenant)
 	s.auditOp(id, id.Tenant, "postgres.remove", r.PathValue("id"), "")
+	writeJSON(w, map[string]bool{"ok": true})
+}
+
+// ---- MySQL: logins and addresses (the agent finds MySQL in Docker by itself) ----
+
+type mysqlIn struct {
+	Name          string `json:"name"`
+	Host          string `json:"host"`
+	Container     string `json:"container"`
+	Addr          string `json:"addr"`
+	Username      string `json:"username"`
+	SSLMode       string `json:"sslmode"`
+	Password      string `json:"password"`
+	ClearPassword bool   `json:"clear_password"`
+}
+
+func (in mysqlIn) reg() registry.MysqlIn {
+	return registry.MysqlIn{Name: in.Name, Host: in.Host, Container: in.Container, Addr: in.Addr, Username: in.Username, SSLMode: in.SSLMode, Password: in.Password, ClearPassword: in.ClearPassword}
+}
+
+func (s *Server) listMysql(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	sn, err := s.snapshot(r.Context(), id.Tenant)
+	if err != nil {
+		writeErr(w, http.StatusServiceUnavailable, "cannot check the status right now: "+err.Error())
+		return
+	}
+	list := sn.sum.Mysql
+	if list == nil {
+		list = []status.Mysql{}
+	}
+	hosts := []string{}
+	for _, h := range allAgents(sn.sum) {
+		hosts = append(hosts, h.Name)
+	}
+	writeJSON(w, map[string]any{"data": list, "hosts": hosts})
+}
+
+func (s *Server) createMysql(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	if len(s.reg.ListMysql(id.Tenant)) >= 500 {
+		writeErr(w, http.StatusBadRequest, "too many MySQL servers are set up here (max 500)")
+		return
+	}
+	var in mysqlIn
+	if !readJSON(w, r, &in) {
+		return
+	}
+	rec, err := s.reg.CreateMysql(id.Tenant, in.reg())
+	if err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "mysql.add", rec.ID, rec.Name)
+	writeJSON(w, rec.Out())
+}
+
+func (s *Server) updateMysql(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	var in mysqlIn
+	if !readJSON(w, r, &in) {
+		return
+	}
+	rec, err := s.reg.UpdateMysql(id.Tenant, r.PathValue("id"), in.reg())
+	if err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "mysql.change", rec.ID, rec.Name)
+	writeJSON(w, rec.Out())
+}
+
+func (s *Server) deleteMysql(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	if err := s.reg.DeleteMysql(id.Tenant, r.PathValue("id")); err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "mysql.remove", r.PathValue("id"), "")
 	writeJSON(w, map[string]bool{"ok": true})
 }
 

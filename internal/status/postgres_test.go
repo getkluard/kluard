@@ -102,3 +102,33 @@ func TestWebList(t *testing.T) {
 		t.Fatalf("%+v", fresh)
 	}
 }
+
+func TestMysqlList(t *testing.T) {
+	now := time.Now()
+	at := func(n string) map[string]string { return map[string]string{"host": "h1", "mysql": n} }
+	rows := []model.Latest{
+		pgRow("mysql_up", 1, now, at("shop")),
+		pgRow("mysql_connections", 12, now, at("shop")),
+		pgRow("mysql_connections_max", 151, now, at("shop")),
+		pgRow("mysql_longest_query_seconds", 5, now, at("shop")),
+		pgRow("mysql_database_size_bytes", 100, now, map[string]string{"host": "h1", "mysql": "shop", "database": "a"}),
+		pgRow("mysql_database_size_bytes", 50, now, map[string]string{"host": "h1", "mysql": "shop", "database": "b"}),
+		pgRow("mysql_info", 1, now, map[string]string{"host": "h1", "mysql": "shop", "container": "shop", "version": "10.11.6-MariaDB", "role": "primary"}),
+		pgRow("mysql_up", 0, now, at("locked")),
+		pgRow("mysql_auth_required", 1, now, at("locked")),
+		pgRow("mysql_up", 0, now.Add(-time.Hour), map[string]string{"host": "h2", "mysql": "gone"}),
+	}
+	got := map[string]Mysql{}
+	for _, x := range MysqlList(now, rows, []registry.Mysql{{ID: "my1", Host: "h1", Name: "shop", Container: "shop"}}) {
+		got[x.Name] = x
+	}
+	if _, ok := got["gone"]; ok {
+		t.Fatal("a long-gone server must drop out")
+	}
+	if x := got["shop"]; x.State != "up" || x.RecordID != "my1" || *x.Conns != 12 || *x.Size != 150 || *x.LongestQuery != 5 || x.Version != "10.11.6-MariaDB" {
+		t.Fatalf("%+v", x)
+	}
+	if x := got["locked"]; x.State != "auth" || x.Conns != nil || x.Reason != "needs a password" {
+		t.Fatalf("%+v", x)
+	}
+}

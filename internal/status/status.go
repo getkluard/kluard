@@ -13,7 +13,7 @@ import (
 
 // Metric names the status view needs.
 var Names = []string{"kluard_agent_info", "kluard_agent_log_paths_rejected", "lumen_agent_info", "lumen_agent_log_paths_rejected", "nextcloud_up", "nextcloud_info", "nextcloud_users", "system_service_up", "container_up",
-	"web_up", "web_info", "web_status_code", "web_response_seconds", "web_tls_expiry_seconds", "web_tls_valid", "nginx_up", "nginx_status_missing", "nginx_info", "nginx_connections_active", "nginx_connections_reading", "nginx_connections_writing", "nginx_connections_waiting", "nginx_connections_accepted_total", "nginx_connections_handled_total", "nginx_http_requests_total", "postgres_up", "postgres_auth_required", "postgres_info", "postgres_connections", "postgres_connections_max", "postgres_connections_active", "postgres_longest_transaction_seconds", "postgres_locks_waiting", "postgres_replication_lag_seconds", "postgres_uptime_seconds", "postgres_database_size_bytes",
+	"web_up", "web_info", "web_status_code", "web_response_seconds", "web_tls_expiry_seconds", "web_tls_valid", "mysql_up", "mysql_auth_required", "mysql_info", "mysql_connections", "mysql_connections_max", "mysql_connections_running", "mysql_longest_query_seconds", "mysql_replication_lag_seconds", "mysql_uptime_seconds", "mysql_database_size_bytes", "nginx_up", "nginx_status_missing", "nginx_info", "nginx_connections_active", "nginx_connections_reading", "nginx_connections_writing", "nginx_connections_waiting", "nginx_connections_accepted_total", "nginx_connections_handled_total", "nginx_http_requests_total", "postgres_up", "postgres_auth_required", "postgres_info", "postgres_connections", "postgres_connections_max", "postgres_connections_active", "postgres_longest_transaction_seconds", "postgres_locks_waiting", "postgres_replication_lag_seconds", "postgres_uptime_seconds", "postgres_database_size_bytes",
 	"redis_up", "redis_auth_required", "redis_info", "redis_memory_used_bytes", "redis_memory_max_bytes", "redis_clients", "redis_evicted_keys_total", "redis_keyspace_hits_total", "redis_keyspace_misses_total", "redis_uptime_seconds", "redis_keys", "redis_master", "redis_save_ok",
 	"nextcloud_cron_age_seconds", "nextcloud_update_available", "nextcloud_webdav_ok", "nextcloud_tls_cert_expiry_seconds", "nextcloud_tls_cert_valid"}
 
@@ -101,6 +101,7 @@ type Summary struct {
 	Instances  []Instance `json:"instances"`
 	Redis      []Redis    `json:"redis"`
 	Postgres   []Postgres `json:"postgres"`
+	Mysql      []Mysql    `json:"mysql"`
 	Nginx      []Nginx    `json:"nginx"`
 	Web        []Web      `json:"web"`
 	Down       []Item     `json:"down"` // services and containers that are down, for the "what is broken" list

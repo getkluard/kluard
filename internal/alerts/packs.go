@@ -21,6 +21,8 @@ func Packs() []Pack {
 			Rules: []string{"Redis down", "Redis memory almost full", "Redis cannot save to disk"}},
 		{ID: "postgres", Signal: "postgres_up", Title: "PostgreSQL", Desc: "Warns when PostgreSQL does not answer, connections run out, a transaction stays open for too long or a replica falls behind.",
 			Rules: []string{"PostgreSQL down", "PostgreSQL connections almost used up", "PostgreSQL transaction open for too long", "PostgreSQL replica is behind"}},
+		{ID: "mysql", Signal: "mysql_up", Title: "MySQL and MariaDB", Desc: "Warns when MySQL or MariaDB does not answer, connections run out, a query runs for too long or a replica stops or falls behind.",
+			Rules: []string{"MySQL down", "MySQL connections almost used up", "MySQL query running for too long", "MySQL replication has stopped", "MySQL replica is behind"}},
 		{ID: "web", Signal: "web_up", Title: "Websites", Desc: "Warns when a checked website does not answer, is slow or has a certificate that runs out.",
 			Rules: []string{"Website down", "Website is slow", "Website certificate expires soon"}},
 		{ID: "heartbeat", Signal: "heartbeat_up", Title: "Backups and jobs", Desc: "Warns when a job that calls a heartbeat address (a backup, a cron job) stops calling or says that it failed.",

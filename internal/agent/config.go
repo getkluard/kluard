@@ -49,6 +49,8 @@ type Config struct {
 	Postgres         []PostgresTarget  `json:"postgres,omitempty"`          // logins and addresses for PostgreSQL (from the Kluard UI); PostgreSQL in Docker is found by itself
 	Nginx            []NginxTarget     `json:"nginx,omitempty"`             // status pages for nginx (from the Kluard UI); nginx in Docker is found by itself
 	Web              []WebTarget       `json:"web,omitempty"`               // addresses to check (from the Kluard UI)
+	Mysql            []MysqlTarget     `json:"mysql,omitempty"`             // logins and addresses for MySQL and MariaDB (from the Kluard UI); MySQL in Docker is found by itself
+	MysqlPassword    string            `json:"mysql_password,omitempty"`    // one password to try on every MySQL that has none of its own
 	PostgresPassword string            `json:"postgres_password,omitempty"` // one password to try on every PostgreSQL that has none of its own
 	Containers       *bool             `json:"containers"`                  // report Docker containers (default true)
 	WatchServices    []string          `json:"watch_services"`              // services that must be running
@@ -118,6 +120,9 @@ func LoadConfig(path string, getenv func(string) string) (Config, error) {
 	}
 	if v := getenv("KLUARD_AGENT_REDIS_PASSWORD"); v != "" {
 		c.RedisPassword = v
+	}
+	if v := getenv("KLUARD_AGENT_MYSQL_PASSWORD"); v != "" {
+		c.MysqlPassword = v
 	}
 	if v := getenv("KLUARD_AGENT_POSTGRES_PASSWORD"); v != "" {
 		c.PostgresPassword = v

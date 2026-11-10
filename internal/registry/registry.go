@@ -28,6 +28,7 @@ const (
 	collHeartbeat      = "heartbeats"     // addresses that jobs call when they have run
 	collWeb            = "web"            // addresses an agent checks
 	collNginx          = "nginx"          // nginx status pages set here
+	collMysql          = "mysql"          // MySQL and MariaDB servers that have a login or an address set here
 	collPostgres       = "postgres"       // PostgreSQL servers that have a login or an address set here
 	collUpd            = "agent_updates"  // updates that someone asked for in the UI, per host
 	collGone           = "instances_gone" // instances that were removed, so that their last metrics do not bring them back
@@ -136,6 +137,7 @@ type AgentConfig struct {
 	Instances     []AgentInstance `json:"instances"`
 	Redis         []AgentRedis    `json:"redis"`
 	Postgres      []AgentPostgres `json:"postgres"`
+	Mysql         []AgentMysql    `json:"mysql"`
 	Nginx         []AgentNginx    `json:"nginx"`
 	Web           []AgentWeb      `json:"web"`
 	UpdateTo      string          `json:"update_to,omitempty"` // set by the server when an update was asked for; not part of the revision
@@ -394,7 +396,7 @@ func (s *Service) DeleteInstance(tenant, id string) error {
 // agent only restarts its collectors when something actually changed.
 func (s *Service) AgentConfig(tenant, host string) (AgentConfig, error) {
 	h := s.GetHost(tenant, host)
-	cfg := AgentConfig{LogPaths: h.LogPaths, DockerLogs: h.DockerLogs, Systemd: h.Systemd, Containers: h.Containers, WatchServices: h.WatchServices, Instances: []AgentInstance{}, Redis: []AgentRedis{}, Postgres: []AgentPostgres{}, Nginx: []AgentNginx{}, Web: []AgentWeb{}}
+	cfg := AgentConfig{LogPaths: h.LogPaths, DockerLogs: h.DockerLogs, Systemd: h.Systemd, Containers: h.Containers, WatchServices: h.WatchServices, Instances: []AgentInstance{}, Redis: []AgentRedis{}, Postgres: []AgentPostgres{}, Mysql: []AgentMysql{}, Nginx: []AgentNginx{}, Web: []AgentWeb{}}
 	for _, i := range s.ListInstances(tenant) {
 		if i.Host != host {
 			continue
@@ -425,6 +427,16 @@ func (s *Service) AgentConfig(tenant, host string) (AgentConfig, error) {
 			pw = ""
 		}
 		cfg.Postgres = append(cfg.Postgres, AgentPostgres{Name: r.Name, Container: r.Container, Addr: r.Addr, Username: r.Username, Password: pw, Database: r.Database, SSLMode: r.SSLMode})
+	}
+	for _, r := range s.ListMysql(tenant) {
+		if r.Host != host {
+			continue
+		}
+		pw, err := s.box.Open(r.PasswordEnc)
+		if err != nil {
+			pw = ""
+		}
+		cfg.Mysql = append(cfg.Mysql, AgentMysql{Name: r.Name, Container: r.Container, Addr: r.Addr, Username: r.Username, Password: pw, SSLMode: r.SSLMode})
 	}
 	for _, r := range s.ListNginx(tenant) {
 		if r.Host != host {
