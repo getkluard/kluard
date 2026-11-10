@@ -27,6 +27,7 @@ const (
 	collRedis          = "redis"          // Redis servers that have a password or an address set here
 	collHeartbeat      = "heartbeats"     // addresses that jobs call when they have run
 	collWeb            = "web"            // addresses an agent checks
+	collS3             = "s3"             // S3-compatible storages an agent watches with an access key
 	collStatusPage     = "statuspages"    // public pages that show customers whether their service is up
 	collNginx          = "nginx"          // nginx status pages set here
 	collMinio          = "minio"          // MinIO servers that have a token or an address set here
@@ -143,6 +144,7 @@ type AgentConfig struct {
 	Minio         []AgentMinio    `json:"minio"`
 	Nginx         []AgentNginx    `json:"nginx"`
 	Web           []AgentWeb      `json:"web"`
+	S3            []AgentS3       `json:"s3"`
 	UpdateTo      string          `json:"update_to,omitempty"` // set by the server when an update was asked for; not part of the revision
 }
 
@@ -399,7 +401,7 @@ func (s *Service) DeleteInstance(tenant, id string) error {
 // agent only restarts its collectors when something actually changed.
 func (s *Service) AgentConfig(tenant, host string) (AgentConfig, error) {
 	h := s.GetHost(tenant, host)
-	cfg := AgentConfig{LogPaths: h.LogPaths, DockerLogs: h.DockerLogs, Systemd: h.Systemd, Containers: h.Containers, WatchServices: h.WatchServices, Instances: []AgentInstance{}, Redis: []AgentRedis{}, Postgres: []AgentPostgres{}, Mysql: []AgentMysql{}, Minio: []AgentMinio{}, Nginx: []AgentNginx{}, Web: []AgentWeb{}}
+	cfg := AgentConfig{LogPaths: h.LogPaths, DockerLogs: h.DockerLogs, Systemd: h.Systemd, Containers: h.Containers, WatchServices: h.WatchServices, Instances: []AgentInstance{}, Redis: []AgentRedis{}, Postgres: []AgentPostgres{}, Mysql: []AgentMysql{}, Minio: []AgentMinio{}, Nginx: []AgentNginx{}, Web: []AgentWeb{}, S3: []AgentS3{}}
 	for _, i := range s.ListInstances(tenant) {
 		if i.Host != host {
 			continue
@@ -461,6 +463,16 @@ func (s *Service) AgentConfig(tenant, host string) (AgentConfig, error) {
 		if r.Host == host {
 			cfg.Web = append(cfg.Web, AgentWeb{Name: r.Name, URL: r.URL, Status: r.Status, Contains: r.Contains})
 		}
+	}
+	for _, r := range s.ListS3(tenant) {
+		if r.Host != host {
+			continue
+		}
+		sk, err := s.box.Open(r.SecretEnc)
+		if err != nil {
+			sk = ""
+		}
+		cfg.S3 = append(cfg.S3, AgentS3{Name: r.Name, URL: r.URL, Region: r.Region, AccessKey: r.AccessKey, SecretKey: sk, Buckets: r.Buckets, Size: r.Size})
 	}
 	b, _ := json.Marshal(cfg)
 	sum := sha256.Sum256(b)

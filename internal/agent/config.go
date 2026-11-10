@@ -48,6 +48,7 @@ type Config struct {
 	RedisPassword    string            `json:"redis_password,omitempty"`    // one password to try on every Redis that has none of its own
 	Postgres         []PostgresTarget  `json:"postgres,omitempty"`          // logins and addresses for PostgreSQL (from the Kluard UI); PostgreSQL in Docker is found by itself
 	Nginx            []NginxTarget     `json:"nginx,omitempty"`             // status pages for nginx (from the Kluard UI); nginx in Docker is found by itself
+	S3               []S3Target        `json:"s3,omitempty"`                // S3-compatible storages to watch (from the Kluard UI)
 	Web              []WebTarget       `json:"web,omitempty"`               // addresses to check (from the Kluard UI)
 	Mysql            []MysqlTarget     `json:"mysql,omitempty"`             // logins and addresses for MySQL and MariaDB (from the Kluard UI); MySQL in Docker is found by itself
 	MysqlPassword    string            `json:"mysql_password,omitempty"`    // one password to try on every MySQL that has none of its own

@@ -27,7 +27,7 @@ type Purger interface {
 
 // PurgeCollections are the document collections that are emptied for a tenant when it is removed. Two things are kept on
 // purpose: what the tenant used (the usage records, for the operator's invoices) and the audit log.
-var PurgeCollections = []string{"users", "keys", "groups", "dashboards", "hosts", "instances", "redis", "postgres", "mysql", "minio", "nginx", "web", "heartbeats", "statuspages", "alert_rules", "alert_state", "alert_events", "alert_silences", "alert_channels", "support_grants", "billing", "billing_usage"}
+var PurgeCollections = []string{"users", "keys", "groups", "dashboards", "hosts", "instances", "redis", "postgres", "mysql", "minio", "nginx", "web", "heartbeats", "statuspages", "s3", "alert_rules", "alert_state", "alert_events", "alert_silences", "alert_channels", "support_grants", "billing", "billing_usage"}
 
 // Offboarder removes a tenant: it empties the document store, the telemetry and the backups, and checks that nothing is left.
 type Offboarder struct {

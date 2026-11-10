@@ -32,7 +32,7 @@ Under **Settings**: sin användning mot sina gränser (och en varning nära en g
 
 - **Statussidor och heartbeats är publika adresser.** Var och en har ett långt slumpmässigt id och kräver ingen inloggning, så id:t är det enda skyddet. Skicka en statussidas länk bara till den kund den hör till. En statussida visar bara de namn du valt och *Operational* eller *Down*, aldrig adresser, maskiner eller felmeddelanden.
 - **Att ta bort en tenant** tar också bort dess statussidor, heartbeats, webbplatskontroller och inställningarna för dess databaser, nginx och MinIO, så adresserna slutar fungera direkt.
-- **Menyer** kan döljas per webbläsare under *Settings, Menu* (databaser, webbplatser, heartbeats och statussidor, för den som inte använder dem). Home, Alerts, Traces, Logs, Metrics, Hosts, Instances, Billing, Add a machine, Users & groups, Backups & archive, Audit log, Settings och Account visas alltid.
+- **Menyer** kan döljas per webbläsare under *Settings, Menu* (databaser, webbplatser, S3-lagring, heartbeats och statussidor, för den som inte använder dem). Home, Alerts, Traces, Logs, Metrics, Hosts, Instances, Billing, Add a machine, Users & groups, Backups & archive, Audit log, Settings och Account visas alltid.
 
 - **Gränserna** gäller kundens egna användare och nycklar, inte en operatör inne i tenanten, som alltid kan rätta till saker.
 - **Hostar** räknas som de som skickat mätvärden de senaste 24 timmarna. En host som redan rapporterar nekas aldrig av hostgränsen.

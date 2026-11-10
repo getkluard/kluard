@@ -23,6 +23,8 @@ func Packs() []Pack {
 			Rules: []string{"PostgreSQL down", "PostgreSQL connections almost used up", "PostgreSQL transaction open for too long", "PostgreSQL replica is behind"}},
 		{ID: "minio", Signal: "minio_up", Title: "MinIO", Desc: "Warns when MinIO does not answer, its storage is nearly full, a drive is offline or the cluster is not healthy.",
 			Rules: []string{"MinIO down", "MinIO storage almost full", "MinIO has a drive offline", "MinIO is not healthy"}},
+		{ID: "s3", Signal: "s3_up", Title: "S3 storage", Desc: "Warns when a watched S3 storage does not answer, refuses the access key or is slow.",
+			Rules: []string{"S3 storage down", "S3 storage is slow"}},
 		{ID: "webserver", Signal: "access_log_error_ratio", Title: "Web server errors", Desc: "Warns when a large share of the answers of a web server (nginx, Apache) are server errors. Needs the machine's Docker or web server logs to be read by the agent.",
 			Rules: []string{"Many server errors on a web server"}},
 		{ID: "mysql", Signal: "mysql_up", Title: "MySQL and MariaDB", Desc: "Warns when MySQL or MariaDB does not answer, connections run out, a query runs for too long or a replica stops or falls behind.",

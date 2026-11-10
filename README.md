@@ -282,6 +282,16 @@ Kluard checks MinIO (the S3-compatible object storage) that runs in Docker, any 
 - **Not in Docker, or not found:** **+ Add MinIO** with the machine that should connect and the address, for example `http://10.0.0.5:9000`.
 - **What is reported:** `minio_up`, usable storage (free, total and `minio_cluster_capacity_utilization`), bytes and objects stored, buckets, drives and servers online and offline, `minio_cluster_health_status`, S3 requests, errors (4xx and 5xx) and traffic. Starter rules (pack *MinIO*): **MinIO down**, **storage almost full** (85%), **has a drive offline** and **is not healthy**. The dashboard template *MinIO* shows them.
 
+## S3 storage monitoring
+
+Any storage that speaks S3 can be watched: AWS S3, Ceph, Garage, SeaweedFS, Wasabi, Backblaze B2, MinIO and others. Open **S3 storage**, choose **+ Add S3 storage**, pick the machine whose agent should check it, and give the address (for example `https://s3.example.com`) and an access key and secret. A key that may only list is enough. The secret is stored encrypted and goes only to the agent on that machine.
+
+The agent signs in once a minute (AWS Signature Version 4, path-style addresses) and reports whether the storage answers, how fast, how many buckets the key can list (`s3_up`, `s3_response_seconds`, `s3_buckets`). A wrong key is shown as DOWN with the reason. Name buckets in the settings if the key is limited to them.
+
+**How big is a bucket?** The S3 interface has no call for it, so Kluard finds it by listing the objects (1000 per request) and adding up their sizes: `s3_bucket_size_bytes` and `s3_bucket_objects` per bucket. That is only done when you tick *measure how much each bucket holds*, at most once an hour per bucket, and it stops after 100,000 objects in a bucket, which is then shown as "at least" (`s3_bucket_size_partial`). On a storage that charges per request, leave it off or name only the buckets you care about. Turn on the alert pack *S3 storage* (down, slow) under *Alerts, Rules, Starter rules*. The agent needs updating.
+
+MinIO has its own, richer page (drives, cluster health) that reads MinIO's metrics address. Use **S3 storage** for everything else, or for MinIO if you only care about size and whether it answers.
+
 ## Server errors from web server logs
 
 When the agent reads the logs of a web server, it also counts the answers in access lines in the common or combined log format (nginx, Apache and most others) and reports `access_log_requests_total` per status class (2xx, 3xx, 4xx, 5xx), `access_log_bytes_total` and, when there were at least 10 requests in half a minute, `access_log_error_ratio`: the share of server errors. Nothing about who asked or what they asked for is kept in the metrics.
@@ -324,7 +334,7 @@ The id in the address is long and random and is the only protection: anyone who 
 
 ## Choose which menus you see
 
-Everything is shown when Kluard is installed. Under **Settings, Menu** you can hide the menus you do not use: Dashboards, Redis, PostgreSQL, MinIO, MySQL, nginx, Websites, Heartbeats and Status pages. Home, Alerts, Traces, Logs, Metrics, Hosts, Instances, Billing, Add a machine, Users & groups, Backups & archive, Audit log, Settings and Account are always shown. The choice is kept in the browser, and a hidden page still opens if you go to its address.
+Everything is shown when Kluard is installed. Under **Settings, Menu** you can hide the menus you do not use: Dashboards, Redis, PostgreSQL, MinIO, MySQL, nginx, Websites, S3 storage, Heartbeats and Status pages. Home, Alerts, Traces, Logs, Metrics, Hosts, Instances, Billing, Add a machine, Users & groups, Backups & archive, Audit log, Settings and Account are always shown. The choice is kept in the browser, and a hidden page still opens if you go to its address.
 
 ## What the agent reports about a host
 

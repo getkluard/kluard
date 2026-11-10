@@ -212,6 +212,13 @@ func start(ctx context.Context, wg *sync.WaitGroup, cfg agent.Config, snd *agent
 					}
 					add(pts)
 				}
+				if len(cfg.S3) > 0 {
+					pts := agent.CollectS3(ctx, cfg.S3, now)
+					for i := range pts {
+						pts[i].Service = cfg.HostService
+					}
+					add(pts)
+				}
 				if len(cfg.Web) > 0 {
 					pts := agent.CollectWeb(ctx, cfg.Web, now)
 					for i := range pts {

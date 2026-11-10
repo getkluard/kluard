@@ -55,6 +55,7 @@ func (s *Server) snapshot(ctx context.Context, tenant string) (snapshot, error) 
 	sn.sum.Minio = status.MinioList(now, rows, s.reg.ListMinio(tenant))
 	sn.sum.Nginx = status.NginxList(now, rows, s.reg.ListNginx(tenant))
 	sn.sum.Web = status.WebList(now, rows, s.reg.ListWeb(tenant))
+	sn.sum.S3 = status.S3List(now, rows, s.reg.ListS3(tenant))
 	s.snaps.mu.Lock()
 	if s.snaps.m == nil {
 		s.snaps.m = map[string]snapshot{}
@@ -77,6 +78,10 @@ func (s *Server) regRoutes(mux *http.ServeMux) {
 	mux.Handle("GET /api/v1/status", s.needAny([]string{perm.Hosts, perm.Metrics}, s.statusSummary))
 	s.heartbeatRoutes(mux)
 	s.statusPageRoutes(mux)
+	mux.Handle("GET /api/v1/s3", s.need(perm.Hosts, false, s.listS3))
+	mux.Handle("POST /api/v1/s3", s.need(perm.Hosts, true, s.createS3))
+	mux.Handle("PUT /api/v1/s3/{id}", s.need(perm.Hosts, true, s.updateS3))
+	mux.Handle("DELETE /api/v1/s3/{id}", s.need(perm.Hosts, true, s.deleteS3))
 	mux.Handle("GET /api/v1/web", s.need(perm.Hosts, false, s.listWeb))
 	mux.Handle("POST /api/v1/web", s.need(perm.Hosts, true, s.createWeb))
 	mux.Handle("PUT /api/v1/web/{id}", s.need(perm.Hosts, true, s.updateWeb))
@@ -866,6 +871,84 @@ func (s *Server) deleteWeb(w http.ResponseWriter, r *http.Request, id edition.Id
 	}
 	s.forget(id.Tenant)
 	s.auditOp(id, id.Tenant, "web.remove", r.PathValue("id"), "")
+	writeJSON(w, map[string]bool{"ok": true})
+}
+
+// ---- S3-compatible storages: an access key an agent uses ----
+
+type s3In struct {
+	Name      string   `json:"name"`
+	Host      string   `json:"host"`
+	URL       string   `json:"url"`
+	Region    string   `json:"region"`
+	AccessKey string   `json:"access_key"`
+	Secret    string   `json:"secret_key"`
+	Buckets   []string `json:"buckets"`
+	Size      bool     `json:"size"`
+}
+
+func (in s3In) reg() registry.S3In {
+	return registry.S3In{Name: in.Name, Host: in.Host, URL: in.URL, Region: in.Region, AccessKey: in.AccessKey, Secret: in.Secret, Buckets: in.Buckets, Size: in.Size}
+}
+
+func (s *Server) listS3(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	sn, err := s.snapshot(r.Context(), id.Tenant)
+	if err != nil {
+		writeErr(w, http.StatusServiceUnavailable, "cannot check the status right now: "+err.Error())
+		return
+	}
+	list := sn.sum.S3
+	if list == nil {
+		list = []status.S3{}
+	}
+	hosts := []string{}
+	for _, h := range allAgents(sn.sum) {
+		hosts = append(hosts, h.Name)
+	}
+	writeJSON(w, map[string]any{"data": list, "hosts": hosts})
+}
+
+func (s *Server) createS3(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	if len(s.reg.ListS3(id.Tenant)) >= 100 {
+		writeErr(w, http.StatusBadRequest, "too many S3 storages are set up here (max 100)")
+		return
+	}
+	var in s3In
+	if !readJSON(w, r, &in) {
+		return
+	}
+	rec, err := s.reg.CreateS3(id.Tenant, in.reg())
+	if err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "s3.add", rec.ID, rec.Name)
+	writeJSON(w, rec.Out())
+}
+
+func (s *Server) updateS3(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	var in s3In
+	if !readJSON(w, r, &in) {
+		return
+	}
+	rec, err := s.reg.UpdateS3(id.Tenant, r.PathValue("id"), in.reg())
+	if err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "s3.change", rec.ID, rec.Name)
+	writeJSON(w, rec.Out())
+}
+
+func (s *Server) deleteS3(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	if err := s.reg.DeleteS3(id.Tenant, r.PathValue("id")); err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "s3.remove", r.PathValue("id"), "")
 	writeJSON(w, map[string]bool{"ok": true})
 }
 
