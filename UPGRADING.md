@@ -6,6 +6,38 @@ How to install the latest version, upgrade a running server, and update the agen
 - Several Kluard servers with different addresses are upgraded the same way, each from its own folder.
 - See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
+## Which way did you install?
+
+| You installed from | Update with | Section |
+|---|---|---|
+| Source with Docker (`./install.sh`, `./dev.sh`, a git clone) | `git pull`, then `docker compose ... up -d --build` | 2 and 3 below |
+| A release file (`kluard-server-linux-amd64.tar.gz`) | Download the new file, replace the program, restart | **Release file** below |
+| An agent on a machine | The **update** button on the Hosts page, or the install command again | 5 below |
+
+Do it in this order: **server first, then the agents.** An older agent works with a newer server (it keeps reporting), but new checks need the new agent.
+
+**How often?** At least once a month, and at once after a release whose notes say *security fix* (see [SECURITY.md](SECURITY.md)). Docker-based servers should also be rebuilt now and then so that the base images are refreshed, even when Kluard itself did not change. Read [CHANGELOG.md](CHANGELOG.md) first: anything that needs a manual step is listed there.
+
+**Which version is running?** The bottom of the menu shows `release v0.1.3` for a server built from a release, and `build 3fa91c2d` for one built from source (the build identifies the source code; see section 4).
+
+### Release file (without Docker)
+
+You need a server that already runs from a release file (see the README, *Server from a release file*). Stop the server the way you started it (Ctrl+C, or `sudo systemctl stop <your service>` if you made one), then replace the program and the agents and start it again with the same settings:
+
+```bash
+cd ~                                             # the folder that holds kluard-server-linux-amd64/
+curl -fLO https://github.com/getkluard/kluard/releases/download/v0.1.3/kluard-server-linux-amd64.tar.gz
+curl -fLO https://github.com/getkluard/kluard/releases/download/v0.1.3/SHA256SUMS
+sha256sum --check --ignore-missing SHA256SUMS    # must say: OK
+cp -a kluard-server-linux-amd64 kluard-server-previous       # keep the old one in case you need it back
+tar xzf kluard-server-linux-amd64.tar.gz         # replaces kluard and dist/ in kluard-server-linux-amd64/
+cd kluard-server-linux-amd64
+KLUARD_DIST_DIR="$PWD/dist" KLUARD_PUBLIC_URL=https://kluard.example.com ./kluard   # the same command as before
+curl -s http://127.0.0.1:4318/healthz            # prints: ok
+```
+
+Change `v0.1.3` to the release you want and `amd64` to `arm64` on an ARM machine. The `dist/` folder holds the agents that **Add a machine** hands out, so it is replaced too. Your settings and your data (ClickHouse, Elasticsearch) are not in that folder and are not touched. To go back, stop the server and start `kluard-server-previous/kluard` instead.
+
 ## From Lumen to Kluard
 
 The product was renamed from Lumen to Kluard. A server that runs Lumen keeps its data and settings; only the names of the program, the containers and the repository change.
@@ -120,7 +152,7 @@ sudo docker compose -f deploy/docker-compose.yml logs --tail=20 kluard
 
 Then open Kluard in the browser. The page is revalidated on every load, so an upgrade shows at once; if it still looks old, press **Ctrl+F5**. Browsers cache the tab icon hard: close and reopen the tab if you still see the old one.
 
-**Which version is this server running?** The bottom of the menu shows the build, for example `build 3fa91c2d`. It identifies the source code, so every server (and every agent) built from the same code shows the same value. To see what a folder *should* show, run this in the Kluard folder; it must match the menu after a rebuild:
+**Which version is this server running?** The bottom of the menu shows `release v0.1.3` for a release, or the build, for example `build 3fa91c2d`, for a server built from source. It identifies the source code, so every server (and every agent) built from the same code shows the same value. To see what a folder *should* show, run this in the Kluard folder; it must match the menu after a rebuild:
 
 ```bash
 echo "build $(find . -type f \( -name '*.go' -o -name '*.html' -o -name go.mod \) ! -name '*_test.go' | LC_ALL=C sort | xargs cat | sha256sum | cut -c1-8)"

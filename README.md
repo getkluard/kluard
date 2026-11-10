@@ -11,7 +11,7 @@ Kluard is an open-source, self-hosted observability platform. It collects OpenTe
 
 [![CI](https://github.com/getkluard/kluard/actions/workflows/ci.yml/badge.svg)](https://github.com/getkluard/kluard/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-![Go](https://img.shields.io/badge/go-1.22%2B-00ADD8.svg)
+![Go](https://img.shields.io/badge/go-1.26%2B-00ADD8.svg)
 ![Dependencies](https://img.shields.io/badge/dependencies-stdlib%20only-brightgreen.svg)
 ![Status](https://img.shields.io/badge/status-early%20release-orange.svg)
 
@@ -149,9 +149,9 @@ You still need ClickHouse (and, optionally, Elasticsearch) and the settings in [
 
 ### Upgrade
 
-Full step-by-step guide, including how to upgrade with read-only access: **[UPGRADING.md](UPGRADING.md)**. In short:
+Full step-by-step guide, including upgrading from a release file and with read-only access: **[UPGRADING.md](UPGRADING.md)**. Upgrade at least once a month and at once after a *security fix* in the release notes; how the project itself is kept patched is in **[SECURITY.md](SECURITY.md)**. In short:
 
-The menu shows the build of the running server (`build 3fa91c2d`); agents built from the same source report the same value, and the Hosts page marks agents that differ with **update**. Pull the new source and run `./install.sh` (or `./dev.sh`) again: it adds missing settings such as `KLUARD_SECRET_KEY` to `deploy/.env`, rebuilds and restarts. **Your address and other settings in `deploy/.env` are never replaced**: `KLUARD_PUBLIC_URL` only changes if you pass `--public-url` (or `--ip` to `dev.sh`), and `KLUARD_BIND` is only set when missing. Several Kluard servers with different addresses can therefore be upgraded the same way. To upgrade without running any script at all: `docker compose -f deploy/docker-compose.yml up -d --build`. Existing data is kept, retention changes are applied to existing tables, and accounts from before groups existed become admins. **Run the agent install command once more on each machine** to get the current agent.
+The menu shows the running server's release (`release v0.1.3`) or, for a build from source, its build (`build 3fa91c2d`); agents built from the same source report the same value, and the Hosts page marks agents that differ with **update**. Pull the new source and run `./install.sh` (or `./dev.sh`) again: it adds missing settings such as `KLUARD_SECRET_KEY` to `deploy/.env`, rebuilds and restarts. **Your address and other settings in `deploy/.env` are never replaced**: `KLUARD_PUBLIC_URL` only changes if you pass `--public-url` (or `--ip` to `dev.sh`), and `KLUARD_BIND` is only set when missing. Several Kluard servers with different addresses can therefore be upgraded the same way. To upgrade without running any script at all: `docker compose -f deploy/docker-compose.yml up -d --build`. Existing data is kept, retention changes are applied to existing tables, and accounts from before groups existed become admins. **Run the agent install command once more on each machine** to get the current agent.
 
 ## Add machines
 

@@ -1,11 +1,17 @@
+# Proposes updates of what Kluard is built and run with, once a week: the GitHub Actions the workflows use, the Go image
+# in the Dockerfile and the images in the compose file (ClickHouse, Elasticsearch). Each proposal is a pull request whose
+# CI result tells whether it is safe to merge.
 version: 2
 updates:
-  - package-ecosystem: gomod
-    directory: /
-    schedule: { interval: monthly }
   - package-ecosystem: github-actions
-    directory: /
-    schedule: { interval: monthly }
+    directory: "/"
+    schedule:
+      interval: weekly
   - package-ecosystem: docker
-    directory: /
-    schedule: { interval: monthly }
+    directory: "/"
+    schedule:
+      interval: weekly
+  - package-ecosystem: docker-compose
+    directory: "/deploy"
+    schedule:
+      interval: weekly

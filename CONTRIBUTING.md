@@ -7,7 +7,7 @@ Thanks for helping. Kluard is small and standard-library only, so getting starte
 ```bash
 git clone https://github.com/getkluard/kluard.git
 cd kluard
-go version        # 1.22 or newer
+go version        # 1.26 or newer
 make test         # gofmt check, go vet, go test ./...
 ```
 

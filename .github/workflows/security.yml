@@ -1,0 +1,31 @@
+# Looks for known vulnerabilities in the Go toolchain and standard library that Kluard is built with (Kluard has no other Go
+# dependencies). Runs every Monday, when go.mod or a workflow changes, and on request. A red run means: update Go (the
+# `go` line in go.mod and the golang: image in the Dockerfile) and make a patch release.
+name: Security
+
+on:
+  schedule:
+    - cron: "23 5 * * 1"
+  push:
+    branches: [main]
+    paths: ["go.mod", "Dockerfile", ".github/workflows/security.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  govulncheck:
+    name: Known vulnerabilities (govulncheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Install govulncheck
+        run: go install golang.org/x/vuln/cmd/govulncheck@latest
+      - name: Community edition
+        run: govulncheck ./...
+      - name: Enterprise edition (build tag)
+        run: govulncheck -tags enterprise ./...

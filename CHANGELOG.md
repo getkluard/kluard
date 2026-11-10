@@ -5,6 +5,13 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 
 ## [Unreleased]
 
+### Security
+- **Built with a supported Go.** Kluard was built with Go 1.22, which has had no security fixes since February 2025. `go.mod` and the Dockerfile now use Go 1.26, and the release workflow builds with the newest 1.26 patch. Upgrade to get binaries built with it, and rebuild Docker-based servers.
+- **Weekly check for known vulnerabilities** (`govulncheck`, the *Security* workflow) and weekly update proposals for GitHub Actions and the Docker images (Dependabot). `SECURITY.md` now says how often Kluard is patched and what to do yourself.
+
+### Added
+- **Upgrade guide for release files.** `UPGRADING.md` starts with a table of the ways to install and how to update each, and describes updating a server that runs from a release file.
+
 ## [0.1.3] - 2026-11-10
 
 ### Added
