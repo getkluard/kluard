@@ -52,6 +52,7 @@ func (s *Server) snapshot(ctx context.Context, tenant string) (snapshot, error) 
 	sn.sum.Redis = status.RedisList(now, rows, s.reg.ListRedis(tenant))
 	sn.sum.Postgres = status.PostgresList(now, rows, s.reg.ListPostgres(tenant))
 	sn.sum.Nginx = status.NginxList(now, rows, s.reg.ListNginx(tenant))
+	sn.sum.Web = status.WebList(now, rows, s.reg.ListWeb(tenant))
 	s.snaps.mu.Lock()
 	if s.snaps.m == nil {
 		s.snaps.m = map[string]snapshot{}
@@ -73,6 +74,10 @@ func (s *Server) regRoutes(mux *http.ServeMux) {
 	}
 	mux.Handle("GET /api/v1/status", s.needAny([]string{perm.Hosts, perm.Metrics}, s.statusSummary))
 	s.heartbeatRoutes(mux)
+	mux.Handle("GET /api/v1/web", s.need(perm.Hosts, false, s.listWeb))
+	mux.Handle("POST /api/v1/web", s.need(perm.Hosts, true, s.createWeb))
+	mux.Handle("PUT /api/v1/web/{id}", s.need(perm.Hosts, true, s.updateWeb))
+	mux.Handle("DELETE /api/v1/web/{id}", s.need(perm.Hosts, true, s.deleteWeb))
 	mux.Handle("GET /api/v1/hosts", s.need(perm.Hosts, false, s.listHosts))
 	s.hostGroupRoutes(mux)
 	mux.Handle("POST /api/v1/services/dismiss", s.need(perm.Hosts, true, s.dismissService))
@@ -697,5 +702,80 @@ func (s *Server) deleteNginx(w http.ResponseWriter, r *http.Request, id edition.
 	}
 	s.forget(id.Tenant)
 	s.auditOp(id, id.Tenant, "nginx.remove", r.PathValue("id"), "")
+	writeJSON(w, map[string]bool{"ok": true})
+}
+
+// ---- website checks: an address an agent fetches once a minute ----
+
+type webIn struct {
+	Name     string `json:"name"`
+	Host     string `json:"host"`
+	URL      string `json:"url"`
+	Status   int    `json:"expect_status"`
+	Contains string `json:"contains"`
+}
+
+func (in webIn) reg() registry.WebIn {
+	return registry.WebIn{Name: in.Name, Host: in.Host, URL: in.URL, Status: in.Status, Contains: in.Contains}
+}
+
+func (s *Server) listWeb(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	sn, err := s.snapshot(r.Context(), id.Tenant)
+	if err != nil {
+		writeErr(w, http.StatusServiceUnavailable, "cannot check the status right now: "+err.Error())
+		return
+	}
+	list := sn.sum.Web
+	if list == nil {
+		list = []status.Web{}
+	}
+	hosts := []string{}
+	for _, h := range allAgents(sn.sum) {
+		hosts = append(hosts, h.Name)
+	}
+	writeJSON(w, map[string]any{"data": list, "hosts": hosts})
+}
+
+func (s *Server) createWeb(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	if len(s.reg.ListWeb(id.Tenant)) >= 500 {
+		writeErr(w, http.StatusBadRequest, "too many website checks are set up here (max 500)")
+		return
+	}
+	var in webIn
+	if !readJSON(w, r, &in) {
+		return
+	}
+	rec, err := s.reg.CreateWeb(id.Tenant, in.reg())
+	if err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "web.add", rec.ID, rec.Name)
+	writeJSON(w, rec)
+}
+
+func (s *Server) updateWeb(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	var in webIn
+	if !readJSON(w, r, &in) {
+		return
+	}
+	rec, err := s.reg.UpdateWeb(id.Tenant, r.PathValue("id"), in.reg())
+	if err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "web.change", rec.ID, rec.Name)
+	writeJSON(w, rec)
+}
+
+func (s *Server) deleteWeb(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	if err := s.reg.DeleteWeb(id.Tenant, r.PathValue("id")); err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "web.remove", r.PathValue("id"), "")
 	writeJSON(w, map[string]bool{"ok": true})
 }

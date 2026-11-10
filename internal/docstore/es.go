@@ -59,6 +59,7 @@ var mappings = map[string]string{
 	"redis":           `{"dynamic":false,"properties":{"id":{"type":"keyword"},"tenant":{"type":"keyword"},"name":{"type":"keyword"},"host":{"type":"keyword"},"updated":{"type":"date"}}}`,
 	"postgres":        `{"dynamic":false,"properties":{"id":{"type":"keyword"},"tenant":{"type":"keyword"},"name":{"type":"keyword"},"host":{"type":"keyword"},"updated":{"type":"date"}}}`,
 	"nginx":           `{"dynamic":false,"properties":{"id":{"type":"keyword"},"tenant":{"type":"keyword"},"name":{"type":"keyword"},"host":{"type":"keyword"},"updated":{"type":"date"}}}`,
+	"web":             `{"dynamic":false,"properties":{"id":{"type":"keyword"},"tenant":{"type":"keyword"},"name":{"type":"keyword"},"host":{"type":"keyword"},"updated":{"type":"date"}}}`,
 	"heartbeats":      `{"dynamic":false,"properties":{"id":{"type":"keyword"},"tenant":{"type":"keyword"},"name":{"type":"keyword"},"host":{"type":"keyword"},"updated":{"type":"date"}}}`,
 	"instances_gone":  `{"dynamic":false,"properties":{"tenant":{"type":"keyword"},"key":{"type":"keyword"},"at":{"type":"date"}}}`,
 	"services_hidden": `{"dynamic":false,"properties":{"tenant":{"type":"keyword"},"name":{"type":"keyword"}}}`,

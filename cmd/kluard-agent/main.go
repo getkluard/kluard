@@ -204,6 +204,13 @@ func start(ctx context.Context, wg *sync.WaitGroup, cfg agent.Config, snd *agent
 					}
 					add(pts)
 				}
+				if len(cfg.Web) > 0 {
+					pts := agent.CollectWeb(ctx, cfg.Web, now)
+					for i := range pts {
+						pts[i].Service = cfg.HostService
+					}
+					add(pts)
+				}
 				if cfg.ContainersOn() || len(cfg.Nginx) > 0 {
 					pts, err := agent.CollectNginx(ctx, "", cfg.Nginx, now)
 					warn("nginx", err)

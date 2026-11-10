@@ -67,3 +67,38 @@ func TestNginxList(t *testing.T) {
 		t.Fatalf("%+v", x)
 	}
 }
+
+func TestWebList(t *testing.T) {
+	now := time.Now()
+	at := func(n string) map[string]string { return map[string]string{"host": "h1", "web": n} }
+	rows := []model.Latest{
+		pgRow("web_up", 1, now, at("shop")),
+		pgRow("web_response_seconds", 0.25, now, at("shop")),
+		pgRow("web_status_code", 200, now, at("shop")),
+		pgRow("web_tls_expiry_seconds", 20*86400, now, at("shop")),
+		pgRow("web_tls_valid", 1, now, at("shop")),
+		pgRow("web_up", 0, now, at("blog")),
+		pgRow("web_info", 1, now, map[string]string{"host": "h1", "web": "blog", "reason": "answered 500"}),
+		pgRow("web_up", 1, now, at("removed")), // reported for a check that no longer exists
+	}
+	recs := []registry.Web{{ID: "wb1", Host: "h1", Name: "shop", URL: "https://shop.example"}, {ID: "wb2", Host: "h1", Name: "blog", URL: "https://blog.example"}, {ID: "wb3", Host: "h1", Name: "new", URL: "http://new.example"}}
+	got := WebList(now, rows, recs)
+	if len(got) != 3 || got[0].Name != "blog" || got[0].State != "down" || got[0].Reason != "answered 500" {
+		t.Fatalf("%+v", got)
+	}
+	var shop, fresh Web
+	for _, x := range got {
+		switch x.Name {
+		case "shop":
+			shop = x
+		case "new":
+			fresh = x
+		}
+	}
+	if shop.State != "up" || shop.Reason != "" || *shop.Seconds != 0.25 || int(*shop.CertDays) != 20 || shop.CertOK == nil || !*shop.CertOK || *shop.Code != 200 {
+		t.Fatalf("%+v", shop)
+	}
+	if fresh.State != "pending" {
+		t.Fatalf("%+v", fresh)
+	}
+}

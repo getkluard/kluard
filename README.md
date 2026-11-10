@@ -39,7 +39,7 @@ Kluard is an open-source, self-hosted observability platform. It collects OpenTe
 
 | | |
 |---|---|
-| **Dashboards you build** | Line, area, stacked bar, single value, table, log and trace panels. Pick metric, aggregation, *split by* label, label filters, unit and size; drag to reorder; live preview. Starter dashboards: **Hosts**, **Nextcloud**, **Nextcloud health**, **Docker host**, **Redis**, **PostgreSQL**, **nginx**, **Services (traces)**, **Logs**. |
+| **Dashboards you build** | Line, area, stacked bar, single value, table, log and trace panels. Pick metric, aggregation, *split by* label, label filters, unit and size; drag to reorder; live preview. Starter dashboards: **Hosts**, **Nextcloud**, **Nextcloud health**, **Docker host**, **Redis**, **PostgreSQL**, **nginx**, **Websites**, **Services (traces)**, **Logs**. |
 | **Up / Down at a glance** | Boxes for Nextcloud instances, hosts, systemd services and Docker containers. A *Down* box shows a green **0** when all is well and turns red, with names and reasons, when something is not. |
 | **Alerts that reach people** | Rules on metrics, up/down status and log counts; notifications by **email, webhook, Slack, Teams**, and in Enterprise **Jira, ServiceNow, PagerDuty, Opsgenie**. Grouping, retries, acknowledge, silences, a replay of the last 24 hours before you save a rule. |
 | **Hosts & Instances pages** | See every machine and Nextcloud instance. Rename hosts, remove old ones, add log paths, choose watched services, fix a mistyped Nextcloud URL, **all in the browser**: agents pick up the change within a minute. |
@@ -270,6 +270,15 @@ A heartbeat watches a job that runs now and then, such as a backup or a cron job
 
 The address needs no login: the long random id in it is the secret, so keep it out of public scripts. A heartbeat is *waiting* until its first call, *on time*, *late* (the call is overdue) or *failed* (the job called `/fail` after its last good call). The metrics are `heartbeat_up` (1 on time, 0 late or failed) and `heartbeat_age_seconds`.
 
+## Website and certificate checks
+
+**Websites** in the menu checks any web address once a minute: does it answer, how fast, and (for https) when the certificate runs out. Use it for your own site and for your customers' sites.
+
+- **+ Add website** takes the address, the machine whose agent makes the request, and optionally a name, the status code that counts as working (otherwise anything below 400 does) and a text the page must contain, which catches a site that answers 200 but shows an error page.
+- **The agent makes the request, not the server.** Choose a machine that reaches the address the way your visitors do. This also lets you check addresses that only your internal network can see, and the server cannot be asked to fetch addresses on its own network. The agent needs to be updated to this version first.
+- **What is reported:** `web_up`, `web_response_seconds`, `web_status_code` and, for https, `web_tls_expiry_seconds` and `web_tls_valid`. Redirects are followed (at most 5) and a check gives up after 15 seconds.
+- **Starter rules (pack *Websites*):** **Website down**, **Website is slow** (over 5 seconds) and **Website certificate expires soon** (under 14 days). The dashboard template *Websites* shows them.
+
 ## What the agent reports about a host
 
 Reported every collection interval (15 s by default); rates are calculated by the agent from the difference between two samples. Linux agents report everything below; Windows agents report CPU, memory and disk usage.
@@ -326,7 +335,7 @@ Kluard can tell people when something is wrong. **Alerts** in the menu has five 
 **Set it up in three steps**
 
 1. **Channels, then Add channel.** Choose where messages go (email, webhook, Slack, Teams; Enterprise adds Jira, ServiceNow, PagerDuty and Opsgenie), fill in the form, save, and press **Test**. Secrets (passwords, tokens, webhook URLs) are encrypted and never shown again.
-2. **Rules, then Starter rules.** At the top are **starter packs**: one button turns on the usual alerts for a kind of service (Linux and Windows machines, Docker, Redis, PostgreSQL, nginx, backups and jobs, Nextcloud). Rules you already have are left alone and every rule can be edited or switched off afterwards. The Hosts page also offers a pack by itself when your agents report that service ("Docker found: turn on alerts?"); *Not now* hides the offer. Below the packs you can add single ready-made rules, for example (host down, Nextcloud instance down, service failed, container down, disk almost full, high CPU, slow Nextcloud, many errors in the logs), or **+ Add rule** to make your own.
+2. **Rules, then Starter rules.** At the top are **starter packs**: one button turns on the usual alerts for a kind of service (Linux and Windows machines, Docker, Redis, PostgreSQL, nginx, websites, backups and jobs, Nextcloud). Rules you already have are left alone and every rule can be edited or switched off afterwards. The Hosts page also offers a pack by itself when your agents report that service ("Docker found: turn on alerts?"); *Not now* hides the offer. Below the packs you can add single ready-made rules, for example (host down, Nextcloud instance down, service failed, container down, disk almost full, high CPU, slow Nextcloud, many errors in the logs), or **+ Add rule** to make your own.
 3. Done. When a rule's condition holds for long enough, an alert fires and every channel that wants it is told.
 
 **Rules** can be of three kinds: a **metric** (for example the highest disk use over 5 minutes above 90 percent, one alert per mount point), the **up/down status** of hosts, services, containers or Nextcloud instances, or the **number of log lines** (for example more than 20 errors in 5 minutes). A rule has an importance (critical, warning, info), a time the condition must last before it fires, how often to check, what to do when there is no data, a message and extra labels. **Preview on the last 24 hours** replays a metric or log rule over history and shows when it would have fired, so you can choose a threshold before you save.

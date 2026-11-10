@@ -26,6 +26,7 @@ const (
 	collInst           = "instances"
 	collRedis          = "redis"          // Redis servers that have a password or an address set here
 	collHeartbeat      = "heartbeats"     // addresses that jobs call when they have run
+	collWeb            = "web"            // addresses an agent checks
 	collNginx          = "nginx"          // nginx status pages set here
 	collPostgres       = "postgres"       // PostgreSQL servers that have a login or an address set here
 	collUpd            = "agent_updates"  // updates that someone asked for in the UI, per host
@@ -136,6 +137,7 @@ type AgentConfig struct {
 	Redis         []AgentRedis    `json:"redis"`
 	Postgres      []AgentPostgres `json:"postgres"`
 	Nginx         []AgentNginx    `json:"nginx"`
+	Web           []AgentWeb      `json:"web"`
 	UpdateTo      string          `json:"update_to,omitempty"` // set by the server when an update was asked for; not part of the revision
 }
 
@@ -392,7 +394,7 @@ func (s *Service) DeleteInstance(tenant, id string) error {
 // agent only restarts its collectors when something actually changed.
 func (s *Service) AgentConfig(tenant, host string) (AgentConfig, error) {
 	h := s.GetHost(tenant, host)
-	cfg := AgentConfig{LogPaths: h.LogPaths, DockerLogs: h.DockerLogs, Systemd: h.Systemd, Containers: h.Containers, WatchServices: h.WatchServices, Instances: []AgentInstance{}, Redis: []AgentRedis{}, Postgres: []AgentPostgres{}, Nginx: []AgentNginx{}}
+	cfg := AgentConfig{LogPaths: h.LogPaths, DockerLogs: h.DockerLogs, Systemd: h.Systemd, Containers: h.Containers, WatchServices: h.WatchServices, Instances: []AgentInstance{}, Redis: []AgentRedis{}, Postgres: []AgentPostgres{}, Nginx: []AgentNginx{}, Web: []AgentWeb{}}
 	for _, i := range s.ListInstances(tenant) {
 		if i.Host != host {
 			continue
@@ -429,6 +431,11 @@ func (s *Service) AgentConfig(tenant, host string) (AgentConfig, error) {
 			continue
 		}
 		cfg.Nginx = append(cfg.Nginx, AgentNginx{Name: r.Name, Container: r.Container, URL: r.URL})
+	}
+	for _, r := range s.ListWeb(tenant) {
+		if r.Host == host {
+			cfg.Web = append(cfg.Web, AgentWeb{Name: r.Name, URL: r.URL, Status: r.Status, Contains: r.Contains})
+		}
 	}
 	b, _ := json.Marshal(cfg)
 	sum := sha256.Sum256(b)
