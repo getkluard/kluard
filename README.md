@@ -254,6 +254,22 @@ Kluard checks nginx (also OpenResty and Angie) that runs in Docker, any number p
 - **Not in Docker, or on an unusual address:** **+ Add nginx** with the machine that should check it and the address of the status page, for example `http://10.0.0.5:8080/nginx_status`.
 - **What is reported:** `nginx_up`, open connections (also reading, writing and waiting), connections accepted and handled, and requests (`nginx_http_requests_total`, shown as a rate). The status page does not count errors (4xx/5xx) or sites; for those, read the nginx access log with the agent's log collection. Starter rule: **nginx down** (pack *nginx*).
 
+## Heartbeats: backups and cron jobs
+
+A heartbeat watches a job that runs now and then, such as a backup or a cron job. The job calls an address when it is done, and Kluard raises an alarm when the call does not come. It catches the failure that ordinary monitoring misses: a job that has quietly stopped running.
+
+1. **Heartbeats, then + Add heartbeat.** Give it a name and how often the job runs (for example every 1 day). The extra time before it counts as late is a tenth of the interval, at least 5 minutes, unless you set it yourself.
+2. **How to use** shows the exact line. Put it last in the script, after the job worked:
+
+   ```bash
+   curl -fsS -m 10 --retry 3 -o /dev/null https://kluard.example.com/hb/<the-secret-id>
+   ```
+
+   In cron, `backup.sh && curl ...` makes the call only when the backup succeeded. Add `/fail` to the address to report a failure at once.
+3. **Alerts, Rules, Starter rules, Backups and jobs** turns on the rule "Heartbeat missed".
+
+The address needs no login: the long random id in it is the secret, so keep it out of public scripts. A heartbeat is *waiting* until its first call, *on time*, *late* (the call is overdue) or *failed* (the job called `/fail` after its last good call). The metrics are `heartbeat_up` (1 on time, 0 late or failed) and `heartbeat_age_seconds`.
+
 ## What the agent reports about a host
 
 Reported every collection interval (15 s by default); rates are calculated by the agent from the difference between two samples. Linux agents report everything below; Windows agents report CPU, memory and disk usage.
@@ -310,7 +326,7 @@ Kluard can tell people when something is wrong. **Alerts** in the menu has five 
 **Set it up in three steps**
 
 1. **Channels, then Add channel.** Choose where messages go (email, webhook, Slack, Teams; Enterprise adds Jira, ServiceNow, PagerDuty and Opsgenie), fill in the form, save, and press **Test**. Secrets (passwords, tokens, webhook URLs) are encrypted and never shown again.
-2. **Rules, then Starter rules.** At the top are **starter packs**: one button turns on the usual alerts for a kind of service (Linux and Windows machines, Docker, Redis, PostgreSQL, nginx, Nextcloud). Rules you already have are left alone and every rule can be edited or switched off afterwards. The Hosts page also offers a pack by itself when your agents report that service ("Docker found: turn on alerts?"); *Not now* hides the offer. Below the packs you can add single ready-made rules, for example (host down, Nextcloud instance down, service failed, container down, disk almost full, high CPU, slow Nextcloud, many errors in the logs), or **+ Add rule** to make your own.
+2. **Rules, then Starter rules.** At the top are **starter packs**: one button turns on the usual alerts for a kind of service (Linux and Windows machines, Docker, Redis, PostgreSQL, nginx, backups and jobs, Nextcloud). Rules you already have are left alone and every rule can be edited or switched off afterwards. The Hosts page also offers a pack by itself when your agents report that service ("Docker found: turn on alerts?"); *Not now* hides the offer. Below the packs you can add single ready-made rules, for example (host down, Nextcloud instance down, service failed, container down, disk almost full, high CPU, slow Nextcloud, many errors in the logs), or **+ Add rule** to make your own.
 3. Done. When a rule's condition holds for long enough, an alert fires and every channel that wants it is told.
 
 **Rules** can be of three kinds: a **metric** (for example the highest disk use over 5 minutes above 90 percent, one alert per mount point), the **up/down status** of hosts, services, containers or Nextcloud instances, or the **number of log lines** (for example more than 20 errors in 5 minutes). A rule has an importance (critical, warning, info), a time the condition must last before it fires, how often to check, what to do when there is no data, a message and extra labels. **Preview on the last 24 hours** replays a metric or log rule over history and shows when it would have fired, so you can choose a threshold before you save.

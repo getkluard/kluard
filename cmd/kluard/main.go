@@ -173,6 +173,7 @@ func main() {
 	} else {
 		log.Warn("KLUARD_BACKUP_DIR is empty: data is deleted after the retention period without a backup", "retention_days", cfg.RetentionDays)
 	}
+	go app.RunHeartbeats(bg)
 	srv := &http.Server{
 		Addr:              cfg.Addr,
 		Handler:           app.Handler(),

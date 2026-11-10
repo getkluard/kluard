@@ -72,6 +72,7 @@ func (s *Server) regRoutes(mux *http.ServeMux) {
 		return
 	}
 	mux.Handle("GET /api/v1/status", s.needAny([]string{perm.Hosts, perm.Metrics}, s.statusSummary))
+	s.heartbeatRoutes(mux)
 	mux.Handle("GET /api/v1/hosts", s.need(perm.Hosts, false, s.listHosts))
 	s.hostGroupRoutes(mux)
 	mux.Handle("POST /api/v1/services/dismiss", s.need(perm.Hosts, true, s.dismissService))

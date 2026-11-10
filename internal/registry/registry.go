@@ -25,6 +25,7 @@ const (
 	collServicesHidden = "services_hidden" // rows the user took off the Home list; they come back if they report again
 	collInst           = "instances"
 	collRedis          = "redis"          // Redis servers that have a password or an address set here
+	collHeartbeat      = "heartbeats"     // addresses that jobs call when they have run
 	collNginx          = "nginx"          // nginx status pages set here
 	collPostgres       = "postgres"       // PostgreSQL servers that have a login or an address set here
 	collUpd            = "agent_updates"  // updates that someone asked for in the UI, per host
