@@ -5,9 +5,11 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-11-10
+
 ### Security
 - **Built with a supported Go.** Kluard was built with Go 1.22, which has had no security fixes since February 2025. `go.mod` and the Dockerfile now use Go 1.26, and the release workflow builds with the newest 1.26 patch. Upgrade to get binaries built with it, and rebuild Docker-based servers.
-- **Weekly check for known vulnerabilities** (`govulncheck`, the *Security* workflow) and weekly update proposals for GitHub Actions and the Docker images (Dependabot). `SECURITY.md` now says how often Kluard is patched and what to do yourself.
+- **Weekly check for known vulnerabilities** (`govulncheck`, the *Security* workflow) and weekly update proposals for GitHub Actions and the Docker images (Dependabot). `SECURITY.md` now says how often Kluard is patched and what to do yourself. Dependabot does not propose a new major version of Elasticsearch or a new major or minor version of ClickHouse: the databases hold your data, so changing them is a decision to test on a copy. Note that the versions in `deploy/docker-compose.yml` (ClickHouse 24.8, Elasticsearch 8.15.3) no longer receive security fixes from their makers; moving to a supported version is planned.
 
 ### Added
 - **Upgrade guide for release files.** `UPGRADING.md` starts with a table of the ways to install and how to update each, and describes updating a server that runs from a release file.
