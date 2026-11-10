@@ -5,6 +5,10 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-10
+
+Includes everything since 0.1.0. Agents need updating to use the new checks (run the install command under *Add a machine* again on each machine).
+
 ### Added
 - **Choose which menus you see.** *Settings, Menu* has a tick box for each optional menu (Dashboards, Redis, PostgreSQL, MinIO, MySQL, nginx, Websites, Heartbeats, Status pages). Everything is shown from the start. Home, Alerts, Traces, Logs, Metrics, Hosts, Instances, Billing, Add a machine, Users & groups, Backups & archive, Audit log, Settings and Account are always shown. The choice is kept per browser.
 - **Status pages for your customers.** A public address, `/status/<id>`, that shows whether a customer's services work: pick Nextcloud instances and website checks, give each the name the customer should see, and send the link. The page shows names and "Operational" or "Down", nothing else (no addresses, machines or error texts), needs no login, refreshes itself and follows the light or dark setting of the browser. `/status/<id>/json` gives the same for your own website. New *Status pages* page. The long random id is the secret, so anyone with the link can read it and nobody can guess it.
