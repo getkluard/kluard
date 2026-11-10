@@ -39,7 +39,7 @@ Kluard is an open-source, self-hosted observability platform. It collects OpenTe
 
 | | |
 |---|---|
-| **Dashboards you build** | Line, area, stacked bar, single value, table, log and trace panels. Pick metric, aggregation, *split by* label, label filters, unit and size; drag to reorder; live preview. Starter dashboards: **Hosts**, **Nextcloud**, **Nextcloud health**, **Docker host**, **Redis**, **PostgreSQL**, **MySQL and MariaDB**, **nginx**, **Websites**, **Services (traces)**, **Logs**. |
+| **Dashboards you build** | Line, area, stacked bar, single value, table, log and trace panels. Pick metric, aggregation, *split by* label, label filters, unit and size; drag to reorder; live preview. Starter dashboards: **Hosts**, **Nextcloud**, **Nextcloud health**, **Docker host**, **Redis**, **PostgreSQL**, **MySQL and MariaDB**, **nginx**, **MinIO**, **Web traffic**, **Websites**, **Services (traces)**, **Logs**. |
 | **Up / Down at a glance** | Boxes for Nextcloud instances, hosts, systemd services and Docker containers. A *Down* box shows a green **0** when all is well and turns red, with names and reasons, when something is not. |
 | **Alerts that reach people** | Rules on metrics, up/down status and log counts; notifications by **email, webhook, Slack, Teams**, and in Enterprise **Jira, ServiceNow, PagerDuty, Opsgenie**. Grouping, retries, acknowledge, silences, a replay of the last 24 hours before you save a rule. |
 | **Hosts & Instances pages** | See every machine and Nextcloud instance. Rename hosts, remove old ones, add log paths, choose watched services, fix a mistyped Nextcloud URL, **all in the browser**: agents pick up the change within a minute. |
@@ -271,6 +271,22 @@ Kluard checks nginx (also OpenResty and Angie) that runs in Docker, any number p
 - **Not in Docker, or on an unusual address:** **+ Add nginx** with the machine that should check it and the address of the status page, for example `http://10.0.0.5:8080/nginx_status`.
 - **What is reported:** `nginx_up`, open connections (also reading, writing and waiting), connections accepted and handled, and requests (`nginx_http_requests_total`, shown as a rate). The status page does not count errors (4xx/5xx) or sites; for those, read the nginx access log with the agent's log collection. Starter rule: **nginx down** (pack *nginx*).
 
+## MinIO monitoring
+
+Kluard checks MinIO (the S3-compatible object storage) that runs in Docker, any number per machine and across machines. The agent reads MinIO's own Prometheus address, `/minio/v2/metrics/cluster`; nothing is installed.
+
+- **Found by itself.** A container whose image is `minio/minio` (or `bitnami/minio`, `quay.io/minio/minio`) is found; the `mc` client, operators and consoles are skipped. Put the label `kluard.minio=false` on a container to leave it out, or `kluard.minio.port=<port>` if the S3 port is not 9000.
+- **Token.** MinIO wants a login for its metrics unless it was started with `MINIO_PROMETHEUS_AUTH_TYPE=public`. A MinIO that wants one shows up as **TOKEN**. Make the token with `mc admin prometheus generate ALIAS`, copy the value after `bearer_token:`, and press **Set token** on the row. It is stored encrypted and sent only to the agent on that machine.
+- **Not in Docker, or not found:** **+ Add MinIO** with the machine that should connect and the address, for example `http://10.0.0.5:9000`.
+- **What is reported:** `minio_up`, usable storage (free, total and `minio_cluster_capacity_utilization`), bytes and objects stored, buckets, drives and servers online and offline, `minio_cluster_health_status`, S3 requests, errors (4xx and 5xx) and traffic. Starter rules (pack *MinIO*): **MinIO down**, **storage almost full** (85%), **has a drive offline** and **is not healthy**. The dashboard template *MinIO* shows them.
+
+## Server errors from web server logs
+
+When the agent reads the logs of a web server, it also counts the answers in access lines in the common or combined log format (nginx, Apache and most others) and reports `access_log_requests_total` per status class (2xx, 3xx, 4xx, 5xx), `access_log_bytes_total` and, when there were at least 10 requests in half a minute, `access_log_error_ratio`: the share of server errors. Nothing about who asked or what they asked for is kept in the metrics.
+
+- **Turn on the logs.** For web servers in Docker, tick *Docker logs* for the machine (Hosts, then the machine's settings). For a web server that writes to files, add the log file, for example `/var/log/nginx/access.log`.
+- **Starter rule (pack *Web server errors*):** **Many server errors on a web server** when more than 5 percent of the answers were 5xx for 10 minutes. The dashboard template *Web traffic* shows requests per second by answer and the share of errors.
+
 ## Heartbeats: backups and cron jobs
 
 A heartbeat watches a job that runs now and then, such as a backup or a cron job. The job calls an address when it is done, and Kluard raises an alarm when the call does not come. It catches the failure that ordinary monitoring misses: a job that has quietly stopped running.
@@ -352,7 +368,7 @@ Kluard can tell people when something is wrong. **Alerts** in the menu has five 
 **Set it up in three steps**
 
 1. **Channels, then Add channel.** Choose where messages go (email, webhook, Slack, Teams; Enterprise adds Jira, ServiceNow, PagerDuty and Opsgenie), fill in the form, save, and press **Test**. Secrets (passwords, tokens, webhook URLs) are encrypted and never shown again.
-2. **Rules, then Starter rules.** At the top are **starter packs**: one button turns on the usual alerts for a kind of service (Linux and Windows machines, Docker, Redis, PostgreSQL, MySQL and MariaDB, nginx, websites, backups and jobs, Nextcloud). Rules you already have are left alone and every rule can be edited or switched off afterwards. The Hosts page also offers a pack by itself when your agents report that service ("Docker found: turn on alerts?"); *Not now* hides the offer. Below the packs you can add single ready-made rules, for example (host down, Nextcloud instance down, service failed, container down, disk almost full, high CPU, slow Nextcloud, many errors in the logs), or **+ Add rule** to make your own.
+2. **Rules, then Starter rules.** At the top are **starter packs**: one button turns on the usual alerts for a kind of service (Linux and Windows machines, Docker, Redis, PostgreSQL, MySQL and MariaDB, nginx, MinIO, web server errors, websites, backups and jobs, Nextcloud). Rules you already have are left alone and every rule can be edited or switched off afterwards. The Hosts page also offers a pack by itself when your agents report that service ("Docker found: turn on alerts?"); *Not now* hides the offer. Below the packs you can add single ready-made rules, for example (host down, Nextcloud instance down, service failed, container down, disk almost full, high CPU, slow Nextcloud, many errors in the logs), or **+ Add rule** to make your own.
 3. Done. When a rule's condition holds for long enough, an alert fires and every channel that wants it is told.
 
 **Rules** can be of three kinds: a **metric** (for example the highest disk use over 5 minutes above 90 percent, one alert per mount point), the **up/down status** of hosts, services, containers or Nextcloud instances, or the **number of log lines** (for example more than 20 errors in 5 minutes). A rule has an importance (critical, warning, info), a time the condition must last before it fires, how often to check, what to do when there is no data, a message and extra labels. **Preview on the last 24 hours** replays a metric or log rule over history and shows when it would have fired, so you can choose a threshold before you save.

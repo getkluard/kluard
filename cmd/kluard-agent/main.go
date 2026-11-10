@@ -204,6 +204,14 @@ func start(ctx context.Context, wg *sync.WaitGroup, cfg agent.Config, snd *agent
 					}
 					add(pts)
 				}
+				if cfg.ContainersOn() || len(cfg.Minio) > 0 {
+					pts, err := agent.CollectMinio(ctx, "", cfg.Minio, now)
+					warn("minio", err)
+					for i := range pts {
+						pts[i].Service = cfg.HostService
+					}
+					add(pts)
+				}
 				if len(cfg.Web) > 0 {
 					pts := agent.CollectWeb(ctx, cfg.Web, now)
 					for i := range pts {
@@ -346,14 +354,27 @@ func start(ctx context.Context, wg *sync.WaitGroup, cfg agent.Config, snd *agent
 			defer wg.Done()
 			tick := time.NewTicker(2 * time.Second)
 			defer tick.Stop()
+			access, lastAccess := agent.NewAccessCounter(), time.Now()
 			for {
 				select {
 				case <-ctx.Done():
 					return
 				case <-tick.C:
 				}
+				if time.Since(lastAccess) >= 30*time.Second { // the share of server errors in access logs, as a metric
+					lastAccess = time.Now()
+					if pts := access.Points(cfg.HostService, lastAccess.UnixNano()); len(pts) > 0 {
+						body, _ := agent.MetricsPayload(cfg.HostService, hostname, pts)
+						if err := snd.Post(ctx, "/v1/metrics", body); err != nil {
+							self.SendError("metrics")
+						} else {
+							self.Sent("metrics", len(pts))
+						}
+					}
+				}
 				for _, t := range tailers {
 					if logs := t.Poll(); len(logs) > 0 {
+						access.Observe(logs)
 						body, _ := agent.LogsPayload(t.Service, hostname, logs)
 						if err := snd.Post(ctx, "/v1/logs", body); err != nil {
 							self.SendError("logs")

@@ -51,6 +51,7 @@ type Config struct {
 	Web              []WebTarget       `json:"web,omitempty"`               // addresses to check (from the Kluard UI)
 	Mysql            []MysqlTarget     `json:"mysql,omitempty"`             // logins and addresses for MySQL and MariaDB (from the Kluard UI); MySQL in Docker is found by itself
 	MysqlPassword    string            `json:"mysql_password,omitempty"`    // one password to try on every MySQL that has none of its own
+	Minio            []MinioTarget     `json:"minio,omitempty"`             // tokens and addresses for MinIO (from the Kluard UI); MinIO in Docker is found by itself
 	PostgresPassword string            `json:"postgres_password,omitempty"` // one password to try on every PostgreSQL that has none of its own
 	Containers       *bool             `json:"containers"`                  // report Docker containers (default true)
 	WatchServices    []string          `json:"watch_services"`              // services that must be running

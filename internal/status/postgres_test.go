@@ -132,3 +132,31 @@ func TestMysqlList(t *testing.T) {
 		t.Fatalf("%+v", x)
 	}
 }
+
+func TestMinioList(t *testing.T) {
+	now := time.Now()
+	at := func(n string) map[string]string { return map[string]string{"host": "h1", "minio": n} }
+	rows := []model.Latest{
+		pgRow("minio_up", 1, now, at("store")),
+		pgRow("minio_cluster_capacity_usable_free_bytes", 250, now, at("store")),
+		pgRow("minio_cluster_capacity_usable_total_bytes", 1000, now, at("store")),
+		pgRow("minio_cluster_drive_offline_total", 1, now, at("store")),
+		pgRow("minio_cluster_health_status", 0, now, at("store")),
+		pgRow("minio_up", 0, now, at("locked")),
+		pgRow("minio_auth_required", 1, now, at("locked")),
+		pgRow("minio_up", 0, now.Add(-time.Hour), map[string]string{"host": "h2", "minio": "gone"}),
+	}
+	got := map[string]Minio{}
+	for _, x := range MinioList(now, rows, []registry.Minio{{ID: "mn1", Host: "h1", Name: "store", TokenEnc: "x"}}) {
+		got[x.Name] = x
+	}
+	if _, ok := got["gone"]; ok {
+		t.Fatal("a long-gone server must drop out")
+	}
+	if x := got["store"]; x.State != "up" || x.RecordID != "mn1" || !x.HasToken || *x.Free != 250 || *x.DrivesOffl != 1 || x.Healthy == nil || *x.Healthy {
+		t.Fatalf("%+v", x)
+	}
+	if x := got["locked"]; x.State != "auth" || x.Free != nil || x.Reason != "needs a token for its metrics" {
+		t.Fatalf("%+v", x)
+	}
+}

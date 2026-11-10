@@ -35,6 +35,7 @@ type RemoteConfig struct {
 	Mysql         []MysqlTarget    `json:"mysql"`
 	Nginx         []NginxTarget    `json:"nginx"`
 	Web           []WebTarget      `json:"web"`
+	Minio         []MinioTarget    `json:"minio"`
 	UpdateTo      string           `json:"update_to,omitempty"` // set when someone asked in the UI for this agent to be updated
 }
 
@@ -125,5 +126,7 @@ func (c Config) Merge(r RemoteConfig) Config {
 	out.Nginx = append(out.Nginx, r.Nginx...)
 	out.Web = append([]WebTarget(nil), c.Web...)
 	out.Web = append(out.Web, r.Web...)
+	out.Minio = append([]MinioTarget(nil), c.Minio...)
+	out.Minio = append(out.Minio, r.Minio...)
 	return out
 }

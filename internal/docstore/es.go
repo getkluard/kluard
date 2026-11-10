@@ -59,6 +59,7 @@ var mappings = map[string]string{
 	"redis":           `{"dynamic":false,"properties":{"id":{"type":"keyword"},"tenant":{"type":"keyword"},"name":{"type":"keyword"},"host":{"type":"keyword"},"updated":{"type":"date"}}}`,
 	"postgres":        `{"dynamic":false,"properties":{"id":{"type":"keyword"},"tenant":{"type":"keyword"},"name":{"type":"keyword"},"host":{"type":"keyword"},"updated":{"type":"date"}}}`,
 	"mysql":           `{"dynamic":false,"properties":{"id":{"type":"keyword"},"tenant":{"type":"keyword"},"name":{"type":"keyword"},"host":{"type":"keyword"},"updated":{"type":"date"}}}`,
+	"minio":           `{"dynamic":false,"properties":{"id":{"type":"keyword"},"tenant":{"type":"keyword"},"name":{"type":"keyword"},"host":{"type":"keyword"},"updated":{"type":"date"}}}`,
 	"nginx":           `{"dynamic":false,"properties":{"id":{"type":"keyword"},"tenant":{"type":"keyword"},"name":{"type":"keyword"},"host":{"type":"keyword"},"updated":{"type":"date"}}}`,
 	"web":             `{"dynamic":false,"properties":{"id":{"type":"keyword"},"tenant":{"type":"keyword"},"name":{"type":"keyword"},"host":{"type":"keyword"},"updated":{"type":"date"}}}`,
 	"heartbeats":      `{"dynamic":false,"properties":{"id":{"type":"keyword"},"tenant":{"type":"keyword"},"name":{"type":"keyword"},"host":{"type":"keyword"},"updated":{"type":"date"}}}`,

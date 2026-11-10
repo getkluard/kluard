@@ -52,6 +52,7 @@ func (s *Server) snapshot(ctx context.Context, tenant string) (snapshot, error) 
 	sn.sum.Redis = status.RedisList(now, rows, s.reg.ListRedis(tenant))
 	sn.sum.Postgres = status.PostgresList(now, rows, s.reg.ListPostgres(tenant))
 	sn.sum.Mysql = status.MysqlList(now, rows, s.reg.ListMysql(tenant))
+	sn.sum.Minio = status.MinioList(now, rows, s.reg.ListMinio(tenant))
 	sn.sum.Nginx = status.NginxList(now, rows, s.reg.ListNginx(tenant))
 	sn.sum.Web = status.WebList(now, rows, s.reg.ListWeb(tenant))
 	s.snaps.mu.Lock()
@@ -100,6 +101,10 @@ func (s *Server) regRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /api/v1/nginx", s.need(perm.Hosts, true, s.createNginx))
 	mux.Handle("PUT /api/v1/nginx/{id}", s.need(perm.Hosts, true, s.updateNginx))
 	mux.Handle("DELETE /api/v1/nginx/{id}", s.need(perm.Hosts, true, s.deleteNginx))
+	mux.Handle("GET /api/v1/minio", s.need(perm.Hosts, false, s.listMinio))
+	mux.Handle("POST /api/v1/minio", s.need(perm.Hosts, true, s.createMinio))
+	mux.Handle("PUT /api/v1/minio/{id}", s.need(perm.Hosts, true, s.updateMinio))
+	mux.Handle("DELETE /api/v1/minio/{id}", s.need(perm.Hosts, true, s.deleteMinio))
 	mux.Handle("GET /api/v1/mysql", s.need(perm.Hosts, false, s.listMysql))
 	mux.Handle("POST /api/v1/mysql", s.need(perm.Hosts, true, s.createMysql))
 	mux.Handle("PUT /api/v1/mysql/{id}", s.need(perm.Hosts, true, s.updateMysql))
@@ -860,5 +865,81 @@ func (s *Server) deleteWeb(w http.ResponseWriter, r *http.Request, id edition.Id
 	}
 	s.forget(id.Tenant)
 	s.auditOp(id, id.Tenant, "web.remove", r.PathValue("id"), "")
+	writeJSON(w, map[string]bool{"ok": true})
+}
+
+// ---- MinIO: tokens and addresses (the agent finds MinIO in Docker by itself) ----
+
+type minioIn struct {
+	Name       string `json:"name"`
+	Host       string `json:"host"`
+	Container  string `json:"container"`
+	URL        string `json:"url"`
+	Token      string `json:"token"`
+	ClearToken bool   `json:"clear_token"`
+}
+
+func (in minioIn) reg() registry.MinioIn {
+	return registry.MinioIn{Name: in.Name, Host: in.Host, Container: in.Container, URL: in.URL, Token: in.Token, ClearToken: in.ClearToken}
+}
+
+func (s *Server) listMinio(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	sn, err := s.snapshot(r.Context(), id.Tenant)
+	if err != nil {
+		writeErr(w, http.StatusServiceUnavailable, "cannot check the status right now: "+err.Error())
+		return
+	}
+	list := sn.sum.Minio
+	if list == nil {
+		list = []status.Minio{}
+	}
+	hosts := []string{}
+	for _, h := range allAgents(sn.sum) {
+		hosts = append(hosts, h.Name)
+	}
+	writeJSON(w, map[string]any{"data": list, "hosts": hosts})
+}
+
+func (s *Server) createMinio(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	if len(s.reg.ListMinio(id.Tenant)) >= 200 {
+		writeErr(w, http.StatusBadRequest, "too many MinIO servers are set up here (max 200)")
+		return
+	}
+	var in minioIn
+	if !readJSON(w, r, &in) {
+		return
+	}
+	rec, err := s.reg.CreateMinio(id.Tenant, in.reg())
+	if err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "minio.add", rec.ID, rec.Name)
+	writeJSON(w, rec.Out())
+}
+
+func (s *Server) updateMinio(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	var in minioIn
+	if !readJSON(w, r, &in) {
+		return
+	}
+	rec, err := s.reg.UpdateMinio(id.Tenant, r.PathValue("id"), in.reg())
+	if err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "minio.change", rec.ID, rec.Name)
+	writeJSON(w, rec.Out())
+}
+
+func (s *Server) deleteMinio(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	if err := s.reg.DeleteMinio(id.Tenant, r.PathValue("id")); err != nil {
+		s.regErr(w, err)
+		return
+	}
+	s.forget(id.Tenant)
+	s.auditOp(id, id.Tenant, "minio.remove", r.PathValue("id"), "")
 	writeJSON(w, map[string]bool{"ok": true})
 }

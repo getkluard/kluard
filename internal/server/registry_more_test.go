@@ -18,6 +18,7 @@ func TestMysqlNginxWebSettingsPermissionsAndSecrets(t *testing.T) {
 		"/api/v1/mysql": `{"host":"web1","container":"db","password":"x"}`,
 		"/api/v1/nginx": `{"host":"web1","container":"web"}`,
 		"/api/v1/web":   `{"host":"web1","url":"https://a.example/"}`,
+		"/api/v1/minio": `{"host":"web1","container":"store","token":"x"}`,
 	} {
 		if code(rd, "POST", ts.URL+path, body) != 403 {
 			t.Errorf("%s: a read-only user must not change settings", path)
@@ -32,7 +33,7 @@ func TestMysqlNginxWebSettingsPermissionsAndSecrets(t *testing.T) {
 		if r.StatusCode != 200 || id == "" {
 			t.Fatalf("%s create: %d %s", path, r.StatusCode, b)
 		}
-		if strings.Contains(string(b), `"password":"x"`) || strings.Contains(string(b), "password_enc") {
+		if strings.Contains(string(b), `"password":"x"`) || strings.Contains(string(b), "password_enc") || strings.Contains(string(b), `"token":"x"`) || strings.Contains(string(b), "token_enc") {
 			t.Errorf("%s: the password came back: %s", path, b)
 		}
 		if code(ot, "PUT", ts.URL+path+"/"+id, body) != 404 || code(ot, "DELETE", ts.URL+path+"/"+id, "") != 404 {

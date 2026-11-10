@@ -28,6 +28,7 @@ const (
 	collHeartbeat      = "heartbeats"     // addresses that jobs call when they have run
 	collWeb            = "web"            // addresses an agent checks
 	collNginx          = "nginx"          // nginx status pages set here
+	collMinio          = "minio"          // MinIO servers that have a token or an address set here
 	collMysql          = "mysql"          // MySQL and MariaDB servers that have a login or an address set here
 	collPostgres       = "postgres"       // PostgreSQL servers that have a login or an address set here
 	collUpd            = "agent_updates"  // updates that someone asked for in the UI, per host
@@ -138,6 +139,7 @@ type AgentConfig struct {
 	Redis         []AgentRedis    `json:"redis"`
 	Postgres      []AgentPostgres `json:"postgres"`
 	Mysql         []AgentMysql    `json:"mysql"`
+	Minio         []AgentMinio    `json:"minio"`
 	Nginx         []AgentNginx    `json:"nginx"`
 	Web           []AgentWeb      `json:"web"`
 	UpdateTo      string          `json:"update_to,omitempty"` // set by the server when an update was asked for; not part of the revision
@@ -396,7 +398,7 @@ func (s *Service) DeleteInstance(tenant, id string) error {
 // agent only restarts its collectors when something actually changed.
 func (s *Service) AgentConfig(tenant, host string) (AgentConfig, error) {
 	h := s.GetHost(tenant, host)
-	cfg := AgentConfig{LogPaths: h.LogPaths, DockerLogs: h.DockerLogs, Systemd: h.Systemd, Containers: h.Containers, WatchServices: h.WatchServices, Instances: []AgentInstance{}, Redis: []AgentRedis{}, Postgres: []AgentPostgres{}, Mysql: []AgentMysql{}, Nginx: []AgentNginx{}, Web: []AgentWeb{}}
+	cfg := AgentConfig{LogPaths: h.LogPaths, DockerLogs: h.DockerLogs, Systemd: h.Systemd, Containers: h.Containers, WatchServices: h.WatchServices, Instances: []AgentInstance{}, Redis: []AgentRedis{}, Postgres: []AgentPostgres{}, Mysql: []AgentMysql{}, Minio: []AgentMinio{}, Nginx: []AgentNginx{}, Web: []AgentWeb{}}
 	for _, i := range s.ListInstances(tenant) {
 		if i.Host != host {
 			continue
@@ -437,6 +439,16 @@ func (s *Service) AgentConfig(tenant, host string) (AgentConfig, error) {
 			pw = ""
 		}
 		cfg.Mysql = append(cfg.Mysql, AgentMysql{Name: r.Name, Container: r.Container, Addr: r.Addr, Username: r.Username, Password: pw, SSLMode: r.SSLMode})
+	}
+	for _, r := range s.ListMinio(tenant) {
+		if r.Host != host {
+			continue
+		}
+		tok, err := s.box.Open(r.TokenEnc)
+		if err != nil {
+			tok = ""
+		}
+		cfg.Minio = append(cfg.Minio, AgentMinio{Name: r.Name, Container: r.Container, URL: r.URL, Token: tok})
 	}
 	for _, r := range s.ListNginx(tenant) {
 		if r.Host != host {
