@@ -6,6 +6,9 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 ## [Unreleased]
 
 ### Added
+- **Starter packs of alerts, one button each.** *Alerts, Rules, Starter rules* now starts with packs for Linux and Windows machines, Docker, Redis and Nextcloud. A pack adds the rules you do not have yet and never makes a second copy (`GET /api/v1/alerts/packs`, `POST /api/v1/alerts/packs/{id}`). New starter rule: *Redis cannot save to disk*.
+- **Kluard suggests the packs that fit.** The Hosts page shows "Standard alerts are ready" when your agents report Docker containers, a Redis or a Nextcloud that has no alerts yet, with a *Turn on alerts* button and *Not now* (`GET /api/v1/alerts/suggestions`).
+- **Dashboard templates Docker host and Redis.** Container state and traffic with the machine's CPU, memory and disk; Redis memory, clients, keys, hit rate, evictions and refused connections, with tiles that turn yellow and red.
 - **The release has a server bundle with the agents inside.** `kluard-server-linux-amd64.tar.gz` and `-arm64.tar.gz` hold the server and a `dist/` folder with the Linux and Windows agents and their checksums, so a server started from a release file (`KLUARD_DIST_DIR` pointing at `dist/`) can hand out agents under *Add a machine*. Before, only the Docker image had them.
 
 ## [0.1.0] - 2026-11-10

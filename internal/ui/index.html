@@ -371,6 +371,30 @@ const TEMPLATES=[
   newPanel('Availability over time (1 = up)','line',6,2,M('nextcloud_up','min',{groupBy:'instance'})),
   newPanel('Certificate valid for','line',6,2,M('nextcloud_tls_cert_expiry_seconds','min',{groupBy:'instance'}),'uptime'),
   newPanel('Recent errors','logs',12,2,{src:'logs',severity:'ERROR'})]}},
+ {name:'Docker host',desc:'Containers up and down, their network traffic, and the CPU, memory and disk of the machine they run on. Needs the agent with Docker access (see Add a machine).',panels:()=>[
+  newPanel('Containers up','stat',3,1,{src:'status',status:'container_up'}),
+  T(newPanel('Containers DOWN','stat',3,1,{src:'status',status:'container_down'}),1),
+  newPanel('Hosts DOWN','stat',3,1,{src:'status',status:'host_down'}),
+  newPanel('Alerts firing','stat',3,1,{src:'status',status:'alerts_firing'}),
+  newPanel('Container state (1 = running)','line',6,2,M('container_up','min',{groupBy:'container'})),
+  newPanel('Network traffic per container','line',6,2,M('container_network_bytes','rate',{groupBy:'container'}),'bytesps'),
+  T(newPanel('CPU utilization','area',6,2,M('system.cpu.utilization','avg',{groupBy:'host'}),'percent01'),0.8,0.9),
+  newPanel('Memory used','line',6,2,M('system.memory.used','avg',{groupBy:'host'}),'bytes'),
+  T(newPanel('Disk full','line',6,2,M('system.filesystem.utilization','max',{groupBy:'mountpoint'}),'percent01'),0.8,0.9),
+  newPanel('Load average (1 min)','line',6,2,M('system.load.1m','avg',{groupBy:'host'}))]},
+ {name:'Redis',desc:'Whether Redis answers, its memory against the limit, clients, keys, hit rate and evictions. Add the Redis under Redis in the menu first.',panels:()=>[
+  T(newPanel('Redis up (1 = yes)','stat',3,1,M('redis_up','min',{groupBy:'redis'})),null,0,'below'),
+  T(newPanel('Memory of the limit','stat',3,1,M('redis_memory_utilization','max',{groupBy:'redis'}),'percent01'),0.8,0.9),
+  T(newPanel('Last save worked (1 = yes)','stat',3,1,M('redis_save_ok','min',{groupBy:'redis'})),null,0,'below'),
+  newPanel('Uptime','stat',3,1,M('redis_uptime_seconds','last',{groupBy:'redis'}),'uptime'),
+  newPanel('Memory used','line',6,2,M('redis_memory_used_bytes','avg',{groupBy:'redis'}),'bytes'),
+  newPanel('Clients','line',6,2,M('redis_clients','avg',{groupBy:'redis'})),
+  newPanel('Keys','line',6,2,M('redis_keys','sum',{groupBy:'redis'})),
+  newPanel('Commands per second','line',6,2,M('redis_commands_total','rate',{groupBy:'redis'}),'rate'),
+  newPanel('Cache hits per second','line',6,2,M('redis_keyspace_hits_total','rate',{groupBy:'redis'}),'rate'),
+  newPanel('Cache misses per second','line',6,2,M('redis_keyspace_misses_total','rate',{groupBy:'redis'}),'rate'),
+  T(newPanel('Keys removed for lack of memory','bar',6,2,M('redis_evicted_keys_total','rate',{groupBy:'redis'}),'rate'),0.0001,1),
+  T(newPanel('Connections refused','bar',6,2,M('redis_rejected_connections_total','rate',{groupBy:'redis'}),'rate'),0.0001,1)]},
  {name:'Services (traces)',desc:'Request rate, error rate and latency per service from your traces.',panels:()=>[
   newPanel('Requests','bar',6,2,{src:'traces',metric:'requests',groupBy:'service'}),
   newPanel('Error rate','line',6,2,{src:'traces',metric:'error_rate',groupBy:'service'},'percent'),
@@ -924,6 +948,16 @@ async function hostsPage(){
       hostsPage()}catch(e){alert(e.message)}};
   // agent keys the server refused in the last day: an agent that cannot report says so only in its own log, so say it here too
   let rej=[];if(!S.me.via_key&&can('keys')){try{rej=(await api('/api/v1/rejected-keys')).rejected||[]}catch(_){}}
+  // services the agents report that have a starter pack of alerts the tenant does not have yet: offer it with one button
+  let sug=[];if(can('alerts',true)){try{sug=(await api('/api/v1/alerts/suggestions')).data||[]}catch(_){}}
+  const hidden=()=>{try{return JSON.parse(localStorage.getItem('kluard.sugHidden')||'[]')}catch(_){return[]}};
+  const hide=id=>{try{localStorage.setItem('kluard.sugHidden',JSON.stringify(hidden().concat(id)))}catch(_){}};
+  const sugCard=()=>{const l=sug.filter(x=>!hidden().includes(x.id));if(!l.length)return null;
+    return el('div',{class:'card',style:'margin:0 0 12px'},el('b',{},'Standard alerts are ready'),
+      el('p',{class:'help',style:'margin:4px 0 8px'},'Kluard found services your agents report. Turn on the alerts that usually matter for them. You can change or switch off every rule on the Alerts page.'),
+      l.map(x=>el('div',{style:'display:flex;gap:12px;align-items:center;padding:6px 0;border-top:1px solid var(--line,#2a3142)'},el('div',{style:'flex:1'},el('b',{},x.title+' found'),el('div',{class:'mut',style:'font-size:12px'},x.missing.length+' rule'+(x.missing.length==1?'':'s')+': '+x.missing.join(' · '))),
+        el('button',{class:'btn sm',onclick:async e=>{e.target.disabled=true;try{await api('/api/v1/alerts/packs/'+x.id,{},{method:'POST',body:{}});sug=sug.filter(y=>y.id!==x.id);e.target.replaceWith(el('span',{class:'ok'},'on'))}catch(er){e.target.disabled=false;alert(er.message)}}},'Turn on alerts'),
+        el('button',{class:'btn ghost sm',onclick:e=>{hide(x.id);e.target.closest('div[style*="border-top"]').remove()}},'Not now'))))};
   const rejCard=()=>rej.length?el('div',{class:'card',style:'border-color:var(--warn,#c98a00);margin:0 0 12px'},el('b',{},'An agent is being refused'),
     el('p',{class:'help',style:'margin:4px 0 6px'},'The server does not know the key these agents use, so nothing they send is kept. Put a valid key in the agent\'s config.json (/etc/kluard-agent/config.json) and restart it. Create a key under ',el('a',{href:'#/machines'},'Add a machine'),'.'),
     el('table',{},el('tr',{},['Key starts with','From','Refused','Last'].map(x=>el('th',{},x))),rej.map(r=>el('tr',{},el('td',{},el('code',{},r.prefix+'…')),el('td',{},r.from),el('td',{},String(r.count)),el('td',{class:'mut'},new Date(r.last).toLocaleString()))))):null;
@@ -952,7 +986,7 @@ async function hostsPage(){
     return sections.filter(x=>x[1].length).flatMap(([name,hl])=>[el('tr',{class:'grouphead'},el('td',{colSpan:10,style:'background:var(--acc2);font-weight:600;padding:6px 12px'},name,el('span',{class:'mut',style:'font-weight:400'},'  '+hl.length+' host'+(hl.length===1?'':'s')))),...hl.map(rowFn)])};
   const render=()=>{const shown=S.hostGroup?hs.filter(h=>has(h,S.hostGroup)):hs;
   view.replaceChildren(
-    rejCard(),groupBar(),
+    sugCard(),rejCard(),groupBar(),
     el('div',{class:'bar'},el('span',{class:'mut'},'A machine appears here as soon as its agent reports. Open one to see its services and containers, or to choose which log files its agent ships.'),el('span',{class:'sp'}),w&&oneClick.length?el('button',{class:'btn ghost',title:'Update every agent that has another version than this server',onclick:updateAll},'Update '+oneClick.length+' agent'+(oneClick.length===1?'':'s')):null,(can('keys')||can('hosts',true))?el('a',{class:'btn',href:'#/machines'},'+ Add a machine'):null),
     shown.length?el('div',{class:'card',style:'padding:0'},el('table',{},el('tr',{},['','Host','IP address','Agent','System','Last seen','Services','Containers','Log paths',''].map(x=>el('th',{},x))),rowsOf(shown,h=>
       el('tr',{class:'row',onclick:()=>{location.hash='#/h/'+encodeURIComponent(h.name)}},el('td',{onclick:ev=>ev.stopPropagation(),style:'white-space:nowrap'},w?el('input',{type:'checkbox',title:'Select this host',checked:sel.has(h.name),onchange:ev=>{ev.target.checked?sel.add(h.name):sel.delete(h.name);render()}}):null,w?' ':null,dot(h.status)),
@@ -1552,8 +1586,10 @@ function ruleDialog(rule,again){
 async function alertsRules(box,again){
   const w=can('alerts',true),r=await api('/api/v1/alerts/rules'),list=r.data||[];
   const act=async(fn)=>{try{await fn()}catch(e){alert(e.message)}again()};
-  const templates=async()=>{const t=(await api('/api/v1/alerts/templates')).data||[],have=new Set(list.map(x=>x.name));
-    dialog('Starter rules',el('div',{},el('p',{class:'help'},'Ready-made rules. Adding one creates it as it is; you can edit it afterwards.'),el('table',{},t.map(x=>el('tr',{},el('td',{},sevBadge(x.severity)),el('td',{},el('b',{},x.name),el('div',{class:'mut',style:'font-size:12px'},ruleText(x))),
+  const templates=async()=>{const t=(await api('/api/v1/alerts/templates')).data||[],have=new Set(list.map(x=>x.name)),packs=(await api('/api/v1/alerts/packs')).data||[];
+    const packRow=p=>{const done=!(p.missing||[]).length;return el('div',{class:'card',style:'margin:0 0 8px;display:flex;gap:12px;align-items:center'},el('div',{style:'flex:1'},el('b',{},p.title),el('div',{class:'mut',style:'font-size:12px'},p.desc),el('div',{class:'mut',style:'font-size:12px'},p.rules.join(' · '))),
+      done?el('span',{class:'ok'},'on'):el('button',{class:'btn sm',onclick:async e=>{e.target.disabled=true;try{const r=await api('/api/v1/alerts/packs/'+p.id,{},{method:'POST',body:{}});e.target.replaceWith(el('span',{class:'ok'},r.added.length+' rule'+(r.added.length==1?'':'s')+' on'))}catch(er){e.target.disabled=false;alert(er.message)}}},'Turn on'))};
+    dialog('Starter rules',el('div',{},el('p',{class:'help'},'Turn on a whole set at once. Rules you already have are left alone, and every rule can be edited or switched off afterwards.'),packs.map(packRow),el('p',{class:'help',style:'margin-top:14px'},'Or add single rules:'),el('table',{},t.map(x=>el('tr',{},el('td',{},sevBadge(x.severity)),el('td',{},el('b',{},x.name),el('div',{class:'mut',style:'font-size:12px'},ruleText(x))),
       el('td',{style:'text-align:right'},have.has(x.name)?el('span',{class:'mut'},'added'):el('button',{class:'btn sm',onclick:async e=>{e.target.disabled=true;try{await api('/api/v1/alerts/rules',{},{method:'POST',body:x});e.target.replaceWith(el('span',{class:'ok'},'added'))}catch(er){e.target.disabled=false;alert(er.message)}}},'Add')))))),
       [['Done',()=>{again()}]])};
   box.replaceChildren(el('div',{class:'bar'},el('span',{class:'mut'},'A rule is a condition Kluard checks regularly. When it holds for long enough, an alert fires and the channels you set up are told.'),el('span',{class:'sp'}),

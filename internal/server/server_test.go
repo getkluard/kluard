@@ -34,6 +34,7 @@ type fakeStore struct {
 	lastTraceQ   model.TraceQuery
 	archive      bool
 	metrics      int                       // metric points stored
+	metricNames  []string                  // what MetricNames answers
 	samples      map[string][]model.Sample // what Samples answers, by Prometheus metric name
 }
 
@@ -65,7 +66,12 @@ func (f *fakeStore) Services(_ context.Context, t string, _, _ time.Time) ([]jso
 }
 func (f *fakeStore) MetricNames(_ context.Context, t, _ string, _, _ time.Time) ([]json.RawMessage, error) {
 	f.tenant = t
-	return nil, nil
+	var out []json.RawMessage
+	for _, n := range f.metricNames {
+		b, _ := json.Marshal(map[string]string{"name": n})
+		out = append(out, b)
+	}
+	return out, nil
 }
 func (f *fakeStore) MetricLabels(_ context.Context, t, _ string, _, _ time.Time) ([]json.RawMessage, error) {
 	f.tenant = t

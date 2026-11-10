@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -55,6 +56,9 @@ func (s *Server) alertRoutes(mux *http.ServeMux) {
 		}
 		writeJSON(w, map[string]any{"data": out})
 	}))
+	mux.Handle("GET /api/v1/alerts/packs", s.need(perm.Alerts, false, s.listPacks))
+	mux.Handle("GET /api/v1/alerts/suggestions", s.need(perm.Alerts, false, s.suggestPacks))
+	mux.Handle("POST /api/v1/alerts/packs/{id}", s.need(perm.Alerts, true, s.enablePack))
 	mux.Handle("GET /api/v1/alerts/silences", s.need(perm.Alerts, false, func(w http.ResponseWriter, r *http.Request, id edition.Identity) {
 		writeJSON(w, map[string]any{"data": s.alerts.ListSilences(id.Tenant)})
 	}))
@@ -259,3 +263,99 @@ func (s *Server) testChannel(w http.ResponseWriter, r *http.Request, id edition.
 }
 
 var _ = strconv.Itoa
+
+type packOut struct {
+	alerts.Pack
+	Missing []string `json:"missing"` // rules of the pack the tenant does not have yet
+}
+
+// listPacks shows the starter packs and how much of each the tenant already has.
+func (s *Server) listPacks(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	have := map[string]bool{}
+	for _, r := range s.alerts.ListRules(id.Tenant) {
+		have[r.Name] = true
+	}
+	out := []packOut{}
+	for _, p := range alerts.Packs() {
+		po := packOut{Pack: p, Missing: []string{}}
+		for _, n := range p.Rules {
+			if !have[n] {
+				po.Missing = append(po.Missing, n)
+			}
+		}
+		out = append(out, po)
+	}
+	writeJSON(w, map[string]any{"data": out})
+}
+
+// enablePack adds the rules of a pack that the tenant does not have yet. It can be pressed twice: rules that exist are left alone.
+func (s *Server) enablePack(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	rules, ok := alerts.PackRules(r.PathValue("id"))
+	if !ok {
+		writeErr(w, http.StatusNotFound, "no such pack")
+		return
+	}
+	have := map[string]bool{}
+	for _, x := range s.alerts.ListRules(id.Tenant) {
+		have[x.Name] = true
+	}
+	added, kept := []string{}, []string{}
+	for _, t := range rules {
+		if have[t.Name] {
+			kept = append(kept, t.Name)
+			continue
+		}
+		t.Enabled = true
+		if _, err := s.alerts.PutRule(id.Tenant, "", t); err != nil {
+			s.alertErr(w, err, nil)
+			return
+		}
+		added = append(added, t.Name)
+	}
+	s.log.Info("alert pack enabled", "by", id.User, "tenant", id.Tenant, "pack", r.PathValue("id"), "added", len(added))
+	writeJSON(w, map[string]any{"added": added, "kept": kept})
+}
+
+type suggestion struct {
+	alerts.Pack
+	Missing []string `json:"missing"`
+}
+
+// suggestPacks says which starter packs fit what this tenant's agents report (a Redis, Docker containers, a Nextcloud...)
+// and which of their rules the tenant does not have yet.
+func (s *Server) suggestPacks(w http.ResponseWriter, r *http.Request, id edition.Identity) {
+	now := time.Now()
+	rows, err := s.store.MetricNames(r.Context(), id.Tenant, "", now.Add(-24*time.Hour), now)
+	if err != nil {
+		s.log.Error("suggestions: metric names", "err", err)
+		writeJSON(w, map[string]any{"data": []suggestion{}}) // a suggestion is a nicety: never an error page
+		return
+	}
+	seen := map[string]bool{}
+	for _, row := range rows {
+		var n struct{ Name string }
+		if json.Unmarshal(row, &n) == nil {
+			seen[n.Name] = true
+		}
+	}
+	have := map[string]bool{}
+	for _, x := range s.alerts.ListRules(id.Tenant) {
+		have[x.Name] = true
+	}
+	out := []suggestion{}
+	for _, p := range alerts.Packs() {
+		if p.Signal == "" || !seen[p.Signal] {
+			continue
+		}
+		sg := suggestion{Pack: p, Missing: []string{}}
+		for _, n := range p.Rules {
+			if !have[n] {
+				sg.Missing = append(sg.Missing, n)
+			}
+		}
+		if len(sg.Missing) > 0 {
+			out = append(out, sg)
+		}
+	}
+	writeJSON(w, map[string]any{"data": out})
+}

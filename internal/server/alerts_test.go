@@ -52,10 +52,12 @@ type alertEnv struct {
 	eng *alerts.Engine
 	q   *alertQ
 	clk *struct{ t time.Time }
+	fs  *fakeStore
 }
 
 func alertServer(t *testing.T) *alertEnv {
 	f, _ := docstore.OpenFile(t.TempDir())
+	fs := &fakeStore{}
 	st, _ := auth.Open(f, 0)
 	st.CreateUser("admin", "acme", "admins-long-password")
 	st.CreateUserIn("reader", "acme", "readers-long-password", "user")
@@ -68,9 +70,9 @@ func alertServer(t *testing.T) *alertEnv {
 	clk := &struct{ t time.Time }{t: time.Now()}
 	eng := &alerts.Engine{DB: f, Box: box, Eval: &alerts.Evaluator{Q: q, St: noStatus{}}, Guard: alerts.Guard{AllowPrivate: true}, GroupWait: time.Second,
 		Now: func() time.Time { return clk.t }, PublicURL: "https://kluard.example.com"}
-	ts := httptest.NewServer(New(&fakeStore{}, a, slog.New(slog.NewTextHandler(io.Discard, nil))).WithAuth(a).WithDashboards(dashboards.New(f)).WithAlerts(eng).Handler())
+	ts := httptest.NewServer(New(fs, a, slog.New(slog.NewTextHandler(io.Discard, nil))).WithAuth(a).WithDashboards(dashboards.New(f)).WithAlerts(eng).Handler())
 	t.Cleanup(ts.Close)
-	return &alertEnv{ts, eng, q, clk}
+	return &alertEnv{ts, eng, q, clk, fs}
 }
 
 func (v *alertEnv) client(t *testing.T, user, pw string) *http.Client {
@@ -431,5 +433,91 @@ func TestARuleMadeThroughTheApiIsOnUnlessSaidOtherwise(t *testing.T) {
 	do(ad, "PUT", v.ts.URL+"/api/v1/alerts/rules/"+on, `{"name":"R3","kind":"status","status":"host_down","enabled":false}`)
 	if enabledOf(on) {
 		t.Fatal("and can switch it off")
+	}
+}
+
+func TestAlertPacksOneButton(t *testing.T) {
+	v := alertServer(t)
+	ad, rd := v.client(t, "admin", "admins-long-password"), v.client(t, "reader", "readers-long-password")
+	if c := code(rd, "POST", v.ts.URL+"/api/v1/alerts/packs/redis", ""); c != 403 {
+		t.Fatalf("a read-only user must not turn on a pack: %d", c)
+	}
+	if c := code(ad, "POST", v.ts.URL+"/api/v1/alerts/packs/nope", ""); c != 404 {
+		t.Fatalf("unknown pack: %d", c)
+	}
+	_, b := do(ad, "POST", v.ts.URL+"/api/v1/alerts/packs/redis", "")
+	var out struct{ Added, Kept []string }
+	json.Unmarshal(b, &out)
+	if len(out.Added) != 3 || len(out.Kept) != 0 {
+		t.Fatalf("first press: %s", b)
+	}
+	// pressing again, or turning on a pack that shares a rule, never makes a second copy
+	_, b = do(ad, "POST", v.ts.URL+"/api/v1/alerts/packs/redis", "")
+	json.Unmarshal(b, &out)
+	if len(out.Added) != 0 || len(out.Kept) != 3 {
+		t.Fatalf("second press: %s", b)
+	}
+	do(ad, "POST", v.ts.URL+"/api/v1/alerts/packs/docker", "")
+	_, b = do(ad, "GET", v.ts.URL+"/api/v1/alerts/rules", "")
+	names := map[string]int{}
+	var rl struct{ Data []alerts.Rule }
+	json.Unmarshal(b, &rl)
+	for _, r := range rl.Data {
+		names[r.Name]++
+		if !r.Enabled {
+			t.Errorf("%s is off", r.Name)
+		}
+	}
+	if names["Container down"] != 1 || names["Redis down"] != 1 || names["Host down"] != 1 {
+		t.Fatalf("rules: %v", names)
+	}
+	_, b = do(rd, "GET", v.ts.URL+"/api/v1/alerts/packs", "")
+	var pk struct {
+		Data []struct {
+			ID      string
+			Missing []string
+		}
+	}
+	json.Unmarshal(b, &pk)
+	for _, p := range pk.Data {
+		if (p.ID == "redis" || p.ID == "docker") && len(p.Missing) != 0 {
+			t.Errorf("%s still misses %v", p.ID, p.Missing)
+		}
+		if p.ID == "nextcloud" && len(p.Missing) != 7 {
+			t.Errorf("nextcloud misses %v", p.Missing)
+		}
+	}
+}
+
+func TestAlertSuggestionsFollowWhatAgentsReport(t *testing.T) {
+	v := alertServer(t)
+	ad := v.client(t, "admin", "admins-long-password")
+	fs := v.fs
+	list := func() map[string]int {
+		_, b := do(ad, "GET", v.ts.URL+"/api/v1/alerts/suggestions", "")
+		var out struct {
+			Data []struct {
+				ID      string
+				Missing []string
+			}
+		}
+		json.Unmarshal(b, &out)
+		m := map[string]int{}
+		for _, s := range out.Data {
+			m[s.ID] = len(s.Missing)
+		}
+		return m
+	}
+	if got := list(); len(got) != 0 {
+		t.Fatalf("nothing reported, nothing suggested: %v", got)
+	}
+	fs.metricNames = []string{"system.cpu.utilization", "container_up", "redis_up"}
+	got := list()
+	if got["docker"] != 3 || got["redis"] != 3 || got["host"] != 4 || got["nextcloud"] != 0 {
+		t.Fatalf("suggestions: %v", got)
+	}
+	do(ad, "POST", v.ts.URL+"/api/v1/alerts/packs/redis", "")
+	if got := list(); got["redis"] != 0 || got["docker"] != 3 {
+		t.Fatalf("a pack that is on is not suggested again: %v", got)
 	}
 }
