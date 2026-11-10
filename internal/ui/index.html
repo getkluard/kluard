@@ -15,9 +15,9 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 #app{display:flex;min-height:100vh}
 #side{width:216px;background:var(--side);color:var(--sidefg);display:flex;flex-direction:column;padding:16px 10px;position:sticky;top:0;height:100vh;flex:none}
 #side .logo{font-weight:700;font-size:19px;color:#fff;padding:2px 10px 18px;letter-spacing:.3px}#side .logo .en{color:var(--acc)}#side .logo .bn{color:#fff}.brand{display:inline-flex;flex-direction:column;align-items:flex-start;gap:8px}.brand .co{display:flex;align-items:center;gap:8px}.brand .cn{font-size:13px;font-weight:600;opacity:.85;overflow-wrap:anywhere}.login .brand .cn{font-size:15px}#side .logo img{max-height:34px;max-width:170px;vertical-align:middle;margin-right:8px;background:rgba(255,255,255,.95);padding:4px 8px;border-radius:8px}.login .brand img{max-height:56px;max-width:240px;display:block;margin-bottom:8px}.logoprev{background:#fff;border:1px dashed var(--line);border-radius:8px;padding:12px;min-height:64px;display:flex;align-items:center}.logoprev img{max-height:64px;max-width:240px}
-#side nav a{display:flex;gap:10px;align-items:center;color:var(--sidefg);padding:8px 10px;border-radius:8px;margin-bottom:2px;text-decoration:none}
+#side nav{flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.25) transparent;margin-right:-6px;padding-right:6px}#side .logo,#side .foot{flex:none}#side nav a{display:flex;gap:10px;align-items:center;color:var(--sidefg);padding:7px 10px;border-radius:8px;margin-bottom:1px;text-decoration:none}
 #side nav a:hover{background:rgba(255,255,255,.07)}#side nav a.on{background:rgba(255,255,255,.12);color:#fff}
-#side nav svg{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#side nav svg,.mi svg{width:17px;height:17px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 #side .foot{margin-top:auto;font-size:12px;padding:8px 10px;border-top:1px solid rgba(255,255,255,.1)}
 #side .foot .row{display:flex;gap:6px;align-items:center;justify-content:space-between;margin-top:8px}
 #side .foot button{background:none;border:1px solid rgba(255,255,255,.2);color:var(--sidefg);border-radius:6px;padding:2px 8px;cursor:pointer;font-size:12px}
@@ -567,6 +567,7 @@ async function panelEditor(existing,onSave){
 // ---- app shell, login and pages ----
 const ICON={home:'<path d="M3 11l9-8 9 8M5 10v10h14V10"/>',dash:'<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>',
  trace:'<path d="M4 6h10M8 12h12M6 18h8"/>',logs:'<path d="M4 6h16M4 12h16M4 18h10"/>',metric:'<path d="M3 17l5-6 4 3 8-9"/><path d="M3 21h18"/>',machine:'<rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/><path d="M7 7h.01M7 17h.01"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',
+ redis:'<path d="M12 3l9 4-9 4-9-4z"/><path d="M3 12l9 4 9-4M3 17l9 4 9-4"/>',mysql:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16"/>',minio:'<ellipse cx="12" cy="7" rx="8" ry="2.5"/><path d="M4 7l2 13h12l2-13"/>',nginx:'<path d="M3 7h13l-3-3M21 17H8l3 3"/>',web:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',pulse:'<path d="M3 12h4l3-7 4 14 3-7h4"/>',okpage:'<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>',
  db:'<ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/>',
  host:'<rect x="3" y="4" width="18" height="12" rx="1"/><path d="M8 20h8M12 16v4"/>',cloud:'<path d="M7 18a4 4 0 010-8 5 5 0 019.6-1A4.5 4.5 0 0117 18z"/>',
  users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.3-5 6.5-5s5.7 1.5 6.5 5"/><path d="M16 4.5a3.5 3.5 0 010 7M18 15c2 .5 3.2 2 3.5 5"/>',archive:'<rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11h14V8M10 12h4"/>',
@@ -576,8 +577,13 @@ const ICON={home:'<path d="M3 11l9-8 9 8M5 10v10h14V10"/>',dash:'<rect x="3" y="
  audit:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',cog:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>'};
 // each entry: href, label, icon, who may see it (hidden pages are also refused by the server)
 const NAV=[['#/','Home','home',()=>true],['#/dashboards','Dashboards','dash',()=>can('dashboards')],['#/traces','Traces','trace',()=>can('traces')],['#/logs','Logs','logs',()=>can('logs')],['#/metrics','Metrics','metric',()=>can('metrics')],
- ['#/hosts','Hosts','host',()=>can('hosts')],['#/instances','Instances','cloud',()=>can('hosts')],['#/redis','Redis','db',()=>can('hosts')],['#/postgres','PostgreSQL','db',()=>can('hosts')],['#/minio','MinIO','db',()=>can('hosts')],['#/mysql','MySQL','db',()=>can('hosts')],['#/nginx','nginx','db',()=>can('hosts')],['#/web','Websites','cloud',()=>can('hosts')],['#/heartbeats','Heartbeats','bell',()=>can('hosts')],['#/statuspages','Status pages','cloud',()=>can('hosts')],['#/alerts','Alerts','bell',()=>can('alerts')],['#/billing','Billing','billing',()=>can('billing')],['#/tenants','Tenants','building',()=>can('operator')],['#/machines','Add a machine','machine',()=>can('keys')||can('hosts',true)],
+ ['#/hosts','Hosts','host',()=>can('hosts')],['#/instances','Instances','cloud',()=>can('hosts')],['#/redis','Redis','redis',()=>can('hosts')],['#/postgres','PostgreSQL','db',()=>can('hosts')],['#/minio','MinIO','minio',()=>can('hosts')],['#/mysql','MySQL','mysql',()=>can('hosts')],['#/nginx','nginx','nginx',()=>can('hosts')],['#/web','Websites','web',()=>can('hosts')],['#/heartbeats','Heartbeats','pulse',()=>can('hosts')],['#/statuspages','Status pages','okpage',()=>can('hosts')],['#/alerts','Alerts','bell',()=>can('alerts')],['#/billing','Billing','billing',()=>can('billing')],['#/tenants','Tenants','building',()=>can('operator')],['#/machines','Add a machine','machine',()=>can('keys')||can('hosts',true)],
  ['#/users','Users & groups','users',()=>can('users')],['#/backups','Backups & archive','archive',()=>can('backups')],['#/audit','Audit log','audit',()=>can('settings')],['#/settings','Settings','cog',()=>can('settings')],['#/account','Account','user',()=>true]];
+// Menus that can be hidden (Settings, Menu). Everything is shown until someone hides it; the rest is always shown.
+const OPTIONAL_NAV=['#/dashboards','#/redis','#/postgres','#/minio','#/mysql','#/nginx','#/web','#/heartbeats','#/statuspages','#/alerts'];
+const hiddenNav=()=>{try{const a=JSON.parse(store.get('kluard.menu.hidden','[]'));return Array.isArray(a)?a.filter(h=>OPTIONAL_NAV.includes(h)):[]}catch{return[]}};
+const navItems=()=>{const hid=hiddenNav();return NAV.filter(n=>n[3]()&&!hid.includes(n[0]))};
+const navLinks=()=>navItems().map(([h,t,i])=>el('a',{href:h,'data-h':h},iconEl(i),t));
 const iconEl=k=>{const s=svg('svg',{viewBox:'0 0 24 24'});s.innerHTML=ICON[k];return s};
 function setTitle(t){const h=$('#top h1');if(h)h.textContent=t;document.title=t+' · '+((S.brand&&S.brand.name)?S.brand.name+' · ':'')+'Kluard'}
 // site name and logo (public: the login page needs them before anyone is signed in)
@@ -635,7 +641,7 @@ function shell(){
   const applyCustom=()=>{const f=Date.parse($('#cfrom').value),t=Date.parse($('#cto').value);if(isNaN(f)||isNaN(t))return;S.custom={from:f,to:Math.max(t,f+6e4)};store.set('kluard.custom',JSON.stringify(S.custom));route(true)};
   if(!can('backups'))S.archive=false;
   $('#root').replaceChildren(el('div',{id:'app'},
-    el('aside',{id:'side'},el('div',{class:'logo'},brandEl(false)),el('nav',{},NAV.filter(n=>n[3]()).map(([h,t,i])=>el('a',{href:h,'data-h':h},iconEl(i),t))),
+    el('aside',{id:'side'},el('div',{class:'logo'},brandEl(false)),el('nav',{},navLinks()),
       el('div',{class:'foot'},el('div',{},S.me.user?S.me.user:'API key',' · ',el('b',{},S.me.tenant)),el('div',{class:'mut',style:'font-size:11px'},S.me.group_name||'',S.me.version?el('span',{title:'Version of this Kluard server. Servers and agents built from the same source show the same value.'},' · '+(S.me.version.startsWith('src-')?'build '+S.me.version.slice(4):S.me.version)):null),
         el('div',{class:'row'},el('button',{onclick:()=>setTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark')},'Theme'),el('button',{onclick:async()=>{try{await api('/api/v1/logout',{},{method:'POST',body:{}})}catch{}showLogin()}},'Sign out')))),
     el('div',{id:'main'},el('div',{id:'top'},el('h1',{},'Kluard'),
@@ -2110,6 +2116,17 @@ async function licenseCard(view,w){
           l.state!=='none'&&l.source!=='file'?el('button',{class:'btn ghost',onclick:async()=>{if(!confirm('Remove the licence? Enterprise features stop; Community features and all data stay.'))return;try{draw(await api('/api/v1/settings/license',{},{method:'DELETE'}))}catch(er){msg.className='err';msg.textContent=er.message}}},'Remove licence'):null)):null,msg,
       el('p',{class:'help'},'The licence is checked inside Kluard against keys that are built in. Nothing is sent anywhere, and nothing is ever deleted when a licence ends. '+(r.license.trial?' A trial stops on its end date.':' Enterprise features keep working for 30 days after the end date.')))};
   draw(r)}
+function menuCard(view){
+  const hid=new Set(hiddenNav());
+  const opts=NAV.filter(n=>OPTIONAL_NAV.includes(n[0])&&n[3]());
+  const boxes=opts.map(([h,t,i])=>{const cb=el('input',{type:'checkbox',checked:!hid.has(h)});
+    cb.onchange=()=>{cb.checked?hid.delete(h):hid.add(h);store.set('kluard.menu.hidden',JSON.stringify([...hid]));$('#side nav').replaceChildren(...navLinks());route(true);refreshAlertBadge()};
+    return el('label',{class:'mi',style:'display:flex;gap:8px;align-items:center;padding:4px 0;cursor:pointer;break-inside:avoid'},cb,iconEl(i),t)});
+  const fixed=NAV.filter(n=>!OPTIONAL_NAV.includes(n[0])&&n[3]()).map(n=>n[1]).join(', ');
+  view.append(el('div',{class:'card',style:'max-width:620px'},el('h2',{style:'margin-top:0'},'Menu'),
+    el('p',{class:'help'},'Tick what you want to see in the menu. Everything is shown from the start; hide what you do not use. The choice is kept in this browser, and a hidden page still works if you open its address.'),
+    el('div',{style:'columns:2;column-gap:24px'},boxes),
+    el('p',{class:'help'},'Always shown: '+fixed+'.')))}
 async function settingsPage(){
   setTitle('Settings');const view=$('#view'),w=can('settings',true);
   await loadBrand();
@@ -2139,6 +2156,7 @@ async function settingsPage(){
       rmBtn):el('p',{class:'help'},'You have read-only access.'),msg,
     el('p',{class:'help'},'The name and logo are the same for everyone who uses this server, and are visible before signing in. In a multi-tenant installation only give the Settings permission to the operator.')));
   drawPrev();
+  menuCard(view);
   await licenseCard(view,w);
   await tenantCards(view,w);
   await healthCard(view);

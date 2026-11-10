@@ -6,6 +6,7 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 ## [Unreleased]
 
 ### Added
+- **Choose which menus you see.** *Settings, Menu* has a tick box for each optional menu (Dashboards, Redis, PostgreSQL, MinIO, MySQL, nginx, Websites, Heartbeats, Status pages, Alerts). Everything is shown from the start. Home, Traces, Logs, Metrics, Hosts, Instances, Billing, Add a machine, Users & groups, Backups & archive, Audit log, Settings and Account are always shown. The choice is kept per browser.
 - **Status pages for your customers.** A public address, `/status/<id>`, that shows whether a customer's services work: pick Nextcloud instances and website checks, give each the name the customer should see, and send the link. The page shows names and "Operational" or "Down", nothing else (no addresses, machines or error texts), needs no login, refreshes itself and follows the light or dark setting of the browser. `/status/<id>/json` gives the same for your own website. New *Status pages* page. The long random id is the secret, so anyone with the link can read it and nobody can guess it.
 - **MinIO monitoring.** The agent finds MinIO in Docker by itself and reads its Prometheus address: usable storage and how full it is, objects, buckets, drives and servers offline, cluster health, S3 requests, errors and traffic. A MinIO that wants a token for its metrics is shown as TOKEN and the token is set with **Set token** (stored encrypted). New MinIO page, metrics `minio_*`, dashboard template *MinIO* and alert pack *MinIO*. The agent needs updating.
 - **Server errors counted from web server logs.** Access lines in the common or combined format (nginx, Apache) among the logs the agent reads are counted per status class, with the share of server errors (`access_log_requests_total`, `access_log_error_ratio`). New dashboard template *Web traffic* and alert pack *Web server errors*. The agent needs updating.
@@ -18,6 +19,9 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 - **Kluard suggests the packs that fit.** The Hosts page shows "Standard alerts are ready" when your agents report Docker containers, a Redis or a Nextcloud that has no alerts yet, with a *Turn on alerts* button and *Not now* (`GET /api/v1/alerts/suggestions`).
 - **Dashboard templates Docker host and Redis.** Container state and traffic with the machine's CPU, memory and disk; Redis memory, clients, keys, hit rate, evictions and refused connections, with tiles that turn yellow and red.
 - **The release has a server bundle with the agents inside.** `kluard-server-linux-amd64.tar.gz` and `-arm64.tar.gz` hold the server and a `dist/` folder with the Linux and Windows agents and their checksums, so a server started from a release file (`KLUARD_DIST_DIR` pointing at `dist/`) can hand out agents under *Add a machine*. Before, only the Docker image had them.
+
+### Changed
+- **The menu scrolls when it is longer than the window,** and the account part stays at the bottom (before, a long menu ran over it). Redis, PostgreSQL, MinIO, MySQL, nginx, Websites, Heartbeats and Status pages now have icons of their own.
 
 ## [0.1.0] - 2026-11-10
 
