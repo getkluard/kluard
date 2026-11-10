@@ -27,6 +27,7 @@ Includes everything since 0.1.0. Agents need updating to use the new checks (run
 - **The release has a server bundle with the agents inside.** `kluard-server-linux-amd64.tar.gz` and `-arm64.tar.gz` hold the server and a `dist/` folder with the Linux and Windows agents and their checksums, so a server started from a release file (`KLUARD_DIST_DIR` pointing at `dist/`) can hand out agents under *Add a machine*. Before, only the Docker image had them.
 
 ### Changed
+- **The menu shows the release.** A server built from a release shows *release v0.1.3* under your name; a server built from source still shows *build* and the source hash, so you can see which build you are running. MinIO no longer has a menu entry of its own (S3 storage covers it; the MinIO page still opens at `#/minio` and its metrics and alert pack stay).
 - **Removing a tenant now also removes** its status pages, heartbeats, website checks and the settings of its PostgreSQL, MySQL, MinIO and nginx (before, they stayed, and a status page stayed public). Daily configuration backups include them too.
 - **The menu scrolls when it is longer than the window,** and the account part stays at the bottom (before, a long menu ran over it). Redis, PostgreSQL, MinIO, MySQL, nginx, Websites, Heartbeats and Status pages now have icons of their own.
 
