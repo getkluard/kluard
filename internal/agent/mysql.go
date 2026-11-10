@@ -144,6 +144,7 @@ type MysqlStats struct {
 	ReplicaRunning                  bool
 	ReplicaLag                      float64
 	Sizes                           []MysqlDB
+	SizesRead                       bool // the size query worked (Sizes may still be empty: the server has no databases of its own)
 }
 
 type MysqlDB struct {
@@ -220,7 +221,7 @@ func MysqlCheck(ctx context.Context, addr string, t MysqlTarget) (MysqlStats, er
 	cached, fresh := mysqlSizes[key], time.Since(mysqlSizeAt[key]) < 5*time.Minute
 	mysqlSizeMu.Unlock()
 	if fresh {
-		st.Sizes = cached
+		st.Sizes, st.SizesRead = cached, true
 	} else {
 		var sizes []MysqlDB
 		_, r, err := c.Query("SELECT table_schema, COALESCE(SUM(data_length+index_length),0) FROM information_schema.tables WHERE table_schema NOT IN ('information_schema','performance_schema','mysql','sys') GROUP BY table_schema ORDER BY 2 DESC", 50)
@@ -233,7 +234,7 @@ func MysqlCheck(ctx context.Context, addr string, t MysqlTarget) (MysqlStats, er
 			mysqlSizeMu.Lock()
 			mysqlSizes[key], mysqlSizeAt[key] = sizes, time.Now()
 			mysqlSizeMu.Unlock()
-			st.Sizes = sizes
+			st.Sizes, st.SizesRead = sizes, true
 		}
 	}
 	return st, nil
@@ -277,6 +278,9 @@ func MysqlPoints(st MysqlStats, attrs map[string]string, now int64) []Point {
 		}
 		g("mysql_replication_running", run)
 		g("mysql_replication_lag_seconds", st.ReplicaLag)
+	}
+	if st.SizesRead {
+		g("mysql_databases", float64(len(st.Sizes)))
 	}
 	for _, d := range st.Sizes {
 		a := map[string]string{"database": d.Name}

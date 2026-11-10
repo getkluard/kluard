@@ -31,6 +31,7 @@ type Mysql struct {
 	Running      *float64 `json:"running,omitempty"`
 	LongestQuery *float64 `json:"longest_query,omitempty"`
 	Size         *float64 `json:"size,omitempty"`
+	Databases    *float64 `json:"databases,omitempty"` // databases besides the system ones; 0 means the server has none of its own
 	Lag          *float64 `json:"replication_lag,omitempty"`
 	Uptime       *float64 `json:"uptime,omitempty"`
 }
@@ -84,6 +85,8 @@ func MysqlList(now time.Time, rows []model.Latest, recs []registry.Mysql) []Mysq
 			x.Lag = &v
 		case "mysql_uptime_seconds":
 			x.Uptime = &v
+		case "mysql_databases":
+			x.Databases = &v
 		case "mysql_database_size_bytes":
 			if x.Size == nil {
 				z := 0.0
@@ -98,7 +101,7 @@ func MysqlList(now time.Time, rows []model.Latest, recs []registry.Mysql) []Mysq
 		}
 		// numbers of a Mysql that is not answering are old: do not show them as if they were current
 		if x.State != "up" {
-			x.Conns, x.ConnsMax, x.Running, x.LongestQuery, x.Size, x.Lag, x.Uptime = nil, nil, nil, nil, nil, nil, nil
+			x.Conns, x.ConnsMax, x.Running, x.LongestQuery, x.Size, x.Databases, x.Lag, x.Uptime = nil, nil, nil, nil, nil, nil, nil, nil
 		}
 		if now.Sub(time.Unix(x.LastSeen, 0)) > Fresh {
 			x.Stale = true

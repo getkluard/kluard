@@ -160,3 +160,17 @@ func TestMinioList(t *testing.T) {
 		t.Fatalf("%+v", x)
 	}
 }
+
+func TestMysqlNoDatabases(t *testing.T) {
+	now := time.Now()
+	at := map[string]string{"host": "h1", "mysql": "fresh"}
+	rows := []model.Latest{
+		pgRow("mysql_up", 1, now, at),
+		pgRow("mysql_databases", 0, now, at),
+		pgRow("mysql_info", 1, now, map[string]string{"host": "h1", "mysql": "fresh", "container": "fresh"}),
+	}
+	l := MysqlList(now, rows, nil)
+	if len(l) != 1 || l[0].Size != nil || l[0].Databases == nil || *l[0].Databases != 0 {
+		t.Fatalf("%+v", l)
+	}
+}
