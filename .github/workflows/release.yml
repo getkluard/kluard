@@ -28,6 +28,16 @@ jobs:
           for arch in amd64 arm64; do
             CGO_ENABLED=0 GOOS=linux GOARCH=$arch go build -trimpath -ldflags "-s -w -X $MOD/internal/buildinfo.Version=$VERSION" -o dist/kluard-linux-$arch ./cmd/kluard
           done
+          # server bundles: the server, the agents it hands out to new machines (dist/) and the checksums, in one archive
+          for arch in amd64 arm64; do
+            b=kluard-server-linux-$arch
+            mkdir -p bundle/$b/dist
+            cp dist/kluard-linux-$arch bundle/$b/kluard
+            cp dist/kluard-agent-* bundle/$b/dist/
+            (cd bundle/$b/dist && sha256sum kluard-agent-* > SHA256SUMS)
+            cp README.md LICENSE bundle/$b/
+            tar -C bundle -czf dist/$b.tar.gz $b
+          done
           (cd dist && sha256sum * > SHA256SUMS)
       - uses: softprops/action-gh-release@v2
         with:

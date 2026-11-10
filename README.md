@@ -131,6 +131,18 @@ Production notes:
 - Set `--public-url` to the address agents will use; it is written into the install scripts.
 - If agents reach Kluard through a proxy such as Squid, exempt the Kluard host.
 
+### Server from a release file (without Docker)
+
+The release page has `kluard-server-linux-amd64.tar.gz` and `kluard-server-linux-arm64.tar.gz`. Each holds the server (`kluard`) and a `dist/` folder with the agents for Linux and Windows, which is what the install command and the download buttons under *Add a machine* hand out. Unpack it, point `KLUARD_DIST_DIR` at the `dist` folder and start the server:
+
+```bash
+tar xzf kluard-server-linux-amd64.tar.gz
+cd kluard-server-linux-amd64
+KLUARD_DIST_DIR="$PWD/dist" KLUARD_PUBLIC_URL=https://kluard.example.com ./kluard
+```
+
+You still need ClickHouse (and, optionally, Elasticsearch) and the settings in [Configuration](#configuration). The Docker route above sets all of this up for you. The plain `kluard-linux-*` file in the release is the server on its own, without agents.
+
 ### Upgrade
 
 Full step-by-step guide, including how to upgrade with read-only access: **[UPGRADING.md](UPGRADING.md)**. In short:

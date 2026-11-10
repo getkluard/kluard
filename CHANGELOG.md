@@ -5,6 +5,9 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 
 ## [Unreleased]
 
+### Added
+- **The release has a server bundle with the agents inside.** `kluard-server-linux-amd64.tar.gz` and `-arm64.tar.gz` hold the server and a `dist/` folder with the Linux and Windows agents and their checksums, so a server started from a release file (`KLUARD_DIST_DIR` pointing at `dist/`) can hand out agents under *Add a machine*. Before, only the Docker image had them.
+
 ## [0.1.0] - 2026-11-10
 
 First tagged release (a pre-release). Everything below came in with it.
