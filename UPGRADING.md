@@ -38,6 +38,54 @@ curl -s http://127.0.0.1:4318/healthz            # prints: ok
 
 Change `v0.1.3` to the release you want and `amd64` to `arm64` on an ARM machine. The `dist/` folder holds the agents that **Add a machine** hands out, so it is replaced too. Your settings and your data (ClickHouse, Elasticsearch) are not in that folder and are not touched. To go back, stop the server and start `kluard-server-previous/kluard` instead.
 
+## Uninstalling Kluard
+
+Remove the **agents first, then the server.** The agents get their uninstall script from the server, so it must still be running. Deleting the server's data deletes your history, users, dashboards and settings for good: if you might want any of it, first make a backup (the **Backups & archive** page) and copy it off the machine.
+
+**1. Every machine with an agent**
+
+| Machine | Command |
+|---|---|
+| Linux | `curl -fsSL https://kluard.example.com/install/agent.sh \| sudo sh -s -- --uninstall` |
+| Windows (elevated PowerShell) | `& ([scriptblock]::Create((irm https://kluard.example.com/install/agent.ps1))) -Uninstall` |
+| Docker host | `docker rm -f kluard-agent` |
+
+Use your own server address. On Linux this stops and removes the `kluard-agent` service, its update helper, the `kluard-agent` user, the program and its settings (`/etc/kluard-agent`). If the server is already gone, do the same by hand on each Linux machine:
+
+```bash
+sudo systemctl disable --now kluard-agent-update.path kluard-agent
+sudo rm -f /etc/systemd/system/kluard-agent.service /etc/systemd/system/kluard-agent-update.path /etc/systemd/system/kluard-agent-update.service
+sudo systemctl daemon-reload
+sudo userdel kluard-agent
+sudo rm -rf /usr/local/bin/kluard-agent* /etc/kluard-agent /usr/local/lib/kluard-agent /var/lib/kluard-agent
+```
+
+**2. The server, installed with Docker (`./install.sh`)**
+
+```bash
+cd /opt/lumen/deploy                       # the folder with docker-compose.yml
+docker compose down                        # stops and removes the containers; the data is kept
+docker compose down -v --rmi local         # only when you are sure: ALSO deletes the data volumes and the image built here
+sudo rm -f /etc/sysctl.d/99-kluard.conf    # the setting ./install.sh added for Elasticsearch
+cd / && sudo rm -r /opt/lumen              # the program folder, including deploy/.env
+```
+
+The first command is enough if you only want to stop Kluard and might come back: run `docker compose up -d` in the same folder to start it again. `deploy/.env` holds the key that decrypts passwords and tokens stored in Kluard and in its backups: delete it only when you no longer need those backups. Docker itself is left installed, since other things may use it. Backups you copied elsewhere are not touched.
+
+**3. The server, from a release file**
+
+Stop the program (Ctrl+C, or stop your service) and delete the folder you unpacked (`kluard-server-linux-amd64/`, and `kluard-server-previous/` if you made one). ClickHouse and Elasticsearch are yours: remove them the way you installed them.
+
+**4. What you set up elsewhere**
+
+Kluard cannot clean up places it only had a login to. Remove what you do not want to leave behind:
+
+- **Nextcloud:** the app password or token you gave under *Instances* (Nextcloud: *Settings, Security, Devices & sessions*).
+- **Databases:** the login you made for Kluard, for example `DROP USER 'kluard'@'%';` in MySQL or MariaDB, and the monitoring role in PostgreSQL.
+- **S3 storage and MinIO:** the access key or token you made for Kluard.
+- **Cron jobs and backup scripts** that call a heartbeat address (`/hb/…`), and links you sent to customers' status pages (they stop working when the server is gone).
+- **DNS, the reverse proxy and the certificate** for the Kluard address.
+
 ## From Lumen to Kluard
 
 The product was renamed from Lumen to Kluard. A server that runs Lumen keeps its data and settings; only the names of the program, the containers and the repository change.

@@ -5,6 +5,9 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 
 ## [Unreleased]
 
+### Added
+- **Uninstall guide.** `UPGRADING.md` describes how to remove Kluard: the agents first, then the server (Docker or release file), and what to clean up elsewhere (Nextcloud app passwords, database logins, S3 keys, heartbeat calls, DNS).
+
 ### Changed
 - **Traces and Billing can be hidden, Dashboards always show.** In *Settings, Menu*, Traces and Billing are now menus you can hide and Dashboards is always shown. A Dashboards entry hidden earlier is shown again.
 

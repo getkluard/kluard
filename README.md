@@ -169,7 +169,7 @@ In the UI open **Add a machine**, create an agent key (for example `web-server-1
 
 **Updating agents.** An agent that is not the same build as the server is marked *update* on the Hosts page. Click it, or *Update N agents*, to update it (a root-owned helper installs what the server offers after checking its checksums and rolls back if the new version does not stay up; a container agent replaces itself in place). Agents from before this feature, and Windows agents, need the install command once: click the label to see it. See [UPGRADING.md](UPGRADING.md).
 
-Remove an agent with `--uninstall` (Linux), `-Uninstall` (Windows) or `docker rm -f kluard-agent`.
+Remove an agent with `--uninstall` (Linux), `-Uninstall` (Windows) or `docker rm -f kluard-agent`. Removing the whole of Kluard, in the right order, is described in [UPGRADING.md](UPGRADING.md#uninstalling-kluard).
 
 `--docker` adds the agent to the `docker` group so it can list containers. **Docker socket access is equivalent to root on that machine**; only use it if you want container up/down status. The Windows script and the Docker-container agent do not collect services yet.
 
