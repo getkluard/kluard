@@ -6,7 +6,11 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 ## [Unreleased]
 
 ### Added
+- **Install guide.** `INSTALL.md` walks through a first installation from start to finish, both from a clone with Docker and from a release file with systemd, ending at the first machine and the first alert.
 - **Uninstall guide.** `UPGRADING.md` describes how to remove Kluard: the agents first, then the server (Docker or release file), and what to clean up elsewhere (Nextcloud app passwords, database logins, S3 keys, heartbeat calls, DNS).
+
+### Fixed
+- **Agent install with `--docker` on servers without a `docker` group.** On some systems Docker works but there is no group named `docker`, and the installer stopped with "no 'docker' group found". It now uses the group that owns the Docker socket, and says so; if there is none it explains what to do.
 
 ### Changed
 - **Traces and Billing can be hidden, Dashboards always show.** In *Settings, Menu*, Traces and Billing are now menus you can hide and Dashboards is always shown. A Dashboards entry hidden earlier is shown again.

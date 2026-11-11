@@ -296,9 +296,18 @@ fi
 CAP="AmbientCapabilities=CAP_DAC_READ_SEARCH
 CapabilityBoundingSet=CAP_DAC_READ_SEARCH"
 if [ "$DOCKERGRP" = 1 ]; then
-  getent group docker >/dev/null 2>&1 || die "--docker needs Docker installed (no 'docker' group found)"
+  # Usually the group is called "docker". Some installs (RHEL-family, rootless set-ups) have no such group, and the
+  # Docker socket belongs to another one: use the group that owns the socket, as long as it is not root.
+  DGROUP=docker
+  if ! getent group docker >/dev/null 2>&1; then
+    DGROUP="$(stat -c %G "${KLUARD_DOCKER_SOCKET:-/var/run/docker.sock}" 2>/dev/null || true)"
+    case "$DGROUP" in
+      ""|UNKNOWN|root) die "--docker: found no 'docker' group, and the Docker socket is not owned by a group the agent can join (check: ls -l /var/run/docker.sock). Create the group and give it the socket, then run this again: sudo groupadd docker; sudo systemctl restart docker.socket docker";;
+    esac
+    echo "Note: there is no 'docker' group here; using '$DGROUP', the group of the Docker socket."
+  fi
   CAP="$CAP
-SupplementaryGroups=docker"
+SupplementaryGroups=$DGROUP"
 fi
 cat > "$SYSTEMD_DIR/kluard-agent.service" <<UNIT
 [Unit]
