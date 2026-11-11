@@ -15,6 +15,7 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 - **Agent install with `--docker` on servers without a `docker` group.** On some systems Docker works but there is no group named `docker`, and the installer stopped with "no 'docker' group found". It now uses the group that owns the Docker socket, and says so; if there is none it explains what to do.
 
 ### Changed
+- **"Standard alerts are ready" moved to the Alerts page.** The suggestion to turn on the starter alerts for the services your agents report is now at the top of Alerts (Active and Rules), no longer on Hosts.
 - **Traces and Billing can be hidden, Dashboards always show.** In *Settings, Menu*, Traces and Billing are now menus you can hide and Dashboards is always shown. A Dashboards entry hidden earlier is shown again.
 
 ## [0.1.4] - 2026-11-10

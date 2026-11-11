@@ -1008,16 +1008,6 @@ async function hostsPage(){
       hostsPage()}catch(e){alert(e.message)}};
   // agent keys the server refused in the last day: an agent that cannot report says so only in its own log, so say it here too
   let rej=[];if(!S.me.via_key&&can('keys')){try{rej=(await api('/api/v1/rejected-keys')).rejected||[]}catch(_){}}
-  // services the agents report that have a starter pack of alerts the tenant does not have yet: offer it with one button
-  let sug=[];if(can('alerts',true)){try{sug=(await api('/api/v1/alerts/suggestions')).data||[]}catch(_){}}
-  const hidden=()=>{try{return JSON.parse(localStorage.getItem('kluard.sugHidden')||'[]')}catch(_){return[]}};
-  const hide=id=>{try{localStorage.setItem('kluard.sugHidden',JSON.stringify(hidden().concat(id)))}catch(_){}};
-  const sugCard=()=>{const l=sug.filter(x=>!hidden().includes(x.id));if(!l.length)return null;
-    return el('div',{class:'card',style:'margin:0 0 12px'},el('b',{},'Standard alerts are ready'),
-      el('p',{class:'help',style:'margin:4px 0 8px'},'Kluard found services your agents report. Turn on the alerts that usually matter for them. You can change or switch off every rule on the Alerts page.'),
-      l.map(x=>el('div',{style:'display:flex;gap:12px;align-items:center;padding:6px 0;border-top:1px solid var(--line,#2a3142)'},el('div',{style:'flex:1'},el('b',{},x.title+' found'),el('div',{class:'mut',style:'font-size:12px'},x.missing.length+' rule'+(x.missing.length==1?'':'s')+': '+x.missing.join(' · '))),
-        el('button',{class:'btn sm',onclick:async e=>{e.target.disabled=true;try{await api('/api/v1/alerts/packs/'+x.id,{},{method:'POST',body:{}});sug=sug.filter(y=>y.id!==x.id);e.target.replaceWith(el('span',{class:'ok'},'on'))}catch(er){e.target.disabled=false;alert(er.message)}}},'Turn on alerts'),
-        el('button',{class:'btn ghost sm',onclick:e=>{hide(x.id);e.target.closest('div[style*="border-top"]').remove()}},'Not now'))))};
   const rejCard=()=>rej.length?el('div',{class:'card',style:'border-color:var(--warn,#c98a00);margin:0 0 12px'},el('b',{},'An agent is being refused'),
     el('p',{class:'help',style:'margin:4px 0 6px'},'The server does not know the key these agents use, so nothing they send is kept. Put a valid key in the agent\'s config.json (/etc/kluard-agent/config.json) and restart it. Create a key under ',el('a',{href:'#/machines'},'Add a machine'),'.'),
     el('table',{},el('tr',{},['Key starts with','From','Refused','Last'].map(x=>el('th',{},x))),rej.map(r=>el('tr',{},el('td',{},el('code',{},r.prefix+'…')),el('td',{},r.from),el('td',{},String(r.count)),el('td',{class:'mut'},new Date(r.last).toLocaleString()))))):null;
@@ -1046,7 +1036,7 @@ async function hostsPage(){
     return sections.filter(x=>x[1].length).flatMap(([name,hl])=>[el('tr',{class:'grouphead'},el('td',{colSpan:10,style:'background:var(--acc2);font-weight:600;padding:6px 12px'},name,el('span',{class:'mut',style:'font-weight:400'},'  '+hl.length+' host'+(hl.length===1?'':'s')))),...hl.map(rowFn)])};
   const render=()=>{const shown=S.hostGroup?hs.filter(h=>has(h,S.hostGroup)):hs;
   view.replaceChildren(
-    sugCard(),rejCard(),groupBar(),
+    rejCard(),groupBar(),
     el('div',{class:'bar'},el('span',{class:'mut'},'A machine appears here as soon as its agent reports. Open one to see its services and containers, or to choose which log files its agent ships.'),el('span',{class:'sp'}),w&&oneClick.length?el('button',{class:'btn ghost',title:'Update every agent that has another version than this server',onclick:updateAll},'Update '+oneClick.length+' agent'+(oneClick.length===1?'':'s')):null,(can('keys')||can('hosts',true))?el('a',{class:'btn',href:'#/machines'},'+ Add a machine'):null),
     shown.length?el('div',{class:'card',style:'padding:0'},el('table',{},el('tr',{},['','Host','IP address','Agent','System','Last seen','Services','Containers','Log paths',''].map(x=>el('th',{},x))),rowsOf(shown,h=>
       el('tr',{class:'row',onclick:()=>{location.hash='#/h/'+encodeURIComponent(h.name)}},el('td',{onclick:ev=>ev.stopPropagation(),style:'white-space:nowrap'},w?el('input',{type:'checkbox',title:'Select this host',checked:sel.has(h.name),onchange:ev=>{ev.target.checked?sel.add(h.name):sel.delete(h.name);render()}}):null,w?' ':null,dot(h.status)),
@@ -1869,10 +1859,23 @@ function ruleText(r){
   return (r.reduce||'avg')+'('+r.metric+') '+r.op+' '+r.threshold+' over '+win+(r.group_by?' per '+r.group_by:'')+((r.filters||[]).length?' where '+r.filters.map(f=>f.k+'='+f.v).join(', '):'')+inG;
 }
 const alertTabs=[['','Active'],['rules','Rules'],['channels','Channels'],['silences','Silences'],['history','History']];
+// Services the agents report that have a starter pack of alerts the tenant does not have yet: offered on the Alerts page with one button
+async function suggestionsCard(){
+  let sug=[];if(!can('alerts',true))return null;
+  try{sug=(await api('/api/v1/alerts/suggestions')).data||[]}catch(_){return null}
+  const hidden=()=>{try{return JSON.parse(localStorage.getItem('kluard.sugHidden')||'[]')}catch(_){return[]}};
+  const hide=id=>{try{localStorage.setItem('kluard.sugHidden',JSON.stringify(hidden().concat(id)))}catch(_){}};
+  const l=sug.filter(x=>!hidden().includes(x.id));if(!l.length)return null;
+  return el('div',{class:'card',style:'margin:0 0 12px'},el('b',{},'Standard alerts are ready'),
+    el('p',{class:'help',style:'margin:4px 0 8px'},'Kluard found services your agents report. Turn on the alerts that usually matter for them. You can change or switch off every rule under Rules.'),
+    l.map(x=>el('div',{style:'display:flex;gap:12px;align-items:center;padding:6px 0;border-top:1px solid var(--line,#2a3142)'},el('div',{style:'flex:1'},el('b',{},x.title+' found'),el('div',{class:'mut',style:'font-size:12px'},x.missing.length+' rule'+(x.missing.length==1?'':'s')+': '+x.missing.join(' · '))),
+      el('button',{class:'btn sm',onclick:async e=>{e.target.disabled=true;try{await api('/api/v1/alerts/packs/'+x.id,{},{method:'POST',body:{}});e.target.replaceWith(el('span',{class:'ok'},'on'));refreshAlertBadge()}catch(er){e.target.disabled=false;alert(er.message)}}},'Turn on alerts'),
+      el('button',{class:'btn ghost sm',onclick:e=>{hide(x.id);e.target.closest('div[style*="border-top"]').remove()}},'Not now'))))}
 async function alertsPage(tab){
   tab=tab||'';setTitle('Alerts');const view=$('#view');
   const bar=el('div',{class:'bar',style:'gap:6px'},alertTabs.map(([t,l])=>el('a',{class:'btn '+(t===tab?'':'ghost'),href:'#/alerts'+(t?'/'+t:'')},l)));
-  const body=el('div',{});view.replaceChildren(bar,body);
+  const body=el('div',{}),sugBox=el('div',{});view.replaceChildren(bar,sugBox,body);
+  if(tab===''||tab==='rules')suggestionsCard().then(c=>{if(c&&sugBox.isConnected)sugBox.replaceChildren(c)});
   const draw={'':alertsActive,rules:alertsRules,channels:alertsChannels,silences:alertsSilences,history:alertsHistory}[tab]||alertsActive;
   await draw(body,()=>alertsPage(tab));
   if(S.refresh&&tab==='')S.timers.push(setInterval(()=>{if(body.isConnected)alertsActive(body,()=>alertsPage(tab))},S.refresh*1000));
