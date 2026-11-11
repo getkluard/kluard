@@ -157,7 +157,7 @@ func LoadConfig(path string, getenv func(string) string) (Config, error) {
 		c.Logs = append(c.Logs, LogSource{Paths: paths, Service: "system-logs", Format: "text"})
 	}
 	if truthy(getenv("KLUARD_AGENT_DOCKER_LOGS")) {
-		c.Logs = append(c.Logs, LogSource{Paths: []string{"/var/lib/docker/containers/*/*-json.log"}, Service: "docker", Format: "docker"})
+		c.Logs = append(c.Logs, LogSource{Paths: []string{DockerLogGlob()}, Service: "docker", Format: "docker"})
 	}
 	if u := getenv("KLUARD_AGENT_NEXTCLOUD_URL"); u != "" {
 		c.Nextcloud = append(c.Nextcloud, NextcloudTarget{

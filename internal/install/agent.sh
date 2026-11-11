@@ -8,6 +8,8 @@
 #   --logs GLOB       also ship log files, e.g. '/var/log/*.log' (repeatable)
 #   --docker          report Docker containers (up/down): adds the agent to the "docker" group, which is root-equivalent
 #   --docker-logs     also ship Docker container logs
+#   --docker-rootless USER   Docker runs rootless as USER: the agent then runs as that user and uses its Docker socket
+#                     and log folder (instead of the "docker" group); implies --docker, add --docker-logs for the logs
 #   --no-host-metrics do not collect CPU/memory/disk of this machine
 #   --checker         this agent is not a machine: it only checks Nextcloud instances (implies --no-host-metrics);
 #                     the instances are added on the Instances page
@@ -27,7 +29,7 @@ STATE_DIR="${KLUARD_STATE_DIR:-/var/lib/kluard-agent}"        # where the agent 
 SYSTEMD_DIR="${KLUARD_SYSTEMD_DIR:-/etc/systemd/system}"
 UPDATE=0
 NO_SERVICE="${KLUARD_NO_SERVICE:-0}"   # for containers/tests: skip user + systemd
-KEY="${KLUARD_KEY:-}"; LOGS=""; DOCKER=0; DOCKERGRP=0; UNINSTALL=0
+KEY="${KLUARD_KEY:-}"; LOGS=""; DOCKER=0; DOCKERGRP=0; UNINSTALL=0; ROOTLESS=""
 HOSTM=true
 ROLE=""
 NC_URL=""; NC_TOKEN=""; NC_USER=""; NC_PASS=""; NC_NAME="nextcloud"; NC_LOG=""
@@ -57,6 +59,7 @@ while [ $# -gt 0 ]; do
 $2"; shift 2;;
     --docker-logs) DOCKER=1; shift;;
     --docker) DOCKERGRP=1; shift;;
+    --docker-rootless) [ $# -ge 2 ] || die "--docker-rootless needs the user name that runs Docker"; ROOTLESS="$2"; shift 2;;
     --no-host-metrics) HOSTM=false; shift;;
     --checker) HOSTM=false; ROLE=checker; shift;;
     --nextcloud) [ $# -ge 2 ] || die "--nextcloud needs a URL"; NC_URL="$2"; shift 2;;
@@ -74,6 +77,21 @@ $2"; shift 2;;
 done
 
 [ "$(id -u)" -eq 0 ] || die "run as root, e.g. ... | sudo sh -s -- --key KEY"
+
+# Rootless Docker: the socket and the container logs belong to one user, and nobody else can reach them. The agent then
+# runs as that user (read-only is not possible: it is the user's own Docker), with the user's socket and data folder.
+RL_UID=""; RL_GROUP=""; RL_SOCK=""; RL_ROOT=""
+if [ -n "$ROOTLESS" ] && [ "$UNINSTALL" != 1 ]; then
+  id "$ROOTLESS" >/dev/null 2>&1 || die "--docker-rootless: there is no user '$ROOTLESS'"
+  RL_UID="$(id -u "$ROOTLESS")"; RL_GROUP="$(id -gn "$ROOTLESS")"
+  [ "$RL_UID" -ne 0 ] || die "--docker-rootless: '$ROOTLESS' is root; for normal Docker use --docker"
+  RL_HOME="$(getent passwd "$ROOTLESS" | cut -d: -f6)"
+  RL_SOCK="/run/user/$RL_UID/docker.sock"
+  RL_ROOT="$RL_HOME/.local/share/docker"
+  [ -S "$RL_SOCK" ] || die "--docker-rootless: found no Docker socket at $RL_SOCK. Is Docker running for $ROOTLESS (as that user: systemctl --user status docker) and is lingering on (sudo loginctl enable-linger $ROOTLESS)?"
+  [ "$DOCKER" != 1 ] || [ -d "$RL_ROOT/containers" ] || die "--docker-rootless: found no container logs in $RL_ROOT/containers"
+  DOCKERGRP=0
+fi
 
 if [ "$UNINSTALL" = 1 ]; then
   if [ "$NO_SERVICE" != 1 ] && command -v systemctl >/dev/null 2>&1; then
@@ -263,7 +281,7 @@ OLDIFS="$IFS"; IFS='
 for g in $LOGS; do [ -n "$g" ] && add_log "$g" "system-logs" "text"; done
 IFS="$OLDIFS"
 set +f
-[ "$DOCKER" = 1 ] && add_log "/var/lib/docker/containers/*/*-json.log" "docker" "docker"
+if [ "$DOCKER" = 1 ]; then add_log "${RL_ROOT:-/var/lib/docker}/containers/*/*-json.log" "docker" "docker"; fi
 NC_JSON=""
 if [ -n "$NC_URL" ]; then
   NC_JSON="{\"url\":\"$NC_URL\",\"service\":\"$NC_NAME\",\"token\":\"$NC_TOKEN\",\"username\":\"$NC_USER\",\"password\":\"$NC_PASS\",\"log_path\":\"$NC_LOG\"}"
@@ -283,7 +301,7 @@ cat > "$CONF_DIR/config.json" <<CFG
 }
 CFG
 fi
-if [ "$NO_SERVICE" != 1 ]; then chown root:kluard-agent "$CONF_DIR/config.json"; chmod 640 "$CONF_DIR/config.json"; fi
+if [ "$NO_SERVICE" != 1 ]; then chown "root:${RL_GROUP:-kluard-agent}" "$CONF_DIR/config.json"; chmod 640 "$CONF_DIR/config.json"; fi
 
 if [ "$NO_SERVICE" = 1 ]; then
   if [ "${KLUARD_TEST_UPDATER:-0}" = 1 ]; then install_updater; fi
@@ -309,6 +327,13 @@ if [ "$DOCKERGRP" = 1 ]; then
   CAP="$CAP
 SupplementaryGroups=$DGROUP"
 fi
+RUNUSER=kluard-agent; EXTRAENV=""
+if [ -n "$ROOTLESS" ]; then
+  RUNUSER="$ROOTLESS"
+  EXTRAENV="Environment=DOCKER_HOST=unix://$RL_SOCK
+Environment=KLUARD_AGENT_DOCKER_DATA_ROOT=$RL_ROOT"
+  echo "Note: rootless Docker for '$ROOTLESS': the agent runs as that user."
+fi
 cat > "$SYSTEMD_DIR/kluard-agent.service" <<UNIT
 [Unit]
 Description=Kluard agent
@@ -316,12 +341,13 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-User=kluard-agent
+User=$RUNUSER
 ExecStart=$BIN_DIR/kluard-agent -config $CONF_DIR/config.json
 Restart=always
 RestartSec=5
 StateDirectory=kluard-agent
 Environment=KLUARD_AGENT_SELF_UPDATE=systemd:$STATE_DIR
+$EXTRAENV
 NoNewPrivileges=true
 ProtectSystem=strict
 PrivateTmp=true

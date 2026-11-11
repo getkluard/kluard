@@ -115,6 +115,16 @@ func dockerSocket() string {
 	return "/var/run/docker.sock"
 }
 
+// DockerLogGlob is where Docker's json-file logs are. Rootless Docker keeps them in the user's own data folder, so the
+// installer sets KLUARD_AGENT_DOCKER_DATA_ROOT (for example /home/anna/.local/share/docker) for that case.
+func DockerLogGlob() string {
+	root := strings.TrimRight(os.Getenv("KLUARD_AGENT_DOCKER_DATA_ROOT"), "/")
+	if root == "" {
+		root = "/var/lib/docker"
+	}
+	return root + "/containers/*/*-json.log"
+}
+
 // ErrNoDocker means Docker is not installed on this machine (not an error worth reporting).
 var ErrNoDocker = errors.New("docker is not installed")
 

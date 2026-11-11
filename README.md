@@ -96,6 +96,8 @@ Telemetry lives in **ClickHouse**. Small, frequently changing records (users, gr
 
 ## Quick start
 
+> **Step-by-step install guide, both from a clone and from a release file: [INSTALL.md](INSTALL.md).**
+
 > **Download from a release instead of the source?** Take **`kluard-server-linux-amd64.tar.gz`** (or `-arm64`): it holds the server *and* the agents. See [Server from a release file](#server-from-a-release-file-without-docker).
 
 ```bash
@@ -117,6 +119,8 @@ It starts Kluard, ClickHouse and Elasticsearch, prints the web UI address, the `
 If a VM cannot connect, use an IP it can reach (bridged: your LAN IP; NAT/host-only: the host address of that network) and allow inbound TCP 4318.
 
 ## Install on a server
+
+The same steps, in order and for both ways of installing, are in **[INSTALL.md](INSTALL.md)**.
 
 Rocky Linux / AlmaLinux / RHEL 9, Ubuntu or Debian, or any host with Docker. 2+ vCPU, 6 GB RAM minimum (8 GB+ recommended), 20 GB+ local SSD.
 
@@ -171,7 +175,7 @@ In the UI open **Add a machine**, create an agent key (for example `web-server-1
 
 Remove an agent with `--uninstall` (Linux), `-Uninstall` (Windows) or `docker rm -f kluard-agent`. Removing the whole of Kluard, in the right order, is described in [UPGRADING.md](UPGRADING.md#uninstalling-kluard).
 
-`--docker` adds the agent to the `docker` group so it can list containers. **Docker socket access is equivalent to root on that machine**; only use it if you want container up/down status. The Windows script and the Docker-container agent do not collect services yet.
+`--docker` adds the agent to the `docker` group so it can list containers. **Docker socket access is equivalent to root on that machine**; only use it if you want container up/down status. The Windows script and the Docker-container agent do not collect services yet. **Rootless Docker** (Docker runs as an ordinary user, for example `anna`): use `--docker-rootless anna` instead of `--docker`. Then the agent runs as that user and reads that user's Docker socket and container logs (`~/.local/share/docker`); add `--docker-logs` for the logs. Docker must be running for that user, with lingering on (`sudo loginctl enable-linger anna`). **If there is no `docker` group** on a normal (rootful) install, `--docker` uses the group that owns the Docker socket.
 
 Agents report their own health (`service.name=kluard-agent`): uptime, items sent, send errors, scrape errors, refused log paths. Set `"metrics_listen": "127.0.0.1:9464"` to also expose `/metrics`. An agent that cannot reach Kluard cannot say so: watch for a missing `kluard_agent_info` (the *Hosts DOWN* box does this).
 

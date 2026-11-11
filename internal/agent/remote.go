@@ -96,7 +96,7 @@ func (c Config) Merge(r RemoteConfig) Config {
 		out.Logs = append(out.Logs, LogSource{Paths: paths, Service: "system-logs", Format: "text"})
 	}
 	if r.DockerLogs {
-		out.Logs = append(out.Logs, LogSource{Paths: []string{"/var/lib/docker/containers/*/*-json.log"}, Service: "docker", Format: "docker"})
+		out.Logs = append(out.Logs, LogSource{Paths: []string{DockerLogGlob()}, Service: "docker", Format: "docker"})
 	}
 	remoteURLs := map[string]bool{}
 	for _, i := range r.Instances {
