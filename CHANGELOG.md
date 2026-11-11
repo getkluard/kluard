@@ -6,7 +6,7 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 ## [Unreleased]
 
 ### Changed
-- **Traces can be hidden, Dashboards always show.** In *Settings, Menu*, Traces is now one of the menus you can hide and Dashboards is always shown. A Dashboards entry hidden earlier is shown again.
+- **Traces and Billing can be hidden, Dashboards always show.** In *Settings, Menu*, Traces and Billing are now menus you can hide and Dashboards is always shown. A Dashboards entry hidden earlier is shown again.
 
 ## [0.1.4] - 2026-11-10
 
