@@ -10,6 +10,7 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 - **Uninstall guide.** `UPGRADING.md` describes how to remove Kluard: the agents first, then the server (Docker or release file), and what to clean up elsewhere (Nextcloud app passwords, database logins, S3 keys, heartbeat calls, DNS).
 
 ### Fixed
+- **Log severity.** Logs that do not state a level (web server access logs, Docker container logs and plain files) used to show as "unspecified". The agent now reads the level from the line when it is clear: the status code of an access line (5xx error, 4xx warning), or a word such as `[error]`, `level=warn` or `ERROR` near the start. Lines that give no hint stay unspecified. Applies to new logs only.
 - **Rootless Docker.** `agent.sh --docker-rootless USER` lets the agent see the containers and logs of a Docker that runs as an ordinary user: it runs as that user and uses the user's own socket and log folder. *Add a machine* has a matching checkbox, "Docker runs rootless", with a field for the user name.
 - **Agent install with `--docker` on servers without a `docker` group.** On some systems Docker works but there is no group named `docker`, and the installer stopped with "no 'docker' group found". It now uses the group that owns the Docker socket, and says so; if there is none it explains what to do.
 

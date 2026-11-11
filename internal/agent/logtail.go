@@ -112,6 +112,9 @@ func (t *Tailer) readFile(path string) []Log {
 				}
 			}
 		}
+		if l.Severity == "" {
+			l.Severity = guessSeverity(l.Body)
+		}
 		out = append(out, l)
 	}
 	return out
