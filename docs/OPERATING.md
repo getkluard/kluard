@@ -32,7 +32,7 @@ Under **Settings**: their usage against their limits (and a warning near a limit
 
 - **Status pages and heartbeats are public addresses.** Each holds a long random id and needs no login, so the id is the only protection. Send a status page link only to the customer it belongs to. A status page shows just the names you chose and *Operational* or *Down*, never addresses, machines or error texts.
 - **Removing a tenant** also removes its status pages, heartbeats, website checks and the settings of its databases, nginx and MinIO, so their addresses stop working at once.
-- **Menus** can be hidden per browser under *Settings, Menu* (databases, websites, S3 storage, heartbeats and status pages, for someone who does not use them). Home, Alerts, Traces, Logs, Metrics, Hosts, Instances, Billing, Add a machine, Users & groups, Backups & archive, Audit log, Settings and Account are always shown.
+- **Menus** can be hidden per browser under *Settings, Menu* (traces, databases, websites, S3 storage, heartbeats and status pages, for someone who does not use them). Home, Alerts, Dashboards, Logs, Metrics, Hosts, Instances, Billing, Add a machine, Users & groups, Backups & archive, Audit log, Settings and Account are always shown.
 
 - **Limits** apply to a customer's own users and keys, not to an operator inside the tenant, who can always fix things.
 - **Hosts** are counted as those that sent metrics in the last 24 hours. A host already reporting is never turned away by the host limit.

@@ -334,7 +334,7 @@ The id in the address is long and random and is the only protection: anyone who 
 
 ## Choose which menus you see
 
-Everything is shown when Kluard is installed. Under **Settings, Menu** you can hide the menus you do not use: Dashboards, Redis, PostgreSQL, MySQL, nginx, Websites, S3 storage, Heartbeats and Status pages. Home, Alerts, Traces, Logs, Metrics, Hosts, Instances, Billing, Add a machine, Users & groups, Backups & archive, Audit log, Settings and Account are always shown. The choice is kept in the browser, and a hidden page still opens if you go to its address.
+Everything is shown when Kluard is installed. Under **Settings, Menu** you can hide the menus you do not use: Traces, Redis, PostgreSQL, MySQL, nginx, Websites, S3 storage, Heartbeats and Status pages. Home, Alerts, Dashboards, Logs, Metrics, Hosts, Instances, Billing, Add a machine, Users & groups, Backups & archive, Audit log, Settings and Account are always shown. The choice is kept in the browser, and a hidden page still opens if you go to its address.
 
 ## What the agent reports about a host
 

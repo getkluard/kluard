@@ -5,6 +5,9 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 
 ## [Unreleased]
 
+### Changed
+- **Traces can be hidden, Dashboards always show.** In *Settings, Menu*, Traces is now one of the menus you can hide and Dashboards is always shown. A Dashboards entry hidden earlier is shown again.
+
 ## [0.1.4] - 2026-11-10
 
 ### Security
@@ -28,7 +31,7 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 Includes everything since 0.1.0. Agents need updating to use the new checks (run the install command under *Add a machine* again on each machine).
 
 ### Added
-- **Choose which menus you see.** *Settings, Menu* has a tick box for each optional menu (Dashboards, Redis, PostgreSQL, MinIO, MySQL, nginx, Websites, S3 storage, Heartbeats, Status pages). Everything is shown from the start. Home, Alerts, Traces, Logs, Metrics, Hosts, Instances, Billing, Add a machine, Users & groups, Backups & archive, Audit log, Settings and Account are always shown. The choice is kept per browser.
+- **Choose which menus you see.** *Settings, Menu* has a tick box for each optional menu (Dashboards, Redis, PostgreSQL, MinIO, MySQL, nginx, Websites, S3 storage, Heartbeats, Status pages). Everything is shown from the start. Home, Alerts, Dashboards, Logs, Metrics, Hosts, Instances, Billing, Add a machine, Users & groups, Backups & archive, Audit log, Settings and Account are always shown. The choice is kept per browser.
 - **Status pages for your customers.** A public address, `/status/<id>`, that shows whether a customer's services work: pick Nextcloud instances and website checks, give each the name the customer should see, and send the link. The page shows names and "Operational" or "Down", nothing else (no addresses, machines or error texts), needs no login, refreshes itself and follows the light or dark setting of the browser. `/status/<id>/json` gives the same for your own website. New *Status pages* page. The long random id is the secret, so anyone with the link can read it and nobody can guess it.
 - **MinIO monitoring.** The agent finds MinIO in Docker by itself and reads its Prometheus address: usable storage and how full it is, objects, buckets, drives and servers offline, cluster health, S3 requests, errors and traffic. A MinIO that wants a token for its metrics is shown as TOKEN and the token is set with **Set token** (stored encrypted). New MinIO page, metrics `minio_*`, dashboard template *MinIO* and alert pack *MinIO*. The agent needs updating.
 - **Server errors counted from web server logs.** Access lines in the common or combined format (nginx, Apache) among the logs the agent reads are counted per status class, with the share of server errors (`access_log_requests_total`, `access_log_error_ratio`). New dashboard template *Web traffic* and alert pack *Web server errors*. The agent needs updating.
