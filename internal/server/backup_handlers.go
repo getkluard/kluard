@@ -68,7 +68,11 @@ func (s *Server) listBackups(w http.ResponseWriter, r *http.Request, id edition.
 	for _, d := range s.bk.List(id.Tenant) {
 		out = append(out, dayOut{d, loaded[d.Day]})
 	}
-	writeJSON(w, map[string]any{"enabled": true, "days": out, "state": s.bk.State(), "info": s.bkInfo})
+	info := s.bkInfo
+	if s.retention != nil { // what was chosen in Settings, which can change while Kluard runs
+		info.DataDays, info.KeepDays = s.retention.Days.Get()
+	}
+	writeJSON(w, map[string]any{"enabled": true, "days": out, "state": s.bk.State(), "info": info})
 }
 
 func (s *Server) runBackup(w http.ResponseWriter, r *http.Request, id edition.Identity) {

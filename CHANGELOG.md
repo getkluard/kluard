@@ -6,6 +6,7 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 ## [Unreleased]
 
 ### Added
+- **Retention in Settings.** *Settings, How long data is kept* sets how many days live data (traces, logs, metrics) and backups are kept, without a restart. The choice is saved, wins over `KLUARD_RETENTION_DAYS` and `KLUARD_BACKUP_RETENTION_DAYS`, and "Use the default" goes back to them. Shortening it asks first, because older data is then removed.
 - **Install guide.** `INSTALL.md` walks through a first installation from start to finish, both from a clone with Docker and from a release file with systemd, ending at the first machine and the first alert.
 - **Uninstall guide.** `UPGRADING.md` describes how to remove Kluard: the agents first, then the server (Docker or release file), and what to clean up elsewhere (Nextcloud app passwords, database logins, S3 keys, heartbeat calls, DNS).
 

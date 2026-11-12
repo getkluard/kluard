@@ -26,6 +26,7 @@ import (
 	"github.com/getkluard/kluard/internal/metering"
 	"github.com/getkluard/kluard/internal/perm"
 	"github.com/getkluard/kluard/internal/registry"
+	"github.com/getkluard/kluard/internal/retention"
 	"github.com/getkluard/kluard/internal/secretbox"
 	"github.com/getkluard/kluard/internal/server"
 	"github.com/getkluard/kluard/internal/store"
@@ -45,13 +46,21 @@ func main() {
 	ch := store.NewClickHouse(cfg)
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-	if err := ch.Migrate(ctx); err != nil {
-		log.Error("clickhouse migration failed", "err", err)
-		os.Exit(1)
-	}
 	store, backend, err := openStore(cfg, log)
 	if err != nil {
 		log.Error("cannot open the user/key/dashboard store", "err", err)
+		os.Exit(1)
+	}
+	// how long data is kept: what somebody chose in Settings wins over the environment, and can change while Kluard runs
+	keepFor := retention.New(cfg.RetentionDays, cfg.BackupRetentionDays)
+	if d, k, ok := retention.Load(ctx, backend); ok {
+		keepFor.Set(d, k, true)
+		cfg.RetentionDays, cfg.BackupRetentionDays = d, k
+		ch.SetRetentionDays(d)
+		log.Info("retention chosen in Settings", "live_days", d, "backup_days", k)
+	}
+	if err := ch.Migrate(ctx); err != nil {
+		log.Error("clickhouse migration failed", "err", err)
 		os.Exit(1)
 	}
 	log.Info("document store ready", "backend", backend.Name())
@@ -166,13 +175,14 @@ func main() {
 	}
 	if where.Get() != "" {
 		app.WithBackupLocation(&server.BackupWhere{DB: backend, Where: where, Default: cfg.BackupDir, Roots: cfg.BackupRoots, DataDir: cfg.DataDir})
-		bk := &backup.Manager{Where: where, Src: ch, Docs: backend, DataDays: cfg.RetentionDays, KeepDays: cfg.BackupRetentionDays, Log: log}
+		bk := &backup.Manager{Where: where, Src: ch, Docs: backend, DataDays: cfg.RetentionDays, KeepDays: cfg.BackupRetentionDays, Days: keepFor, Log: log}
 		app.WithBackups(bk, server.BackupInfo{DataDays: cfg.RetentionDays, KeepDays: cfg.BackupRetentionDays})
 		go bk.Run(bg)
 		log.Info("daily backup of expiring data enabled", "dir", where.Get(), "chosen_in_settings", strict, "live_days", cfg.RetentionDays, "backup_days", cfg.BackupRetentionDays)
 	} else {
 		log.Warn("KLUARD_BACKUP_DIR is empty: data is deleted after the retention period without a backup", "retention_days", cfg.RetentionDays)
 	}
+	app.WithRetention(&server.Retention{DB: backend, Days: keepFor, CH: ch})
 	go app.RunHeartbeats(bg)
 	srv := &http.Server{
 		Addr:              cfg.Addr,

@@ -587,7 +587,7 @@ docker compose -f deploy/docker-compose.yml exec kluard /kluard keys create --te
 
 ## Retention, backup and archive
 
-Live data stays in ClickHouse for `KLUARD_RETENTION_DAYS` (**30**); changing the value also updates existing tables at startup. Before data expires, every completed UTC day is exported once per tenant and table as gzip JSON lines:
+Live data stays in ClickHouse for `KLUARD_RETENTION_DAYS` (**30**); changing the value also updates existing tables at startup. Before data expires, every completed UTC day is exported once per tenant and table as gzip JSON lines: The retention can also be changed in **Settings, How long data is kept** (live data and backups), without a restart; what is chosen there wins over the environment, and "Use the default" goes back to it.
 
 ```
 /backup/telemetry/YYYY-MM-DD/<tenant>/otel_{spans,logs,metrics}.jsonl.gz   (+ a DONE marker, written last)
@@ -612,7 +612,7 @@ Backups are kept `KLUARD_BACKUP_RETENTION_DAYS` (**365**; `0` = forever). A fail
 | `KLUARD_ADDR` | `:4318` | listen address |
 | `KLUARD_PUBLIC_URL` | | address agents use; written into the install scripts |
 | `KLUARD_CLICKHOUSE_URL` / `_DB` / `_USER` / `_PASSWORD` | `http://localhost:8123` / `kluard` / `default` / | ClickHouse |
-| `KLUARD_RETENTION_DAYS` | `30` | days of live data |
+| `KLUARD_RETENTION_DAYS` | `30` | days of live data (can be changed in Settings) |
 | `KLUARD_BACKUP_DIR` | `/backup` | daily export of expiring data; empty disables backups |
 | `KLUARD_BACKUP_RETENTION_DAYS` | `365` | how long backups are kept; `0` = forever |
 | `KLUARD_ALERTS` | `true` | `false` switches alerting off |

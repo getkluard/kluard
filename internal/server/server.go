@@ -50,6 +50,7 @@ type Server struct {
 	billing            *Billing
 	oidc               *oidc.Service
 	bkInfo             BackupInfo
+	retention          *Retention
 	snaps              snapCache
 	facetCache         facetCache
 	a                  *auth.Auth
@@ -100,6 +101,7 @@ func (s *Server) Handler() http.Handler {
 	s.tenancyRoutes(mux)
 	s.healthRoutes(mux)
 	s.backupLocationRoutes(mux)
+	s.retentionRoutes(mux)
 	s.routesAudit(mux)
 	s.oidcRoutes(mux)
 	s.billingRoutes(mux)

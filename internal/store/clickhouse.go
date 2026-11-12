@@ -90,17 +90,27 @@ func (c *ClickHouse) Migrate(ctx context.Context) error {
 		}
 	}
 	// a changed KLUARD_RETENTION_DAYS must also apply to tables that already exist
+	return c.ApplyRetention(ctx, c.cfg.RetentionDays)
+}
+
+// SetRetentionDays changes what Migrate applies, before it runs (a choice made in Settings wins over the environment).
+func (c *ClickHouse) SetRetentionDays(days int) { c.cfg.RetentionDays = days }
+
+// ApplyRetention makes the telemetry tables expire after `days`. It is used at start and when somebody changes the
+// retention in Settings. ClickHouse removes the older rows in the background, not at once.
+func (c *ClickHouse) ApplyRetention(ctx context.Context, days int) error {
 	for _, t := range tables {
 		cur, err := c.do(ctx, ttlQuery, map[string]string{"db": c.cfg.ClickHouseDB, "t": t.Name}, nil)
 		if err != nil {
 			return err
 		}
-		if !ttlIs(string(cur), c.cfg.RetentionDays) {
-			if _, err := c.do(ctx, ttlAlter(t, c.cfg.RetentionDays), nil, nil); err != nil {
+		if !ttlIs(string(cur), days) {
+			if _, err := c.do(ctx, ttlAlter(t, days), nil, nil); err != nil {
 				return err
 			}
 		}
 	}
+	c.cfg.RetentionDays = days
 	return nil
 }
 

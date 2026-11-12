@@ -734,6 +734,29 @@ async function backupLocationCard(view){
       el('label',{},'Folder'),inp,el('div',{class:'bar',style:'margin-top:8px'},el('button',{class:'btn ghost',onclick:check},'Check'),el('button',{class:'btn',onclick:save},'Use this folder'),c.source==='chosen'?el('button',{class:'btn ghost',onclick:reset},'Use the default ('+c.default+')'):null),res,mount);
     showMount()};
   await draw(cur)}
+// ---- how long data is kept ----
+async function retentionCard(view){
+  if(!(S.me&&S.me.health&&can('backups',true)))return;
+  let cur;try{cur=await api('/api/v1/retention')}catch{return}
+  const card=el('div',{class:'card',style:'max-width:760px;margin-top:14px'});view.append(card);
+  const draw=c=>{
+    const d=el('input',{type:'number',min:c.min_data_days,max:c.max_data_days,value:c.data_days,style:'width:110px'}),k=el('input',{type:'number',min:0,max:c.max_backup_days,value:c.backup_days,style:'width:110px'}),res=el('div',{style:'margin-top:8px'});
+    const fail=er=>res.replaceChildren(el('div',{class:'errbox'},er.message));
+    const save=async()=>{const nd=Math.round(+d.value),nk=Math.round(+k.value);
+      if(!(nd>=c.min_data_days&&nd<=c.max_data_days))return res.replaceChildren(el('div',{class:'errbox'},'Live data can be kept for '+c.min_data_days+' to '+c.max_data_days+' days.'));
+      if(!(nk>=0&&nk<=c.max_backup_days))return res.replaceChildren(el('div',{class:'errbox'},'Backups can be kept for 0 (forever) to '+c.max_backup_days+' days.'));
+      if(nd<c.data_days&&!confirm('Keep live data for '+nd+' days instead of '+c.data_days+'?\n\nTraces, logs and metrics older than '+nd+' days are removed from Kluard in the next hours and cannot be brought back from here'+(c.backups?', except from a backup. Run a backup first if you want the days that are about to go (Backup & archive, Run backup now).':'. No backup is set up, so they are gone for good.')))return;
+      if(nk&&c.backup_days===0&&!confirm('Keep backups for '+nk+' days?\n\nBackups older than '+nk+' days are deleted at the next backup. Today they are kept forever.'))return;
+      if(nk&&nk<c.backup_days&&c.backup_days!==0&&!confirm('Keep backups for '+nk+' days instead of '+c.backup_days+'?\n\nBackups older than '+nk+' days are deleted at the next backup.'))return;
+      try{draw(await api('/api/v1/retention',{},{method:'PUT',body:{data_days:nd,backup_days:nk}}))}catch(er){fail(er)}};
+    const reset=async()=>{if(!confirm('Go back to the default, '+c.default_data_days+' days of live data and '+(c.default_backup_days?c.default_backup_days+' days':'for ever')+' of backups?'))return;try{draw(await api('/api/v1/retention',{},{method:'DELETE'}))}catch(er){fail(er)}};
+    card.replaceChildren(el('h2',{style:'margin-top:0'},'How long data is kept'),
+      el('p',{class:'help'},'Traces, logs and metrics are kept for this many days and then removed. The change applies at once and needs no restart; older data is removed in the background, so the disk is not freed in the same minute. Settings such as users, rules and dashboards are not affected.'),
+      c.source==='chosen'?null:el('p',{class:'help'},'Now the default from the installation (KLUARD_RETENTION_DAYS and KLUARD_BACKUP_RETENTION_DAYS). Saving here replaces it.'),
+      el('div',{class:'form'},el('label',{},'Live data, days'),d,el('label',{},'Backups, days (0 = for ever)'),k),
+      c.backups?null:el('p',{class:'help'},'No backup folder is set up, so there are no backups: data is deleted when the time is up.'),
+      el('div',{class:'bar',style:'margin-top:8px'},el('button',{class:'btn',onclick:save},'Save'),c.source==='chosen'?el('button',{class:'btn ghost',onclick:reset},'Use the default ('+c.default_data_days+' and '+(c.default_backup_days||'for ever')+')'):null),res)};
+  draw(cur)}
 async function homeHealth(){
   if(!(S.me&&S.me.health))return null;
   let h;try{h=await api('/api/v1/health')}catch{return null}
@@ -2202,6 +2225,7 @@ async function settingsPage(){
   await tenantCards(view,w);
   await healthCard(view);
   await backupLocationCard(view);
+  await retentionCard(view);
   await oidcCard(view);
 }
 boot();

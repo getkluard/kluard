@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"github.com/getkluard/kluard/internal/docstore"
+	"github.com/getkluard/kluard/internal/retention"
 )
 
 // Tables are the telemetry tables that are backed up, with the short names used in the API.
@@ -59,6 +60,7 @@ type Manager struct {
 	Docs     docstore.Backend // for the daily configuration dump; may be nil
 	DataDays int              // days of live data in ClickHouse: how far back a first run backfills
 	KeepDays int              // how long backups are kept (0 = forever)
+	Days     *retention.Days  // when set, the live choice (changed in Settings) instead of DataDays and KeepDays
 	Log      *slog.Logger
 	Now      func() time.Time
 
@@ -212,7 +214,8 @@ func (m *Manager) runLocked(ctx context.Context) (int, error) {
 	}
 	today := m.now().Truncate(24 * time.Hour)
 	exported := 0
-	for i := m.DataDays; i >= 1; i-- {
+	dataDays, _ := m.days()
+	for i := dataDays; i >= 1; i-- {
 		day := today.AddDate(0, 0, -i)
 		if _, err := os.Stat(filepath.Join(m.telemetryDir(), day.Format("2006-01-02"), "DONE")); err == nil {
 			continue
@@ -230,11 +233,19 @@ func (m *Manager) runLocked(ctx context.Context) (int, error) {
 	return exported, nil
 }
 
+func (m *Manager) days() (data, keep int) {
+	if m.Days != nil {
+		return m.Days.Get()
+	}
+	return m.DataDays, m.KeepDays
+}
+
 func (m *Manager) prune(today time.Time) {
-	if m.KeepDays <= 0 {
+	_, keepDays := m.days()
+	if keepDays <= 0 {
 		return
 	}
-	cutoff := today.AddDate(0, 0, -m.KeepDays).Format("2006-01-02")
+	cutoff := today.AddDate(0, 0, -keepDays).Format("2006-01-02")
 	entries, _ := os.ReadDir(m.telemetryDir())
 	for _, e := range entries {
 		if e.IsDir() && dayRe.MatchString(e.Name()) && e.Name() < cutoff {
