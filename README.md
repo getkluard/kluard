@@ -122,6 +122,8 @@ If a VM cannot connect, use an IP it can reach (bridged: your LAN IP; NAT/host-o
 
 The same steps, in order and for both ways of installing, are in **[INSTALL.md](INSTALL.md)**.
 
+No domain? Kluard also runs on an IP address and port: `sudo ./install.sh --public-url http://192.168.1.50:4318`. Agents on other machines need that IP address (not `localhost`), and the traffic is plain HTTP, so add HTTPS before you monitor over the internet.
+
 Rocky Linux / AlmaLinux / RHEL 9, Ubuntu or Debian, or any host with Docker. 2+ vCPU, 6 GB RAM minimum (8 GB+ recommended), 20 GB+ local SSD.
 
 ```bash

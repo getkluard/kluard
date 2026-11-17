@@ -9,7 +9,7 @@ Two ways to install the **server**. Pick one and follow it from top to bottom.
 | Needs | Git, Docker (the script installs it), 6 GB RAM (8 GB+ recommended) | Docker for ClickHouse, `curl`, `tar`, systemd |
 | Updating | [UPGRADING.md](UPGRADING.md), "Source with Docker" | [UPGRADING.md](UPGRADING.md), "Release file" |
 
-Both need a Linux server with 2+ vCPU and 20 GB+ of local SSD (Rocky Linux, AlmaLinux or RHEL 9, Ubuntu or Debian), a name such as `kluard.example.com` that points to it, and TCP port 4318 reachable from the machines you will monitor (or HTTPS in front, see the last step). Remove it again: [UPGRADING.md](UPGRADING.md), "Uninstalling Kluard".
+Both need a Linux server with 2+ vCPU and 20 GB+ of local SSD (Rocky Linux, AlmaLinux or RHEL 9, Ubuntu or Debian), a name such as `kluard.example.com` that points to it (or just its IP address and port 4318, see the last steps), and TCP port 4318 reachable from the machines you will monitor (or HTTPS in front, see the last step). Remove it again: [UPGRADING.md](UPGRADING.md), "Uninstalling Kluard".
 
 ---
 
@@ -167,6 +167,13 @@ Continue at **Both ways: the last steps**.
 ---
 
 ## Both ways: the last steps
+
+**No domain? Use an IP address and port.** For a test, a home lab or a company network you do not need a name or HTTPS. Use the machine's address and port 4318 as the public address:
+
+- Way A: `sudo ./install.sh --public-url http://192.168.1.50:4318 --tenant main`. Without `--public-url` the installer finds the IP itself. Change it later with `./install.sh --public-url http://NEW-IP:4318`.
+- Way B: put `KLUARD_PUBLIC_URL=http://192.168.1.50:4318` in `/etc/kluard/kluard.env` and run `sudo systemctl restart kluard`.
+
+On the server itself you can open `http://localhost:4318`, but the agents on other machines need the IP address, so do not use `localhost` as the public address. Open TCP 4318 on the firewall for the machines you monitor. The traffic is plain HTTP: keep it to a network you trust, and add HTTPS (next) before you monitor over the internet.
 
 **Put HTTPS in front.** API keys travel in headers and Nextcloud tokens are sent to the agents, so use HTTPS. Put Nginx or Caddy in front of port 4318 and make Kluard listen on the machine only:
 
