@@ -571,6 +571,8 @@ kluard users set-group alice GROUP
 
 ## Login, keys and security
 
+A complete overview of the security model, its limits and what you must do yourself: **[docs/SECURITY-OVERVIEW.md](docs/SECURITY-OVERVIEW.md)** ([svenska](docs/SECURITY-OVERVIEW.sv.md)).
+
 - **People log in with username and password.** Passwords are salted PBKDF2-HMAC-SHA256 (600,000 iterations); sessions are signed HttpOnly `SameSite=Strict` cookies (12 h, `Secure` over HTTPS); logins are throttled per username (10 failures / 10 min); changing a password ends that user's sessions.
 - **Machines use API keys**, stored only as SHA-256 hashes (shown once). A browser session can never send telemetry. You can also sign in to the UI *with* an API key: that session reads data and uses dashboards but cannot manage keys, users or passwords, and ends when the key is deleted.
 - **Storage:** users, groups, key hashes, dashboards, host settings, instances and the session secret live in Elasticsearch (`kluard-users`, `-groups`, `-keys`, `-dashboards`, `-hosts`, `-instances`, `-meta`). Writes are single-document with optimistic concurrency (two people saving the same dashboard cannot silently overwrite each other). Elasticsearch has no multi-document transactions. Without `KLUARD_ELASTICSEARCH_URL` Kluard uses a JSON file (`documents.json`, mode 0600).

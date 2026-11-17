@@ -1,5 +1,7 @@
 # Security policy
 
+For an overview of how Kluard protects data, where the limits are and what you must do yourself, read [docs/SECURITY-OVERVIEW.md](docs/SECURITY-OVERVIEW.md) (på svenska: [docs/SECURITY-OVERVIEW.sv.md](docs/SECURITY-OVERVIEW.sv.md)).
+
 ## Reporting a vulnerability
 
 Please **do not open a public issue** for security problems.
@@ -38,7 +40,7 @@ agents too: the Hosts page marks those that differ from the server.
 - Stored Nextcloud credentials are encrypted with AES-GCM (`KLUARD_SECRET_KEY`) and never returned by the API.
 - Every query is filtered by the tenant of the authenticated caller; permissions are enforced by the server, not the UI.
 - Log paths pushed to agents from the server are checked against an allow-list on the machine.
-- The UI's content-security policy allows only same-origin scripts, styles and connections, and `data:` images (for the logo preview and the generated tab icon).
+- The UI's content-security policy allows only same-origin scripts, styles and connections, and `data:` images (for the logo preview and the generated tab icon). The UI is one HTML file with its script inline, so the policy also has to allow inline scripts (`'unsafe-inline'`).
 - The logo upload is verified by its content, size-limited, refuses SVG with scripts or event handlers, and is served with `Content-Security-Policy: sandbox` and `nosniff`.
 
 ## Hardening your deployment
