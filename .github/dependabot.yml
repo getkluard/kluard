@@ -5,8 +5,9 @@
 # The databases are held back on purpose. Their data lives in volumes, and CI does not run them, so a green check says
 # nothing about whether existing data survives:
 #   - Elasticsearch: patch and minor updates are proposed, a new major version (8 to 9) is not.
-#   - ClickHouse: only the version in the compose file is kept (24.8, a long-term support release); moving to the next
-#     long-term release is a decision to take and test on a copy of the data, not a weekly update.
+#   - ClickHouse: the version in the compose file is an exact patch of a long-term support release (26.8.x). Patches of
+#     it are proposed; the next long-term release is a decision to take and test on a copy of the data. The exact
+#     patch is pinned on purpose: on one server the floating tag 26.8 crashed with "Illegal instruction" while 26.8.37 ran fine.
 version: 2
 updates:
   - package-ecosystem: github-actions

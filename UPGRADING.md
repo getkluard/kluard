@@ -1,5 +1,7 @@
 # Upgrading Kluard
 
+First installation: [INSTALL.md](INSTALL.md). Removal: [Uninstalling Kluard](#uninstalling-kluard) below.
+
 How to install the latest version, upgrade a running server, and update the agents. You only need **read** access to the repository: nobody has to push anything to upgrade.
 
 - Your settings are kept: `deploy/.env` (address, secrets, bind address) is never replaced, and all data lives in Docker volumes that an upgrade does not touch.
@@ -233,6 +235,56 @@ docker restart kluard-agent
 ```
 
 (Running the install command with `--key` again also works on Linux, but it writes the settings from scratch: any log paths and instances given as flags on that machine are replaced by what you give it.)
+
+## Upgrading Elasticsearch and ClickHouse
+
+Kluard 0.1.5 and later run Elasticsearch 8.19.25 and ClickHouse 26.8.37. A server installed earlier keeps the old databases until you change them. The data lives in volumes, so take a copy first and keep it until the new versions have run well for a while.
+
+```
+cd /opt/lumen/deploy
+df -h /var/lib/docker                      # free space first; Elasticsearch turns red at about 90 % full
+cp .env ~/kluard-env-backup && chmod 600 ~/kluard-env-backup
+docker volume ls | grep -E 'esdata|chdata' # the names are normally deploy_esdata and deploy_chdata
+docker compose down
+mkdir -p ~/kluard-volbackup
+for v in deploy_esdata deploy_chdata; do
+  docker run --rm -v $v:/d:ro -v ~/kluard-volbackup:/b alpine tar czf /b/$v.tgz -C /d .
+done
+ls -lh ~/kluard-volbackup
+cp docker-compose.yml ~/docker-compose.yml.bak
+```
+
+Get the new compose file (`git pull --ff-only`), or change the two image lines by hand. Then start Elasticsearch first and check it, then ClickHouse:
+
+```
+docker compose pull elasticsearch
+docker compose up -d elasticsearch
+sleep 60
+docker compose exec elasticsearch sh -c 'curl -s -u elastic:$ELASTIC_PASSWORD localhost:9200 | grep number; curl -s -u elastic:$ELASTIC_PASSWORD localhost:9200/_cluster/health?pretty | grep status'
+docker compose pull clickhouse
+docker run --rm --entrypoint clickhouse clickhouse/clickhouse-server:26.8.37 local --query "select version()"
+docker compose up -d clickhouse
+sleep 40
+docker compose exec clickhouse clickhouse-client -q "select version()"
+docker compose up -d --build
+docker compose ps
+```
+
+Expect `8.19.25` with status green or yellow, then `26.8.37.168`. If the `docker run` line prints nothing or `Illegal instruction`, do not start ClickHouse: set the image back to the old tag and tell us your CPU model.
+
+To go back, a database that has been upgraded cannot be downgraded in place; restore the copy:
+
+```
+docker compose down
+cp ~/docker-compose.yml.bak docker-compose.yml
+for v in deploy_esdata deploy_chdata; do
+  docker volume rm $v && docker volume create $v
+  docker run --rm -v $v:/d -v ~/kluard-volbackup:/b alpine tar xzf /b/$v.tgz -C /d
+done
+docker compose up -d
+```
+
+Data that arrived after the copy is lost. Elasticsearch 9 and later ClickHouse releases are separate decisions: test them on a copy first.
 
 ## Going back
 

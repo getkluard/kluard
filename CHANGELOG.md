@@ -16,6 +16,7 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 - **Agent install with `--docker` on servers without a `docker` group.** On some systems Docker works but there is no group named `docker`, and the installer stopped with "no 'docker' group found". It now uses the group that owns the Docker socket, and says so; if there is none it explains what to do.
 
 ### Changed
+- **Supported databases.** `deploy/docker-compose.yml` and `INSTALL.md` now use Elasticsearch 8.19.25 and ClickHouse 26.8.37 (both with security support into 2027), up from 8.15.3 and 24.8, which no longer received fixes. ClickHouse is pinned to an exact patch: on one server the floating tag `26.8` crashed with "Illegal instruction" while `26.8.37` ran fine, so the exact tag is the safer choice. `UPGRADING.md` has a new section for moving an existing server, with a backup and a way back.
 - **"Standard alerts are ready" moved to the Alerts page.** The suggestion to turn on the starter alerts for the services your agents report is now at the top of Alerts (Active and Rules), no longer on Hosts.
 - **Traces and Billing can be hidden, Dashboards always show.** In *Settings, Menu*, Traces and Billing are now menus you can hide and Dashboards is always shown. A Dashboards entry hidden earlier is shown again.
 
