@@ -13,6 +13,14 @@ Docker settings and install.sh. Nothing is built from source.
 
      sudo ./install.sh --public-url http://192.168.1.50:4318 --tenant main
 
+   Just trying it? Leave out --public-url:
+
+     sudo ./install.sh --tenant main
+
+   It then uses this machine's IP address and port 4318 (on the same machine you can also open
+   http://localhost:4318). Set the real address later by running install.sh again with --public-url;
+   nothing else changes.
+
 2. Save deploy/.env somewhere safe, outside the server. It holds the key that encrypts the stored Nextcloud tokens.
 
 3. Put HTTPS in front of port 4318 before you monitor over the internet (INSTALL.md, "The last steps").

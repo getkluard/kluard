@@ -54,6 +54,8 @@ sudo ./install.sh --public-url https://kluard.example.com --tenant main
 
 It installs Docker if it is missing, creates the secrets in `deploy/.env`, checks the machine, builds and starts Kluard, ClickHouse and Elasticsearch, waits until they are healthy and prints the address and the `admin` login. Add `--allow-podman-removal` if podman is installed. Use your own address after `--public-url`; it is written into the agent install commands.
 
+**No domain yet, or just trying it on this machine?** Leave out `--public-url`: `sudo ./install.sh --tenant main`. Kluard then uses this machine's IP address and port 4318 (`http://<ip>:4318`; on the same machine you can also open `http://localhost:4318`). You can set the real address later by running `sudo ./install.sh --public-url https://kluard.example.com` again; nothing else changes. Agents on other machines need the IP address or domain, not `localhost`.
+
 **4. Save `deploy/.env`**
 
 It holds `KLUARD_SECRET_KEY`, which encrypts the Nextcloud tokens Kluard stores. Without it they cannot be read again. Copy the file somewhere safe, outside the server.

@@ -134,6 +134,8 @@ sudo ./install.sh --public-url https://kluard.example.com --tenant main
 
 Installs Docker if missing, generates secrets into `deploy/.env`, runs a preflight check, starts everything, waits until healthy and prints the address and the admin login. Add `--allow-podman-removal` if podman is installed. Manual steps: `deploy/install-rhel-family.sh` or `deploy/install-debian-family.sh`, `deploy/gen-env.sh`, `deploy/preflight.sh`, `make up`.
 
+**No domain yet, or just trying it on this machine?** Leave out `--public-url`: `sudo ./install.sh --tenant main`. Kluard then uses this machine's IP address and port 4318 (`http://<ip>:4318`; on the same machine you can also open `http://localhost:4318`). You can set the real address later by running `sudo ./install.sh --public-url https://kluard.example.com` again; nothing else changes. Agents on other machines need the IP address or domain, not `localhost`.
+
 **Keep `deploy/.env` safe.** It holds `KLUARD_SECRET_KEY`, which encrypts stored Nextcloud credentials; without it they cannot be read again.
 
 Production notes:
