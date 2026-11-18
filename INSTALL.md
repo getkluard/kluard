@@ -1,28 +1,43 @@
 # Installing Kluard
 
-Two ways to install the **server**. Pick one and follow it from top to bottom.
+Two ways to install the **server**. **We recommend Docker (A).** Pick one and follow it from top to bottom.
 
-| | A. Clone and Docker | B. Release file (`.tar.gz`) |
+| | A. Docker (recommended) | B. Plain program (`kluard-server-linux-*.tar.gz`) |
 |---|---|---|
-| You get | Kluard, ClickHouse and Elasticsearch, all in Docker, set up by one script | The `kluard` program, started by systemd; ClickHouse in one Docker container |
-| Good for | Most people. Fewest steps. | Servers where you do not want to build from source, or want to pin an exact release |
-| Needs | Git, Docker (the script installs it), 6 GB RAM (8 GB+ recommended) | Docker for ClickHouse, `curl`, `tar`, systemd |
-| Updating | [UPGRADING.md](UPGRADING.md), "Source with Docker" | [UPGRADING.md](UPGRADING.md), "Release file" |
+| You get | Kluard, ClickHouse and Elasticsearch, all in Docker, set up by `install.sh` | The `kluard` program, started by systemd; ClickHouse in one Docker container that you start yourself |
+| Files | `kluard-server-docker-linux-amd64.tar.gz` (holds `install.sh`), or a git clone | `kluard-server-linux-amd64.tar.gz` |
+| Good for | Almost everyone. Fewest steps, and the same setup we test. | People who run their own ClickHouse and want the bare program |
+| Needs | Docker (the script installs it), 6 GB RAM (8 GB+ recommended) | Docker for ClickHouse, `curl`, `tar`, systemd |
+| Updating | [UPGRADING.md](UPGRADING.md), "Docker release file" or "Source with Docker" | [UPGRADING.md](UPGRADING.md), "Plain program" |
 
 Both need a Linux server with 2+ vCPU and 20 GB+ of local SSD (Rocky Linux, AlmaLinux or RHEL 9, Ubuntu or Debian), a name such as `kluard.example.com` that points to it (or just its IP address and port 4318, see the last steps), and TCP port 4318 reachable from the machines you will monitor (or HTTPS in front, see the last step). Remove it again: [UPGRADING.md](UPGRADING.md), "Uninstalling Kluard".
 
 ---
 
-## A. Clone and Docker
+## A. Docker (recommended)
 
-**1. Get the source**
+**1. Get the files.** Either way gives you the same `install.sh`.
+
+*From a release file (no git needed).* Open the [releases page](https://github.com/getkluard/kluard/releases), pick a version and set it here. Use `arm64` instead of `amd64` on an ARM machine.
+
+```bash
+VERSION=v0.2.1
+ARCH=amd64
+curl -fLO https://github.com/getkluard/kluard/releases/download/$VERSION/kluard-server-docker-linux-$ARCH.tar.gz
+curl -fLO https://github.com/getkluard/kluard/releases/download/$VERSION/SHA256SUMS
+sha256sum --check --ignore-missing SHA256SUMS      # must say: OK
+tar xzf kluard-server-docker-linux-$ARCH.tar.gz
+cd kluard-server-docker-linux-$ARCH
+```
+
+*Or from the source.*
 
 ```bash
 git clone https://github.com/getkluard/kluard.git
 cd kluard
 ```
 
-To install an exact release instead of the newest source, add `git checkout v0.1.4` after `cd kluard`.
+To install an exact release from source, add `git checkout v0.2.1` after `cd kluard`.
 
 **2. Let Elasticsearch have enough memory maps (Linux)**
 
@@ -54,14 +69,14 @@ Continue at **Both ways: the last steps** below.
 
 ---
 
-## B. Release file
+## B. Plain program
 
 **1. Download and check the file**
 
-Open the [releases page](https://github.com/getkluard/kluard/releases), pick a version and set it here. Use `arm64` instead of `amd64` on an ARM machine.
+Open the [releases page](https://github.com/getkluard/kluard/releases), pick a version and set it here. Use `arm64` instead of `amd64` on an ARM machine. This is the file **without** `docker` in its name.
 
 ```bash
-VERSION=v0.1.4
+VERSION=v0.2.1
 ARCH=amd64
 cd ~
 curl -fLO https://github.com/getkluard/kluard/releases/download/$VERSION/kluard-server-linux-$ARCH.tar.gz

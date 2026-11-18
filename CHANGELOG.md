@@ -5,6 +5,11 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-18
+
+### Added
+- **A Docker release file.** Each release now has `kluard-server-docker-linux-amd64.tar.gz` (and `-arm64`) next to the plain `kluard-server-linux-*.tar.gz`. The Docker file includes `install.sh`, the compose file, the agents and a `START-HERE.txt`: unpack it and run `sudo ./install.sh --public-url ... --tenant main`, with no git needed. **Docker is the recommended way**; `INSTALL.md` now starts with it. The plain file gets a `START-HERE.txt` too, saying that it needs a ClickHouse you start yourself.
+
 ## [0.2.0] - 2026-11-18
 
 **Before you upgrade:** this release moves the databases to Elasticsearch 8.19.25 and ClickHouse 26.8.37. On a server that runs the older ones, `docker compose up -d --build` replaces them in place. Take the copy described in `UPGRADING.md`, *Upgrading Elasticsearch and ClickHouse*, first.

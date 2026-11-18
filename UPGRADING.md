@@ -13,7 +13,8 @@ How to install the latest version, upgrade a running server, and update the agen
 | You installed from | Update with | Section |
 |---|---|---|
 | Source with Docker (`./install.sh`, `./dev.sh`, a git clone) | `git pull`, then `docker compose ... up -d --build` | 2 and 3 below |
-| A release file (`kluard-server-linux-amd64.tar.gz`) | Download the new file, replace the program, restart | **Release file** below |
+| The Docker release file (`kluard-server-docker-linux-amd64.tar.gz`) | Unpack the new file over the folder, run `install.sh` again | **Docker release file** below |
+| The plain program (`kluard-server-linux-amd64.tar.gz`) | Download the new file, replace the program, restart | **Plain program** below |
 | An agent on a machine | The **update** button on the Hosts page, or the install command again | 5 below |
 
 Do it in this order: **server first, then the agents.** An older agent works with a newer server (it keeps reporting), but new checks need the new agent.
@@ -22,9 +23,25 @@ Do it in this order: **server first, then the agents.** An older agent works wit
 
 **Which version is running?** The bottom of the menu shows `release v0.1.3` for a server built from a release, and `build 3fa91c2d` for one built from source (the build identifies the source code; see section 4).
 
-### Release file (without Docker)
+### Docker release file
 
-You need a server that already runs from a release file (see the README, *Server from a release file*). Stop the server the way you started it (Ctrl+C, or `sudo systemctl stop <your service>` if you made one), then replace the program and the agents and start it again with the same settings:
+You need a server installed from `kluard-server-docker-linux-amd64.tar.gz`. Your settings live in `deploy/.env` and the databases in Docker volumes, so unpacking a new file over the folder keeps them. Read the release notes first, and take the backup described under *Upgrading Elasticsearch and ClickHouse* if the notes say the databases change.
+
+```bash
+cd ~                                   # the folder that holds kluard-server-docker-linux-amd64/
+VERSION=v0.2.1
+curl -fLO https://github.com/getkluard/kluard/releases/download/$VERSION/kluard-server-docker-linux-amd64.tar.gz
+curl -fLO https://github.com/getkluard/kluard/releases/download/$VERSION/SHA256SUMS
+sha256sum --check --ignore-missing SHA256SUMS    # must say: OK
+cp -a kluard-server-docker-linux-amd64 kluard-server-previous
+tar xzf kluard-server-docker-linux-amd64.tar.gz  # keeps deploy/.env, data/ and backup/
+cd kluard-server-docker-linux-amd64
+sudo ./install.sh                                # no flags: keeps the address and the secrets
+```
+
+### Plain program (without Docker)
+
+You need a server that already runs from the plain release file (see INSTALL.md, *B. Plain program*). Stop the server the way you started it (Ctrl+C, or `sudo systemctl stop <your service>` if you made one), then replace the program and the agents and start it again with the same settings:
 
 ```bash
 cd ~                                             # the folder that holds kluard-server-linux-amd64/
@@ -74,7 +91,7 @@ cd / && sudo rm -r /opt/lumen              # the program folder, including deplo
 
 The first command is enough if you only want to stop Kluard and might come back: run `docker compose up -d` in the same folder to start it again. `deploy/.env` holds the key that decrypts passwords and tokens stored in Kluard and in its backups: delete it only when you no longer need those backups. Docker itself is left installed, since other things may use it. Backups you copied elsewhere are not touched.
 
-**3. The server, from a release file**
+**3. The server, from a release file (Docker or plain)**
 
 Stop the program (Ctrl+C, or stop your service) and delete the folder you unpacked (`kluard-server-linux-amd64/`, and `kluard-server-previous/` if you made one). ClickHouse and Elasticsearch are yours: remove them the way you installed them.
 

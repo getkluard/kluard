@@ -28,15 +28,37 @@ jobs:
           for arch in amd64 arm64; do
             CGO_ENABLED=0 GOOS=linux GOARCH=$arch go build -trimpath -ldflags "-s -w -X $MOD/internal/buildinfo.Version=$VERSION" -o dist/kluard-linux-$arch ./cmd/kluard
           done
-          # server bundles: the server, the agents it hands out to new machines (dist/) and the checksums, in one archive
+          # Server bundles, two kinds for each architecture:
+          #   kluard-server-linux-<arch>         the program and the agents; ClickHouse and the settings are set up by hand
+          #   kluard-server-docker-linux-<arch>  the same, plus install.sh and the Docker settings: one command starts
+          #                                      everything (recommended). The image is built on the user's machine from
+          #                                      the program in the file, nothing is compiled there.
           for arch in amd64 arm64; do
             b=kluard-server-linux-$arch
             mkdir -p bundle/$b/dist
             cp dist/kluard-linux-$arch bundle/$b/kluard
             cp dist/kluard-agent-* bundle/$b/dist/
             (cd bundle/$b/dist && sha256sum kluard-agent-* > SHA256SUMS)
-            cp README.md LICENSE bundle/$b/
+            cp README.md INSTALL.md UPGRADING.md LICENSE bundle/$b/
+            cp deploy/release/START-HERE-binary.txt bundle/$b/START-HERE.txt
             tar -C bundle -czf dist/$b.tar.gz $b
+
+            d=kluard-server-docker-linux-$arch
+            mkdir -p bundle/$d/dist bundle/$d/data bundle/$d/backup bundle/$d/deploy/clickhouse
+            cp dist/kluard-linux-$arch bundle/$d/kluard
+            cp dist/kluard-agent-* bundle/$d/dist/
+            # agents installed when the product was called Lumen ask for the old file names when they update themselves
+            for f in bundle/$d/dist/kluard-agent-*; do cp "$f" "$(echo "$f" | sed 's#/kluard-agent-#/lumen-agent-#')"; done
+            (cd bundle/$d/dist && sha256sum kluard-agent-* lumen-agent-* > SHA256SUMS)
+            cp deploy/release/Dockerfile bundle/$d/Dockerfile
+            cp install.sh bundle/$d/
+            cp deploy/docker-compose.yml deploy/gen-env.sh deploy/preflight.sh deploy/install-debian-family.sh deploy/install-rhel-family.sh bundle/$d/deploy/
+            cp deploy/clickhouse/kluard.xml bundle/$d/deploy/clickhouse/
+            cp README.md INSTALL.md UPGRADING.md SECURITY.md LICENSE bundle/$d/
+            cp deploy/release/START-HERE-docker.txt bundle/$d/START-HERE.txt
+            chmod +x bundle/$d/install.sh bundle/$d/deploy/*.sh
+            # the empty data and backup folders stay in the archive; the Dockerfile turns them into /data and /backup
+            tar -C bundle -czf dist/$d.tar.gz $d
           done
           (cd dist && sha256sum * > SHA256SUMS)
       - uses: softprops/action-gh-release@v2
@@ -46,8 +68,8 @@ jobs:
           body: |
             ## Which file do I download?
 
-            - **Server and agents together: `kluard-server-linux-amd64.tar.gz`** (or `-arm64`). It holds the server and the Linux and Windows agents that *Add a machine* hands out to new machines. Unpack it and start `kluard` with `KLUARD_DIST_DIR` pointing at its `dist/` folder (see the README, "Server from a release file").
-            - **With Docker:** use the source and `./install.sh`; it builds the server and the agents for you.
+            - **Recommended: `kluard-server-docker-linux-amd64.tar.gz`** (or `-arm64`). Unpack it and run `sudo ./install.sh --public-url https://kluard.example.com`: it installs Docker if needed and starts Kluard, ClickHouse and Elasticsearch. Read `START-HERE.txt` in the folder.
+            - **The plain program: `kluard-server-linux-amd64.tar.gz`** (or `-arm64`). The server and the agents, without an installer. It needs a ClickHouse that you start yourself (see `INSTALL.md`, "B. Plain program").
             - **Only an agent, on one machine:** `kluard-agent-linux-*` or `kluard-agent-windows-*`. Normally you use the install command under *Add a machine* instead.
             - `kluard-linux-*` is the server alone, without agents. Check any file against `SHA256SUMS`.
           prerelease: false

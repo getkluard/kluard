@@ -16,7 +16,7 @@ This page describes what Kluard does to protect your data, where the limits are,
 | **Agents** (on the machines you monitor) | A config file with the API key and, if you use them, Nextcloud credentials | They connect **out** to the server. Nothing connects in to an agent unless you switch on its metrics port |
 | **Backup folder** | Daily exports of telemetry, and a configuration dump | The server's disk. It is only readable by whoever has access to the server |
 
-Release-file installs (way B in [INSTALL.md](../INSTALL.md)) run the same parts: the server under systemd and ClickHouse in one Docker container that listens only on `127.0.0.1`.
+Plain-program installs (way B in [INSTALL.md](../INSTALL.md)) run the same parts: the server under systemd and ClickHouse in one Docker container that listens only on `127.0.0.1`.
 
 ## 2. Signing in
 

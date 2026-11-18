@@ -1,0 +1,15 @@
+Kluard server, plain program (without Docker for Kluard itself)
+================================================================
+
+This file holds the server (kluard), the agents it hands out to new machines (dist/) and no installer.
+It needs a ClickHouse database that is already running, and a folder it may write to. Most people should take the
+Docker release file instead (kluard-server-docker-linux-<arch>.tar.gz): it starts everything with one command.
+
+To run this file you need to:
+  1. start ClickHouse (one Docker container, or your own server),
+  2. write the settings (KLUARD_CLICKHOUSE_URL, KLUARD_CLICKHOUSE_PASSWORD, KLUARD_DATA_DIR, KLUARD_DIST_DIR,
+     KLUARD_SECRET_KEY, KLUARD_ADMIN_USER, KLUARD_ADMIN_PASSWORD, KLUARD_PUBLIC_URL),
+  3. start ./kluard, or run it as a systemd service.
+
+The exact commands, from start to finish, are in INSTALL.md, "B. Plain program". Without these settings the program
+stops at once with "permission denied" for /data or "connection refused" for port 8123.

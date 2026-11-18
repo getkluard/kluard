@@ -1,0 +1,24 @@
+Kluard server, Docker release file (recommended)
+=================================================
+
+This folder holds everything the installer needs: the compiled server, the agents it hands out to new machines, the
+Docker settings and install.sh. Nothing is built from source.
+
+1. As root, run the installer. It installs Docker if it is missing, creates the passwords, starts Kluard, ClickHouse
+   and Elasticsearch, waits until they are healthy and prints the web address and the admin login:
+
+     sudo ./install.sh --public-url https://kluard.example.com --tenant main
+
+   No domain yet? Use the machine's IP address and port 4318 instead:
+
+     sudo ./install.sh --public-url http://192.168.1.50:4318 --tenant main
+
+2. Save deploy/.env somewhere safe, outside the server. It holds the key that encrypts the stored Nextcloud tokens.
+
+3. Put HTTPS in front of port 4318 before you monitor over the internet (INSTALL.md, "The last steps").
+
+To update: download the new Docker release file, unpack it over this folder (deploy/.env is not in the file, so your
+settings stay), take the database copy that UPGRADING.md asks for if the release notes say so, and run
+sudo ./install.sh again.
+
+Full guide: INSTALL.md. Updating and removing: UPGRADING.md. Security: docs/SECURITY-OVERVIEW.md.

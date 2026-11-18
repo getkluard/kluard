@@ -98,7 +98,7 @@ Telemetry lives in **ClickHouse**. Small, frequently changing records (users, gr
 
 > **Step-by-step install guide, both from a clone and from a release file: [INSTALL.md](INSTALL.md).**
 
-> **Download from a release instead of the source?** Take **`kluard-server-linux-amd64.tar.gz`** (or `-arm64`): it holds the server *and* the agents. See [Server from a release file](#server-from-a-release-file-without-docker).
+> **Download from a release instead of the source?** Take **`kluard-server-docker-linux-amd64.tar.gz`** (or `-arm64`, recommended): unpack it and run `sudo ./install.sh`. It holds the server, the agents and the Docker setup. The plain program without Docker is `kluard-server-linux-amd64.tar.gz`, see [Server as a plain program](#server-as-a-plain-program-without-docker).
 
 ```bash
 git clone https://github.com/getkluard/kluard.git
@@ -141,9 +141,9 @@ Production notes:
 - Set `--public-url` to the address agents will use; it is written into the install scripts.
 - If agents reach Kluard through a proxy such as Squid, exempt the Kluard host.
 
-### Server from a release file (without Docker)
+### Server as a plain program (without Docker)
 
-The release page has `kluard-server-linux-amd64.tar.gz` and `kluard-server-linux-arm64.tar.gz`. Each holds the server (`kluard`) and a `dist/` folder with the agents for Linux and Windows, which is what the install command and the download buttons under *Add a machine* hand out. Unpack it, point `KLUARD_DIST_DIR` at the `dist` folder and start the server:
+The release page also has a Docker file, `kluard-server-docker-linux-amd64.tar.gz`, which includes `install.sh` and is the recommended one. For the plain program it has `kluard-server-linux-amd64.tar.gz` and `kluard-server-linux-arm64.tar.gz`. Each holds the server (`kluard`) and a `dist/` folder with the agents for Linux and Windows, which is what the install command and the download buttons under *Add a machine* hand out. Unpack it, point `KLUARD_DIST_DIR` at the `dist` folder and start the server:
 
 ```bash
 tar xzf kluard-server-linux-amd64.tar.gz
