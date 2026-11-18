@@ -3,7 +3,7 @@ Kluard Enterprise Edition License (the "EE License")
 DRAFT. This text has not been reviewed by a lawyer. Fill in the bracketed items and have it
 reviewed before the first customer relies on it.
 
-Copyright (c) 2026 [LICENSOR NAME, ORGANISATION NUMBER, ADDRESS] ("Licensor"). All rights reserved.
+Copyright (c) 2026 Daniel Andersson (sole proprietor, Sweden), 512 94 Svenljunga, Sweden ("Licensor"). All rights reserved.
 
 This license applies to (a) every file in the "ee/" directory of this repository, (b) every file whose
 name ends in "_ee.go" or "_ee_test.go", and (c) any other file that says it is covered by this license
@@ -48,7 +48,7 @@ License, Version 2.0 (see the LICENSE file in the repository root).
 9. Termination. This License ends automatically if you breach it. On termination you must stop
    using the Enterprise Software in production.
 
-10. Governing law. Swedish law applies. Disputes are settled by the courts of [CITY], Sweden.
+10. Governing law. Swedish law applies. Disputes are settled by the courts of Borås, Sweden.
     [Confirm this with a lawyer.]
 
-Questions about licensing: [LICENSING CONTACT E-MAIL, for example info@kluard.com]
+Questions about licensing: info@kluard.com

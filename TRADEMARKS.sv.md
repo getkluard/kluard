@@ -3,7 +3,7 @@
 UTKAST. Policyn är inte juridiskt granskad, och "Kluard" är ännu inte ett registrerat varumärke. Fyll i ägaren nedan, kontrollera
 namnet mot andra varumärken i EU och USA (se `docs/RELEASE.md`) och låt en jurist läsa texten innan du förlitar dig på den.
 
-**Ägare:** [LICENSGIVARENS NAMN, ORGANISATIONSNUMMER, ADRESS] ("vi"). **Kontakt:** [KONTAKTADRESS FÖR LICENSFRÅGOR, till exempel info@kluard.com]
+**Ägare:** Daniel Andersson (enskild firma, Sverige), 512 94 Svenljunga, Sverige ("vi"). **Kontakt:** info@kluard.com
 
 Kluards kärna är öppen källkod under Apache License 2.0. Licensen ger dig koden. Den ger dig **inte** rätt att använda våra namn och
 loggor (avsnitt 6 i Apache-licensen säger det). Den här policyn förklarar vad du får göra.
@@ -44,7 +44,7 @@ här policyn ger dig rätt att använda den i produktion utan licens.
 
 ## Fråga och rapportera
 
-Är du osäker, fråga oss innan du publicerar: [KONTAKTADRESS FÖR LICENSFRÅGOR]. Säg till om du ser en användning av märkena som verkar fel.
+Är du osäker, fråga oss innan du publicerar: info@kluard.com. Säg till om du ser en användning av märkena som verkar fel.
 Vi kan ändra policyn; versionen i repot är den gällande. Vi vill vara rimliga och försöker normalt prata först innan vi ber dig sluta.
 
 Policyn är licensierad under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): du får återanvända den för ditt eget projekt.

@@ -5,6 +5,10 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-18
+
+**Before you upgrade:** this release moves the databases to Elasticsearch 8.19.25 and ClickHouse 26.8.37. On a server that runs the older ones, `docker compose up -d --build` replaces them in place. Take the copy described in `UPGRADING.md`, *Upgrading Elasticsearch and ClickHouse*, first.
+
 ### Added
 - **Retention in Settings.** *Settings, How long data is kept* sets how many days live data (traces, logs, metrics) and backups are kept, without a restart. The choice is saved, wins over `KLUARD_RETENTION_DAYS` and `KLUARD_BACKUP_RETENTION_DAYS`, and "Use the default" goes back to them. Shortening it asks first, because older data is then removed.
 - **Install guide.** `INSTALL.md` walks through a first installation from start to finish, both from a clone with Docker and from a release file with systemd, ending at the first machine and the first alert. It also shows how to run on an IP address and port without a domain.
@@ -17,6 +21,8 @@ versions follow [Semantic Versioning](https://semver.org/) once a first release 
 - **Agent install with `--docker` on servers without a `docker` group.** On some systems Docker works but there is no group named `docker`, and the installer stopped with "no 'docker' group found". It now uses the group that owns the Docker socket, and says so; if there is none it explains what to do.
 
 ### Changed
+- **Releases are normal releases.** The release workflow no longer marks releases as pre-releases, so a new release becomes the "Latest" one on GitHub.
+- **Licensor details.** `ee/LICENSE` and `TRADEMARKS.md` (and the Swedish `TRADEMARKS.sv.md`) now name the licensor and a contact address. The Enterprise licence text is still a draft that a lawyer has not read.
 - **Supported databases.** `deploy/docker-compose.yml` and `INSTALL.md` now use Elasticsearch 8.19.25 and ClickHouse 26.8.37 (both with security support into 2027), up from 8.15.3 and 24.8, which no longer received fixes. ClickHouse is pinned to an exact patch: on one server the floating tag `26.8` crashed with "Illegal instruction" while `26.8.37` ran fine, so the exact tag is the safer choice. `UPGRADING.md` has a new section for moving an existing server, with a backup and a way back.
 - **"Standard alerts are ready" moved to the Alerts page.** The suggestion to turn on the starter alerts for the services your agents report is now at the top of Alerts (Active and Rules), no longer on Hosts.
 - **Traces and Billing can be hidden, Dashboards always show.** In *Settings, Menu*, Traces and Billing are now menus you can hide and Dashboards is always shown. A Dashboards entry hidden earlier is shown again.

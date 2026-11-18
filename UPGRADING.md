@@ -124,6 +124,8 @@ sudo cp deploy/.env ~/kluard-env-backup && sudo chmod 600 ~/kluard-env-backup
 
 `deploy/.env` holds `KLUARD_SECRET_KEY`, which decrypts the stored Nextcloud tokens. Keep a copy somewhere safe, away from the server.
 
+**Upgrading to 0.2.0 or later from an older release also changes the database versions** (Elasticsearch 8.15 to 8.19, ClickHouse 24.8 to 26.8): do the copy in *Upgrading Elasticsearch and ClickHouse* below first, then come back here.
+
 For a big upgrade also copy the daily backups off the machine:
 
 ```bash
@@ -238,7 +240,7 @@ docker restart kluard-agent
 
 ## Upgrading Elasticsearch and ClickHouse
 
-Kluard 0.1.5 and later run Elasticsearch 8.19.25 and ClickHouse 26.8.37. A server installed earlier keeps the old databases until you change them. The data lives in volumes, so take a copy first and keep it until the new versions have run well for a while.
+Kluard 0.2.0 and later run Elasticsearch 8.19.25 and ClickHouse 26.8.37. **The new compose file names these images, so the next `docker compose up -d` on a server that runs older ones upgrades the databases in place.** The data lives in volumes, so take the copy below **before** you pull the new code, and keep it until the new versions have run well for a while. A database that has been upgraded cannot be downgraded in place.
 
 ```
 cd /opt/lumen/deploy

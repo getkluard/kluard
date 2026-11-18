@@ -50,4 +50,4 @@ jobs:
             - **With Docker:** use the source and `./install.sh`; it builds the server and the agents for you.
             - **Only an agent, on one machine:** `kluard-agent-linux-*` or `kluard-agent-windows-*`. Normally you use the install command under *Add a machine* instead.
             - `kluard-linux-*` is the server alone, without agents. Check any file against `SHA256SUMS`.
-          prerelease: true
+          prerelease: false

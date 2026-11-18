@@ -4,7 +4,7 @@ DRAFT. This policy has not been reviewed by a lawyer, and "Kluard" is not yet a 
 below, check the name for conflicts in the EU and the US (see `docs/RELEASE.md`), and have a lawyer read this text before you
 rely on it.
 
-**Owner:** [LICENSOR NAME, ORGANISATION NUMBER, ADDRESS] ("we"). **Contact:** [LICENSING CONTACT E-MAIL, for example info@kluard.com]
+**Owner:** Daniel Andersson (sole proprietor, Sweden), 512 94 Svenljunga, Sweden ("we"). **Contact:** info@kluard.com
 
 The Kluard software core is open source under the Apache License 2.0. That licence gives you the code. It does **not** give you
 the right to use our names and logos (section 6 of the Apache licence says so). This policy explains what you may do.
@@ -45,7 +45,7 @@ The Enterprise Edition (the `ee/` directory and the files named `*_ee.go`) is no
 
 ## Asking and reporting
 
-If you are unsure, ask us before you publish: [LICENSING CONTACT E-MAIL]. Tell us if you see a use of the Marks that looks wrong.
+If you are unsure, ask us before you publish: info@kluard.com. Tell us if you see a use of the Marks that looks wrong.
 We may change this policy; the version in the repository is the current one. We aim to be fair and will usually try to talk
 before we ask you to stop.
 
