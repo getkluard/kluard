@@ -33,7 +33,7 @@ Kluard is an open-source, self-hosted observability platform. It collects OpenTe
 - [Status and "Down"](#status-and-down) · [Labels](#labels)
 - [Users, groups and permissions](#users-groups-and-permissions) · [Login, keys and security](#login-keys-and-security)
 - [Billing](#billing-for-nextcloud-instances) · [Retention, backup and archive](#retention-backup-and-archive)
-- [Editions and design documents](#editions-and-design-documents) · [Configuration](#configuration) · [API](#api) · [Development](#development) · [Contributing](#contributing) · [Roadmap](#roadmap)
+- [Editions and design documents](#editions-and-design-documents) · [Configuration](#configuration) · [API](#api) · [Development](#development) · [Run from a clone](#run-it-from-a-clone-for-contributors) · [Contributing](#contributing) · [Roadmap](#roadmap)
 
 ## Features
 
@@ -96,47 +96,36 @@ Telemetry lives in **ClickHouse**. Small, frequently changing records (users, gr
 
 ## Quick start
 
-> **Step-by-step install guide, both from a clone and from a release file: [INSTALL.md](INSTALL.md).**
+> **Step-by-step install guide, both from a release file and from a clone: [INSTALL.md](INSTALL.md).**
 
-> **Download from a release instead of the source?** Take **`kluard-server-docker-linux-amd64.tar.gz`** (or `-arm64`, recommended): unpack it and run `sudo ./install.sh`. It holds the server, the agents and the Docker setup. The plain program without Docker is `kluard-server-linux-amd64.tar.gz`, see [Server as a plain program](#server-as-a-plain-program-without-docker).
+Needs a Linux server with 2+ vCPU and 6 GB RAM (8 GB+ recommended). Docker is installed for you if it is missing. Copy the whole box and run it on the server:
 
 ```bash
-git clone https://github.com/getkluard/kluard.git
+ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+curl -fLO https://github.com/getkluard/kluard/releases/latest/download/kluard-server-docker-linux-$ARCH.tar.gz
+tar xzf kluard-server-docker-linux-$ARCH.tar.gz
+mv kluard-server-docker-linux-$ARCH kluard
 cd kluard
-```
-
-Needs Docker with the compose plugin and about 8 GB RAM (Elasticsearch + ClickHouse). On Linux hosts Elasticsearch needs `vm.max_map_count=262144` (Docker Desktop on Mac/Windows handles it itself).
-
-```bash
-sudo sysctl -w vm.max_map_count=262144                                   # Linux only
-echo 'vm.max_map_count=262144' | sudo tee /etc/sysctl.d/99-kluard.conf    # keep it after reboot
-./dev.sh                      # auto-detects your LAN IP
-./dev.sh --ip 192.168.56.1    # or choose the address your VM can reach
-```
-
-It starts Kluard, ClickHouse and Elasticsearch, prints the web UI address, the `admin` login and ready-to-paste commands for other machines. `./dev.sh status | stop | reset` manage it.
-
-If a VM cannot connect, use an IP it can reach (bridged: your LAN IP; NAT/host-only: the host address of that network) and allow inbound TCP 4318.
-
-## Install on a server
-
-The same steps, in order and for both ways of installing, are in **[INSTALL.md](INSTALL.md)**.
-
-No domain? Kluard also runs on an IP address and port: `sudo ./install.sh --public-url http://192.168.1.50:4318`. Agents on other machines need that IP address (not `localhost`), and the traffic is plain HTTP, so add HTTPS before you monitor over the internet.
-
-Rocky Linux / AlmaLinux / RHEL 9, Ubuntu or Debian, or any host with Docker. 2+ vCPU, 6 GB RAM minimum (8 GB+ recommended), 20 GB+ local SSD.
-
-```bash
 sudo sysctl -w vm.max_map_count=262144
 echo 'vm.max_map_count=262144' | sudo tee /etc/sysctl.d/99-kluard.conf
 sudo ./install.sh --public-url https://kluard.example.com --tenant main
 ```
 
-Installs Docker if missing, generates secrets into `deploy/.env`, runs a preflight check, starts everything, waits until healthy and prints the address and the admin login. Add `--allow-podman-removal` if podman is installed. Manual steps: `deploy/install-rhel-family.sh` or `deploy/install-debian-family.sh`, `deploy/gen-env.sh`, `deploy/preflight.sh`, `make up`.
+This is the recommended way: the release file `kluard-server-docker-linux-amd64.tar.gz` (or `-arm64`) holds the server, the agents and the Docker setup. The installer generates secrets into `deploy/.env`, runs a preflight check, starts Kluard, ClickHouse and Elasticsearch, waits until they are healthy and prints the address and the admin login. Add `--allow-podman-removal` if podman is installed.
 
 **No domain yet, or just trying it on this machine?** Leave out `--public-url`: `sudo ./install.sh --tenant main`. Kluard then uses this machine's IP address and port 4318 (`http://<ip>:4318`; on the same machine you can also open `http://localhost:4318`). You can set the real address later by running `sudo ./install.sh --public-url https://kluard.example.com` again; nothing else changes. Agents on other machines need the IP address or domain, not `localhost`.
 
 **Keep `deploy/.env` safe.** It holds `KLUARD_SECRET_KEY`, which encrypts stored Nextcloud credentials; without it they cannot be read again.
+
+The plain program without Docker is `kluard-server-linux-amd64.tar.gz`, see [Server as a plain program](#server-as-a-plain-program-without-docker). To run Kluard from a clone of the source, see [Run it from a clone](#run-it-from-a-clone-for-contributors).
+
+## Install on a server
+
+The same steps, in order and for both ways of installing, are in **[INSTALL.md](INSTALL.md)**. The command box is in the [Quick start](#quick-start).
+
+Rocky Linux / AlmaLinux / RHEL 9, Ubuntu or Debian, or any host with Docker. 2+ vCPU, 6 GB RAM minimum (8 GB+ recommended), 20 GB+ local SSD. No domain? Kluard also runs on an IP address and port: `sudo ./install.sh --public-url http://192.168.1.50:4318`. The traffic is then plain HTTP, so add HTTPS before you monitor over the internet.
+
+Manual steps, if you do not want the installer: `deploy/install-rhel-family.sh` or `deploy/install-debian-family.sh`, `deploy/gen-env.sh`, `deploy/preflight.sh`, `make up`.
 
 Production notes:
 - **Use HTTPS.** API keys travel in headers and Nextcloud tokens are sent to agents. Put Nginx/Caddy in front and set `KLUARD_BIND=127.0.0.1` in `deploy/.env`. Docker-published ports usually bypass firewalld, so do not rely on it alone.
@@ -145,7 +134,7 @@ Production notes:
 
 ### Server as a plain program (without Docker)
 
-The release page also has a Docker file, `kluard-server-docker-linux-amd64.tar.gz`, which includes `install.sh` and is the recommended one. For the plain program it has `kluard-server-linux-amd64.tar.gz` and `kluard-server-linux-arm64.tar.gz`. Each holds the server (`kluard`) and a `dist/` folder with the agents for Linux and Windows, which is what the install command and the download buttons under *Add a machine* hand out. Unpack it, point `KLUARD_DIST_DIR` at the `dist` folder and start the server:
+The Docker file `kluard-server-docker-linux-amd64.tar.gz` (the [Quick start](#quick-start)) includes `install.sh` and is the recommended one. For the plain program the release page has `kluard-server-linux-amd64.tar.gz` and `kluard-server-linux-arm64.tar.gz`. Each holds the server (`kluard`) and a `dist/` folder with the agents for Linux and Windows, which is what the install command and the download buttons under *Add a machine* hand out. Unpack it, point `KLUARD_DIST_DIR` at the `dist` folder and start the server:
 
 ```bash
 tar xzf kluard-server-linux-amd64.tar.gz
@@ -159,7 +148,7 @@ You still need ClickHouse (and, optionally, Elasticsearch) and the settings in [
 
 Full step-by-step guide, including upgrading from a release file and with read-only access: **[UPGRADING.md](UPGRADING.md)**. Upgrade at least once a month and at once after a *security fix* in the release notes; how the project itself is kept patched is in **[SECURITY.md](SECURITY.md)**. In short:
 
-The menu shows the running server's release (`release v0.1.3`) or, for a build from source, its build (`build 3fa91c2d`); agents built from the same source report the same value, and the Hosts page marks agents that differ with **update**. Pull the new source and run `./install.sh` (or `./dev.sh`) again: it adds missing settings such as `KLUARD_SECRET_KEY` to `deploy/.env`, rebuilds and restarts. **Your address and other settings in `deploy/.env` are never replaced**: `KLUARD_PUBLIC_URL` only changes if you pass `--public-url` (or `--ip` to `dev.sh`), and `KLUARD_BIND` is only set when missing. Several Kluard servers with different addresses can therefore be upgraded the same way. To upgrade without running any script at all: `docker compose -f deploy/docker-compose.yml up -d --build`. Existing data is kept, retention changes are applied to existing tables, and accounts from before groups existed become admins. **Run the agent install command once more on each machine** to get the current agent.
+The menu shows the running server's release (`release v0.1.3`) or, for a build from source, its build (`build 3fa91c2d`); agents built from the same source report the same value, and the Hosts page marks agents that differ with **update**. Unpack the new release file over the folder (or pull the new source) and run `./install.sh` again (`./dev.sh` for a clone used for development): it adds missing settings such as `KLUARD_SECRET_KEY` to `deploy/.env`, rebuilds and restarts. **Your address and other settings in `deploy/.env` are never replaced**: `KLUARD_PUBLIC_URL` only changes if you pass `--public-url` (or `--ip` to `dev.sh`), and `KLUARD_BIND` is only set when missing. Several Kluard servers with different addresses can therefore be upgraded the same way. To upgrade without running any script at all: `docker compose -f deploy/docker-compose.yml up -d --build`. Existing data is kept, retention changes are applied to existing tables, and accounts from before groups existed become admins. **Run the agent install command once more on each machine** to get the current agent.
 
 ## Add machines
 
@@ -691,6 +680,23 @@ Two agent settings decide how an agent is listed: `KLUARD_AGENT_ROLE` (`host` or
 OpenTelemetry SDKs and the Collector can send directly: exporter encoding `json`, endpoint `http://kluard:4318`, header `Authorization: Bearer KEY`.
 
 ## Development
+
+### Run it from a clone (for contributors)
+
+To change the code or try the newest source, clone the repository. Everyone else should use the [release file](#quick-start). It needs Docker with the compose plugin and about 8 GB RAM (Elasticsearch + ClickHouse). On Linux hosts Elasticsearch needs `vm.max_map_count=262144` (Docker Desktop on Mac/Windows handles it itself).
+
+```bash
+git clone https://github.com/getkluard/kluard.git
+cd kluard
+sudo sysctl -w vm.max_map_count=262144                                   # Linux only
+echo 'vm.max_map_count=262144' | sudo tee /etc/sysctl.d/99-kluard.conf    # keep it after reboot
+./dev.sh                      # auto-detects your LAN IP
+./dev.sh --ip 192.168.56.1    # or choose the address your VM can reach
+```
+
+It starts Kluard, ClickHouse and Elasticsearch, prints the web UI address, the `admin` login and ready-to-paste commands for other machines. `./dev.sh status | stop | reset` manage it. If a VM cannot connect, use an IP it can reach (bridged: your LAN IP; NAT/host-only: the host address of that network) and allow inbound TCP 4318.
+
+### Code layout and tests
 
 ```
 cmd/kluard             server                    cmd/kluard-agent    agent
